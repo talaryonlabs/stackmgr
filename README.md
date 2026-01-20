@@ -20,6 +20,6 @@ Management CLI for Deployment Stack
 - stackmgr list-apps [stack-name]
 
 ### Create custom app
-- stackmgr new-app [app-name] [stack-name] --from-template [template-app]
-- stackmgr migrate-app [full-app-name] [stack-name] --from-template [template-app]
+- stackmgr new-app [app-name] [stack-name] --from-template [template-app] --dev
+- stackmgr migrate-app [full-app-name] [stack-name] --from-template [template-app] --dev
 - stackmgr remove-app [full-app-name] [stack-name]
