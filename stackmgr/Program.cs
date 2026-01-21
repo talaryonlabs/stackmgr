@@ -1,47 +1,48 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using System.CommandLine;
+using stackmgr;
+using stackmgr.Arguments;
+using stackmgr.Commands;
+using stackmgr.Options;
 
-Argument<string> stackNameArgument = new Argument<string>("stack-name");
-Argument<string> appNameArgument = new Argument<string>("app-name");
+var stackNameArgument = new StackNameArgument();
+var appNameArgument = new StackNameArgument();
 
-Option<bool> devOption = new Option<bool>("--dev");
-Option<string> templateOption = new Option<string>("--template") { Required = true };
+var devOption = new Option<bool>("--dev");
+var templateOption = new TemplateOption { Required = true };
 
-Command listStack = new Command("list-stacks", "List stacks");
-Command newStack = new Command("new-stack", "Create a new stack") { stackNameArgument };
-Command deleteStack = new Command("delete-stack", "Delete a stack") { stackNameArgument };
-Command enableStack = new Command("enable-stack", "Enable a stack") { stackNameArgument };
-Command disableStack = new Command("disable-stack", "Disable a stack") { stackNameArgument };
-Command migrateStack = new Command("migrate-stack", "Migrate a stack") { stackNameArgument };
+var listStack = new Command("list-stacks", "List stacks");
+var newStack = new NewStackCommand();
+var deleteStack = new Command("delete-stack", "Delete a stack") { stackNameArgument };
+var enableStack = new Command("enable-stack", "Enable a stack") { stackNameArgument };
+var disableStack = new Command("disable-stack", "Disable a stack") { stackNameArgument };
+var migrateStack = new Command("migrate-stack", "Migrate a stack") { stackNameArgument };
 
-Command newApp = new Command("new-app", "Create a new app") { stackNameArgument, appNameArgument };
-Command addApp = new Command("add-app", "Add an app to a stack") { stackNameArgument, appNameArgument, devOption, templateOption };
-Command migrateApp = new Command("migrate-app", "Migrate an app to a stack") { stackNameArgument, appNameArgument, templateOption, devOption };
-Command removeApp = new Command("remove-app", "Remove an app from a stack") { stackNameArgument, appNameArgument };
+var newApp = new Command("new-app", "Create a new app") { stackNameArgument, appNameArgument };
+var addApp = new Command("add-app", "Add an app to a stack") { stackNameArgument, appNameArgument, devOption, templateOption };
+var migrateApp = new Command("migrate-app", "Migrate an app to a stack") { stackNameArgument, appNameArgument, templateOption, devOption };
+var removeApp = new Command("remove-app", "Remove an app from a stack") { stackNameArgument, appNameArgument };
 
-RootCommand rootCommand = new RootCommand();
-rootCommand.Add(listStack);
-rootCommand.Add(newStack);
-rootCommand.Add(deleteStack);
-rootCommand.Add(enableStack);
-rootCommand.Add(disableStack);
-rootCommand.Add(migrateStack);
-rootCommand.Add(newApp);
-rootCommand.Add(addApp);
-rootCommand.Add(migrateApp);
-rootCommand.Add(removeApp);
-
-listStack.SetAction(async (v, c) =>
+var rootCommand = new RootCommand
 {
-    return await Task.Run(() =>
-    {
-        Console.WriteLine("Listing stacks async");
-        return 0;
-    }, c);
-});
+    listStack,
+    newStack,
+    deleteStack,
+    enableStack,
+    disableStack,
+    migrateStack,
+    newApp,
+    addApp,
+    migrateApp,
+    removeApp
+};
 
-ParseResult parseResult = rootCommand.Parse(args);
+var manager = new StackManager();
+
+manager.RegisterListStacks(listStack);
+
+var parseResult = rootCommand.Parse(args);
 
 if(parseResult.CommandResult.Command == newStack)
 {
