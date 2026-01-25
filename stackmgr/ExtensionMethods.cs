@@ -10,10 +10,16 @@ public static class ExtensionMethods
         Symbol item = Activator.CreateInstance<TSymbol>();
         return parseResult.GetRequiredValue<TValue>(item.Name);
     }
+    
+    public static TValue? GetValue<TValue, TSymbol>(this ParseResult parseResult) where TSymbol : Symbol 
+    {
+        Symbol item = Activator.CreateInstance<TSymbol>();
+        return parseResult.GetValue<TValue>(item.Name);
+    }
 
     public static string GetStackPath(this StackEnvironment environment, string stackName)
     {
-        return Path.Combine(Directory.GetCurrentDirectory(), environment.ToString().ToLower(), stackName);
+        return Path.Combine(Directory.GetCurrentDirectory(), environment.Name.ToLower(), stackName);
     }
     
     public static bool HasStack(this StackEnvironment environment, string stackName)

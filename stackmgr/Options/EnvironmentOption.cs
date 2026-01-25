@@ -2,8 +2,10 @@
 
 namespace stackmgr.Options;
 
-public enum StackEnvironment { Production, Staging, Development }
-
-public class EnvironmentOption() : Option<StackEnvironment>("--environment", "--env")
+public class EnvironmentOption : Option<string>
 {
+    public EnvironmentOption() : base("--environment", "--env")
+    {
+        Description = "environment name (e.g. dev, prod)";
+    }
 }

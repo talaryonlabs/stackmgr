@@ -10,6 +10,7 @@ public class Kustomization
     [YamlMember(Alias = "apiVersion")] public string ApiVersion { get; set; } = "kustomize.config.k8s.io/v1beta1";
     [YamlMember(Alias = "images")] public List<KustomizationImage>? Images { get; set; }
     [YamlMember(Alias = "resources")] public List<string>? Resources { get; set;}
+    [YamlMember(Alias = "namespace")] public string? Namespace { get; set; }
     
     public void Save(StackEnvironment env, string stack)
     {

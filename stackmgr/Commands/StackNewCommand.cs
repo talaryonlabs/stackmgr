@@ -11,7 +11,7 @@ public class StackNewCommand : Command
         SetAction(v =>
         {
             var env = v.GetRequiredValue<StackEnvironment, EnvironmentOption>();
-            var stackName = v.GetRequiredValue<string, StackNameArgument>();
+            var stackName = v.GetRequiredValue<string, NameArgument>();
 
             if (env.HasStack(stackName))
             {
