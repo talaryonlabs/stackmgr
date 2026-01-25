@@ -17,4 +17,10 @@
       <PackageReference Include="YamlDotNet" Version="16.3.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Reference Include="Talaryon.Toolbox">
+        <HintPath>..\..\toolbox\src\Toolbox\bin\Debug\net10.0\Talaryon.Toolbox.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>

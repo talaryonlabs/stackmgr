@@ -7,14 +7,22 @@ public class InitCommand : Command
 {
     public InitCommand() : base("init", "Initialize stack repository")
     {
-        
+        var gitignore = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), ".gitignore"));
         var environments = Enum.GetValues<StackEnvironment>();
         
         SetAction(_ =>
         {
-            if (CliConfig.Exists)
+            if(!gitignore.Exists) gitignore
+                .Create()
+                .Close();
+            
+            var lines = File.ReadAllLines(gitignore.FullName);
+            if (!lines.Contains(".stackmgr")) lines = lines.Append(".stackmgr").ToArray();
+            File.WriteAllLines(gitignore.FullName, lines);
+            
+            if (StackMgrConfig.Exists)
             {
-                Console.WriteLine($"{CliConfig.FileName} already exists. Nothing to do.");
+                Console.WriteLine($"{StackMgrConfig.FileName} already exists. Nothing to do.");
             }
             else
             {
@@ -27,7 +35,7 @@ public class InitCommand : Command
                         Console.WriteLine($"Created directory {envPath}");
                     }
                 }
-                CliConfig.Create();
+                StackMgrConfig.Create();
             }
         });
     }
