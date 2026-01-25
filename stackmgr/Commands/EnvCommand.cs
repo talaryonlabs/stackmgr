@@ -10,6 +10,6 @@ public class EnvCommand : Command
         Add(new EnvInitCommand());
         Add(new EnvConfigureCommand());
         Add(new EnvDropCommand());
-        Add(new EnvSyncCommand());
+        Add(new EnvTestCommand());
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using stackmgr.Arguments;
 using stackmgr.Options;
+using stackmgr.Services;
 
 namespace stackmgr.Commands;
 
@@ -8,22 +9,37 @@ public class StackNewCommand : Command
 {
     public StackNewCommand() : base("new", "Create a new stack")
     {
-        SetAction(v =>
+        SetAction(async v =>
         {
-            var env = v.GetRequiredValue<StackEnvironment, EnvironmentOption>();
-            var stackName = v.GetRequiredValue<string, NameArgument>();
-
-            if (env.HasStack(stackName))
+            var config = StackMgrConfig.Load();
+            var name = v.GetRequiredValue<string, EnvironmentOption>().ToLower();
+            var env = config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+            var stack = v.GetRequiredValue<string, StackArgument>();
+            
+            if (env is null)
             {
-                Console.WriteLine($"Stack '{stackName}' already exists in environment '{env}'");
+                Console.WriteLine($"Environment '{name}' does not exist.");
                 return;
             }
             
-            Console.WriteLine($"Creating stack '{stackName}' in environment '{env}'");
-            var stackPath = env.GetStackPath(stackName);
-            Directory.CreateDirectory(stackPath);
+            var path = env.GetStackPath(stack);
+            var ns = $"{env.Name.ToLower()}-{stack}";
             
-            StackConfig.Generate(env, stackName);
+            Console.WriteLine($"Creating stack '{stack}' in environment '{env.Name}'");
+            if(!Directory.Exists(path))
+            {
+                Console.WriteLine($".. Creating directory '{path}'");
+                Directory.CreateDirectory(path);
+            }
+            
+            if (await RKE2.CreateNamespace(env, ns))
+            {
+                Console.WriteLine(".. Stack namespace created.");
+            }
+            
+            // StackConfig.Generate(env, stack);
+            
+            
         });
     }
 }

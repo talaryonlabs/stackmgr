@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using stackmgr.Arguments;
 using stackmgr.Options;
+using Talaryon.Toolbox.Extensions;
 
 namespace stackmgr.Commands;
 
@@ -12,6 +13,8 @@ public class EnvConfigureCommand : Command
         Add(new RKE2AccessTokenOption());
         Add(new RKE2UrlOption());
         Add(new RKE2ProjectIdOption());
+        Add(new ArgoCDServiceOption());
+        Add(new ArgoCDNamespaceOption());
         SetAction(v =>
         {
             var config = StackMgrConfig.Load();
@@ -27,7 +30,7 @@ public class EnvConfigureCommand : Command
             var rke2AccessToken = v.GetValue<string, RKE2AccessTokenOption>();
             if (rke2AccessToken is not null)
             {
-                env.RKE2.AccessToken = rke2AccessToken;
+                env.RKE2.AccessToken = rke2AccessToken.ToBase64String();
                 Console.WriteLine("RKE2 access token updated.");
             }
             
@@ -43,6 +46,20 @@ public class EnvConfigureCommand : Command
             {
                 env.RKE2.ProjectId = rke2ProjectId;
                 Console.WriteLine("RKE2 project ID updated.");
+            }
+            
+            var argoService = v.GetValue<string, ArgoCDServiceOption>();
+            if (argoService is not null)
+            {
+                env.ArgoCD.Service = argoService;
+                Console.WriteLine("ArgoCD service updated.");
+            }
+            
+            var argoNamespace = v.GetValue<string, ArgoCDNamespaceOption>();
+            if (argoNamespace is not null)
+            {
+                env.ArgoCD.Namespace = argoNamespace;
+                Console.WriteLine("ArgoCD namespace updated.");
             }
             
             config.Save();

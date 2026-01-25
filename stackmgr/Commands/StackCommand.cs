@@ -8,7 +8,7 @@ public class StackCommand : Command
 {
     public StackCommand() : base("stack", "Manage stacks")
     {
-        var stackName = new NameArgument();
+        var stackName = new StackArgument();
         
         Add(new EnvironmentOption { Required = true, Recursive = true });
         Add(new StackListCommand());

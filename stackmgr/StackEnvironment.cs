@@ -18,6 +18,6 @@ public class StackEnvironmentRKE2
 
 public class StackEnvironmentArgoCD
 {
-    [JsonPropertyName("url")] public string Url { get; set; } = "";
-    [JsonPropertyName("access_token")] public string AccessToken { get; set; } = "";
+    [JsonPropertyName("namespace")] public string Namespace { get; set; } = "";
+    [JsonPropertyName("service")] public string Service { get; set; } = "";
 }

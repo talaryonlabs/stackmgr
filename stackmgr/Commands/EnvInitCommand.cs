@@ -20,7 +20,7 @@ public class EnvInitCommand : Command
             
             if (config.Environments.Any(x => x.Name.Equals(env, StringComparison.CurrentCultureIgnoreCase)))
             {
-                Console.WriteLine($"Environment '{env}' already exists. ");
+                Console.WriteLine($"Environment '{env}' already exists.");
                 return;
             }
             

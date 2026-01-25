@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using stackmgr.Arguments;
 using stackmgr.Options;
+using stackmgr.Services;
 
 namespace stackmgr.Commands;
 
@@ -8,26 +9,42 @@ public class StackDeleteCommand : Command
 {
     public StackDeleteCommand() : base("delete", "Delete a stack")
     {
-        SetAction(v =>
+        SetAction(async v =>
         {
-            var env = v.GetRequiredValue<StackEnvironment, EnvironmentOption>();
-            var stackName = v.GetRequiredValue<string, NameArgument>();
+            var config = StackMgrConfig.Load();
+            var name = v.GetRequiredValue<string, EnvironmentOption>().ToLower();
+            var env = config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+            var stack = v.GetRequiredValue<string, StackArgument>();
 
-            if (!env.HasStack(stackName))
+            if (env is null)
             {
-                Console.WriteLine($"Stack '{stackName}' does not exist in environment '{env}'");
+                Console.WriteLine($"Environment '{name}' does not exist.");
                 return;
             }
-            Console.Write($"Are you sure you want to delete stack '{stackName}' in environment '{env}'? [y/N] ");
+            
+            var path = env.GetStackPath(stack);
+            var ns = $"{env.Name.ToLower()}-{stack}";
+            
+            if (!env.HasStack(stack))
+            {
+                Console.WriteLine($"Stack '{stack}' does not exist in environment '{env.Name}'");
+                return;
+            }
+            Console.Write($"Are you sure you want to delete stack '{stack}' in environment '{env.Name}'? [y/N] ");
             var input = Console.ReadLine();
-            if (input is not null && input.Trim().Length > 0 && input.Trim().Equals("y", StringComparison.CurrentCultureIgnoreCase))
+            if (!(input is not null && input.Trim().Length > 0 && input.Trim().Equals("y", StringComparison.CurrentCultureIgnoreCase)))
             {
-                Console.WriteLine($"Deleting stack '{stackName}' in environment '{env}'");
-                var stackPath = env.GetStackPath(stackName);
-                Directory.Delete(stackPath, true);
+                Console.WriteLine("Aborted");
                 return;
             }
-            Console.WriteLine("Aborted");
+            Console.WriteLine($"Deleting stack '{stack}' in environment '{env.Name}'");
+            var stackPath = env.GetStackPath(stack);
+            // Directory.Delete(stackPath, true);
+            
+            if (await RKE2.DeleteNamespace(env, ns))
+            {
+                Console.WriteLine(".. Stack namespace deleted.");
+            }
         });
     }
 }
