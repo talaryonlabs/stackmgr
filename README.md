@@ -1,6 +1,24 @@
 # stackmgr
 Management CLI for Deployment Stack
 
+## Environment Management
+```
+stackmgr env init <environment-name>
+stackmgr env drop <environment-name>
+```
+
+### Configure environment settings
+```
+stackmgr env configure <environment-name> \
+  --rke2-access-token
+...
+```
+
+### Test environment configuration
+```
+stackmgr env test <environment-name>
+```
+
 ## Stack Managament
 - stackmgr list-stacks
 
