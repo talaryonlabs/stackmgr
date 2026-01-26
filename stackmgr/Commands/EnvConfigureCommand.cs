@@ -15,6 +15,8 @@ public class EnvConfigureCommand : Command
         Add(new RKE2ProjectIdOption());
         Add(new ArgoCDServiceOption());
         Add(new ArgoCDNamespaceOption());
+        Add(new ArgoCDProjectOption());
+        Add(new ArgoCDRepositoryOption());
         SetAction(v =>
         {
             var config = StackMgrConfig.Load();
@@ -60,6 +62,20 @@ public class EnvConfigureCommand : Command
             {
                 env.ArgoCD.Namespace = argoNamespace;
                 Console.WriteLine("ArgoCD namespace updated.");
+            }
+            
+            var argoProject = v.GetValue<string, ArgoCDProjectOption>();
+            if (argoProject is not null)
+            {
+                env.ArgoCD.Project = argoProject;
+                Console.WriteLine("ArgoCD project updated.");
+            }
+            
+            var argoRepository = v.GetValue<string, ArgoCDRepositoryOption>();
+            if (argoRepository is not null)
+            {
+                env.ArgoCD.Repository = argoRepository;
+                Console.WriteLine("ArgoCD repository updated.");
             }
             
             config.Save();

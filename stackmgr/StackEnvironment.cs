@@ -20,4 +20,6 @@ public class StackEnvironmentArgoCD
 {
     [JsonPropertyName("namespace")] public string Namespace { get; set; } = "";
     [JsonPropertyName("service")] public string Service { get; set; } = "";
+    [JsonPropertyName("project")] public string Project { get; set; } = "";
+    [JsonPropertyName("repository")] public string Repository { get; set; } = "";
 }

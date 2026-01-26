@@ -30,6 +30,8 @@ public class EnvTestCommand : Command
             
             Console.WriteLine(".. Testing ArgoCD connection ...");
             await ArgoCD.TestConnection(env);
+            
+            await ArgoCD.DisableAutoSync(env, "ambulanz.care");
         });
     }
 }

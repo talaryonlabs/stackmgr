@@ -6,13 +6,6 @@ namespace stackmgr.Services;
 
 public class RKE2
 {
-    private static readonly StackMgrConfig? Config;
-
-    static RKE2()
-    {
-        Config = StackMgrConfig.Load();
-    }
-
     private static HttpClient NewClient(StackEnvironment env)
     {
         var rke2Client = new HttpClient();
