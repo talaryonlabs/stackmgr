@@ -30,10 +30,11 @@ stackmgr stack --env|--environment [environment-name] new <stack-name>
 stackmgr stack --env|--environment [environment-name] delete <stack-name>
 ```
 
-### Add/Remove stack from ArgoCD
+### Add/Remove/Status stack from ArgoCD
 ```
 stackmgr stack --env|--environment [environment-name] enable <stack-name>
 stackmgr stack --env|--environment [environment-name] disable <stack-name>
+stackmgr stack --env|--environment [environment-name] status <stack-name>
 ```
 
 ### Update kustomization.yaml
