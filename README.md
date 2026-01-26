@@ -20,18 +20,26 @@ stackmgr env test <environment-name>
 ```
 
 ## Stack Managament
-- stackmgr list-stacks
+```
+stackmgr stack --env|--environment [environment-name] list
+```
 
 ### Create/Delete stack and namespace
-- stackmgr new-stack [name]
-- stackmgr delete-stack [name]
+```
+stackmgr stack --env|--environment [environment-name] new <stack-name>
+stackmgr stack --env|--environment [environment-name] delete <stack-name>
+```
 
 ### Add/Remove stack from ArgoCD
-- stackmgr enable-stack [name]
-- stackmgr disable-stack [name]
+```
+stackmgr stack --env|--environment [environment-name] enable <stack-name>
+stackmgr stack --env|--environment [environment-name] disable <stack-name>
+```
 
 ### Update kustomization.yaml
-- stackmgr migrate-stack [name]
+```
+stackmgr stack --env|--environment [environment-name] migrate <stack-name>
+```
 
 ## App Management
 - stackmgr list-available-apps
