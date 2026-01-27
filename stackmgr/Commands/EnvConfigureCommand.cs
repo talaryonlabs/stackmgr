@@ -13,8 +13,8 @@ public class EnvConfigureCommand : Command
         Add(new RKE2AccessTokenOption());
         Add(new RKE2UrlOption());
         Add(new RKE2ProjectIdOption());
-        Add(new ArgoCDServiceOption());
-        Add(new ArgoCDNamespaceOption());
+        Add(new ArgoCDUrlOption());
+        Add(new ArgoCDAccessTokenOption());
         Add(new ArgoCDProjectOption());
         Add(new ArgoCDRepositoryOption());
         SetAction(v =>
@@ -50,18 +50,18 @@ public class EnvConfigureCommand : Command
                 Console.WriteLine("RKE2 project ID updated.");
             }
             
-            var argoService = v.GetValue<string, ArgoCDServiceOption>();
-            if (argoService is not null)
+            var argoUrl = v.GetValue<string, ArgoCDUrlOption>();
+            if (argoUrl is not null)
             {
-                env.ArgoCD.Service = argoService;
-                Console.WriteLine("ArgoCD service updated.");
+                env.ArgoCD.Url = argoUrl;
+                Console.WriteLine("ArgoCD URL updated.");
             }
             
-            var argoNamespace = v.GetValue<string, ArgoCDNamespaceOption>();
-            if (argoNamespace is not null)
+            var argoAccessToken = v.GetValue<string, ArgoCDAccessTokenOption>();
+            if (argoAccessToken is not null)
             {
-                env.ArgoCD.Namespace = argoNamespace;
-                Console.WriteLine("ArgoCD namespace updated.");
+                env.ArgoCD.AccessToken = argoAccessToken.ToBase64String();
+                Console.WriteLine("ArgoCD access token updated.");
             }
             
             var argoProject = v.GetValue<string, ArgoCDProjectOption>();

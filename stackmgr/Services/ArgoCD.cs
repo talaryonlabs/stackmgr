@@ -12,7 +12,7 @@ public class ArgoCD
     private static HttpClient NewClient(StackEnvironment env)
     {
         var rke2Client = new HttpClient();
-        rke2Client.DefaultRequestHeaders.Add("Authorization", $"Bearer {env.RKE2.AccessToken.FromBase64String()}");
+        rke2Client.DefaultRequestHeaders.Add("Authorization", $"Bearer {env.ArgoCD.AccessToken.FromBase64String()}");
         rke2Client.DefaultRequestHeaders.Add("Accept", "application/json");
 
         return rke2Client;
@@ -20,27 +20,15 @@ public class ArgoCD
 
     public static bool CheckRequirements(StackEnvironment env)
     {
-        if (env.RKE2.AccessToken is null or "")
+        if (env.ArgoCD.Url is null or "")
         {
-            Console.WriteLine("No access token provided. Please check your configuration.");
+            Console.WriteLine("No ArgoCD URL provided. Please check your configuration.");
             return false;
         }
 
-        if (env.RKE2.Url is null or "")
+        if (env.ArgoCD.AccessToken is null or "")
         {
-            Console.WriteLine("No RKE2 URL provided. Please check your configuration.");
-            return false;
-        }
-
-        if (env.ArgoCD.Namespace is null or "")
-        {
-            Console.WriteLine("No ArgoCD namespace provided. Please check your configuration.");
-            return false;
-        }
-
-        if (env.ArgoCD.Service is null or "")
-        {
-            Console.WriteLine("No ArgoCD service provided. Please check your configuration.");
+            Console.WriteLine("No ArgoCD access token provided. Please check your configuration.");
             return false;
         }
 
@@ -63,14 +51,13 @@ public class ArgoCD
     {
         if (!CheckRequirements(env)) return false;
 
-        Console.WriteLine(
-            $" - ArgoCD URL: /api/v1/namespaces/{env.ArgoCD.Namespace}/services/{env.ArgoCD.Service}/proxy/");
+        Console.WriteLine($" - API URL: {env.ArgoCD.Url}");
         Console.WriteLine($" - Project: {env.ArgoCD.Project}");
 
         var client = NewClient(env);
         var response =
             await client.GetAsync(
-                $"{env.RKE2.Url}/api/v1/namespaces/{env.ArgoCD.Namespace}/services/{env.ArgoCD.Service}/proxy/api/v1/projects/{env.ArgoCD.Project}");
+                $"{env.ArgoCD.Url}/api/v1/projects/{env.ArgoCD.Project}");
         switch (response.StatusCode)
         {
             case HttpStatusCode.Unauthorized:
@@ -97,7 +84,7 @@ public class ArgoCD
         using var client = NewClient(env);
         var response =
             await client.GetAsync(
-                $"{env.RKE2.Url}/api/v1/namespaces/{env.ArgoCD.Namespace}/services/{env.ArgoCD.Service}/proxy/api/v1/applications");
+                $"{env.ArgoCD.Url}/api/v1/applications");
 
         var list = await response.Content.ReadFromJsonAsync<V1alpha1ApplicationList>();
 
@@ -145,7 +132,7 @@ public class ArgoCD
         using var client = NewClient(env);
         var response =
             await client.GetAsync(
-                $"{env.RKE2.Url}/api/v1/namespaces/{env.ArgoCD.Namespace}/services/{env.ArgoCD.Service}/proxy/api/v1/applications/{name}");
+                $"{env.ArgoCD.Url}/api/v1/applications/{name}");
 
         if (!response.IsSuccessStatusCode)
         {
@@ -186,7 +173,7 @@ public class ArgoCD
         using var client = NewClient(env);
         var response =
             await client.PutAsJsonAsync(
-                $"{env.RKE2.Url}/api/v1/namespaces/{env.ArgoCD.Namespace}/services/{env.ArgoCD.Service}/proxy/api/v1/applications/{name}", application);
+                $"{env.ArgoCD.Url}/api/v1/applications/{name}", application);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -212,7 +199,7 @@ public class ArgoCD
 
         var json = JsonSerializer.Serialize(app);
         
-        var request = new HttpRequestMessage(HttpMethod.Put, $"{env.RKE2.Url}/api/v1/namespaces/{env.ArgoCD.Namespace}/services/{env.ArgoCD.Service}/proxy/api/v1/applications/{name}");
+        var request = new HttpRequestMessage(HttpMethod.Put, $"{env.ArgoCD.Url}/api/v1/applications/{name}");
         request.Content = new StringContent(json);
         request.Content.Headers.ContentType = new("application/json");
         
