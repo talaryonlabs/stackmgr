@@ -19,7 +19,7 @@
 
     <ItemGroup>
       <Reference Include="Talaryon.Toolbox">
-        <HintPath>..\..\libs\Talaryon.Toolbox.dll</HintPath>
+        <HintPath>..\libs\Talaryon.Toolbox.dll</HintPath>
       </Reference>
     </ItemGroup>
 
