@@ -208,6 +208,7 @@ public class ArgoCD
 
         var content = await response.Content.ReadAsStringAsync();
         
+        Console.WriteLine(content);
         if (!response.IsSuccessStatusCode)
         {
             Console.WriteLine($"Failed to disable auto sync for application '{name}'. Response code: {response.StatusCode}");
