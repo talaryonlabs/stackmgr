@@ -36,7 +36,11 @@ public class StackNewCommand : Command
             {
                 Console.WriteLine(".. Stack namespace created.");
             }
-            
+
+            if (await ArgoCD.CreateApplication(env, stack))
+            {
+                Console.WriteLine(".. ArgoCD application created.");
+            }
             // StackConfig.Generate(env, stack);
             
             

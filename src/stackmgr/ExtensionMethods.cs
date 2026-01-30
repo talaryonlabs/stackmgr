@@ -7,13 +7,13 @@ public static class ExtensionMethods
 {
     public static TValue GetRequiredValue<TValue, TSymbol>(this ParseResult parseResult) where TSymbol : Symbol 
     {
-        Symbol item = Activator.CreateInstance<TSymbol>();
+        var item = Activator.CreateInstance<TSymbol>();
         return parseResult.GetRequiredValue<TValue>(item.Name);
     }
     
     public static TValue? GetValue<TValue, TSymbol>(this ParseResult parseResult) where TSymbol : Symbol 
     {
-        Symbol item = Activator.CreateInstance<TSymbol>();
+        var item = Activator.CreateInstance<TSymbol>();
         return parseResult.GetValue<TValue>(item.Name);
     }
 

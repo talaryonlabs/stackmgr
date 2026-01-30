@@ -76,6 +76,25 @@ public class ArgoCD
         return response.IsSuccessStatusCode;
     }
 
+    public static async Task<IEnumerable<V1alpha1Application>?> ListApplicationsAsync(StackEnvironment env)
+    {
+        if (!CheckRequirements(env)) return null;
+
+        using var client = NewClient(env);
+        var response =
+            await client.GetAsync(
+                $"{env.ArgoCD.Url}/api/v1/applications?project={env.ArgoCD.Project}");
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"Failed to get applications. Response code: {response.StatusCode}");
+            return null;
+        }
+        
+        var applications = await response.Content.ReadFromJsonAsync<V1alpha1ApplicationList>();
+        return applications?.Items;
+    }
+
     public static async Task<bool> CreateApplication(StackEnvironment env, string name)
     {
         if (!CheckRequirements(env)) return false;
@@ -91,13 +110,13 @@ public class ArgoCD
         list.Items.ForEach(x => Console.WriteLine($"{x.Metadata.Name}"));
 
 
-        var application = new ArgoCDApplication
+        var application = new V1alpha1Application()
         {
-            Metadata = new ArgoCDApplicationMetadata
+            Metadata = new V1ObjectMeta()
             {
                 Name = name
             },
-            Spec = new ArgoCDApplicationSpec
+            Spec = new V1alpha1ApplicationSpec()
             {
                 SyncPolicy = new V1alpha1SyncPolicy
                 {
@@ -139,8 +158,18 @@ public class ArgoCD
             Console.WriteLine($"Failed to get application '{name}'. Response code: {response.StatusCode}");
             return null;
         }
-
-        return await response.Content.ReadFromJsonAsync<V1alpha1Application>();;
+        
+        var application = await response.Content.ReadFromJsonAsync<V1alpha1Application>();
+        if (application is null)
+        {
+            Console.WriteLine($"Failed to get application '{name}'. (unknown error)");
+            return null;
+        }
+        
+        application.Metadata.DeletionTimestamp = DateTimeOffset.Now;
+        application.Status.ObservedAt = DateTime.Now;
+        
+        return application;
     }
 
     public static async Task<bool> DeleteApplication(StackEnvironment env, string name)
@@ -156,34 +185,46 @@ public class ArgoCD
             Console.WriteLine($"Failed to get application '{name}'. (Unknown error)");
             return false;
         }
-        
-        application.Spec = new V1alpha1ApplicationSpec
+
+        var json = JsonSerializer.Serialize(new Dictionary<string, object>
         {
-            SyncPolicy = new V1alpha1SyncPolicy
             {
-                Automated = new V1alpha1SyncPolicyAutomated
+                "metadata", new Dictionary<string, object>()
                 {
-                    Prune = true,
-                    SelfHeal = true,
-                    AllowEmpty = false
+                    { "name", application.Metadata.Name }
+                }
+            },
+            {
+                "spec", new Dictionary<string, object>
+                {
+                    { "destination", application.Spec.Destination },
+                    { "source", application.Spec.Source },
+                    {
+                        "syncPolicy", new V1alpha1SyncPolicy
+                        {
+                            Automated = new V1alpha1SyncPolicyAutomated
+                            {
+                                Prune = true,
+                                SelfHeal = true
+                            }
+                        }
+                    }
                 }
             }
-        };
-        
+        });
+
         using var client = NewClient(env);
+        var request = new StringContent(json) { Headers = { ContentType = new("application/json") } };
         var response =
-            await client.PutAsJsonAsync(
-                $"{env.ArgoCD.Url}/api/v1/applications/{name}", application);
+            await client.PutAsync($"{env.ArgoCD.Url}/api/v1/applications/{name}?validate=false", request);
 
-        if (!response.IsSuccessStatusCode)
-        {
-            Console.WriteLine($"Failed to enable auto sync for application '{name}'. Response code: {response.StatusCode}");
-            return false;
-        }
-
-        return true;
+        if (response.IsSuccessStatusCode) return true;
+        Console.WriteLine(
+            $"Failed to disable auto sync for application '{name}'. Response code: {response.StatusCode}");
+        Console.WriteLine(await response.Content.ReadAsStringAsync());
+        return false;
     }
-    
+
     public static async Task<bool> DisableAutoSync(StackEnvironment env, string name)
     {
         var application = await GetApplication(env, name);
@@ -193,29 +234,39 @@ public class ArgoCD
             return false;
         }
 
-        var app = (ArgoCDApplication)application;
-        
-        using var client = NewClient(env);
-
-        var json = JsonSerializer.Serialize(app);
-        
-        var request = new HttpRequestMessage(HttpMethod.Put, $"{env.ArgoCD.Url}/api/v1/applications/{name}");
-        request.Content = new StringContent(json);
-        request.Content.Headers.ContentType = new("application/json");
-        
-        var response =
-            await client.SendAsync(request);
-
-        var content = await response.Content.ReadAsStringAsync();
-        
-        Console.WriteLine(content);
-        if (!response.IsSuccessStatusCode)
+        var json = JsonSerializer.Serialize(new Dictionary<string, object>
         {
-            Console.WriteLine($"Failed to disable auto sync for application '{name}'. Response code: {response.StatusCode}");
-            return false;
-        }
+            {
+                "metadata", new Dictionary<string, object>()
+                {
+                    { "name", application.Metadata.Name }
+                }
+            },
+            {
+                "spec", new Dictionary<string, object>
+                {
+                    { "destination", application.Spec.Destination },
+                    { "source", application.Spec.Source },
+                    {
+                        "syncPolicy", new V1alpha1SyncPolicy
+                        {
+                            Automated = null!
+                        }
+                    }
+                }
+            }
+        });
 
-        return true;
+        using var client = NewClient(env);
+        var request = new StringContent(json) { Headers = { ContentType = new("application/json") } };
+        var response =
+            await client.PutAsync($"{env.ArgoCD.Url}/api/v1/applications/{name}?validate=false", request);
+
+        if (response.IsSuccessStatusCode) return true;
+        Console.WriteLine(
+            $"Failed to disable auto sync for application '{name}'. Response code: {response.StatusCode}");
+        Console.WriteLine(await response.Content.ReadAsStringAsync());
+        return false;
     }
 }
 

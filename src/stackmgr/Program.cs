@@ -9,8 +9,12 @@ var rootCommand = new RootCommand
     new StackCommand()
 };
 
-var parseResult = rootCommand.Parse("env test test");
-// var parseResult = rootCommand.Parse(args);
+var parseResult = rootCommand.Parse("stack --env test list");
+if (args.Length > 0)
+{ 
+    parseResult = rootCommand.Parse(args);    
+}
+
 // if (!StackMgrConfig.Exists && parseResult.CommandResult.Command != initCommand)
 // {
 //     Console.WriteLine("Stack repository not initialized.");
