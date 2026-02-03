@@ -1,9 +1,5 @@
-﻿using System.CommandLine;
-using System.Net;
-using stackmgr.Arguments;
+﻿using stackmgr.Arguments;
 using stackmgr.Services;
-using Talaryon.Toolbox.Extensions;
-using YamlDotNet.Serialization.ObjectGraphVisitors;
 
 namespace stackmgr.Commands;
 
@@ -14,14 +10,8 @@ public class EnvTestCommand : StackManagerCommand
         Add(new EnvironmentArgument());
         SetAction(async v =>
         {
-            var name = v.GetRequiredValue<string, EnvironmentArgument>().ToLower();
-            var env = Config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+            var env = GetEnvironment<EnvironmentArgument>(v);
             
-            if (env is null)
-            {
-                Console.WriteLine($"Environment '{name}' does not exist.");
-                return;
-            }
             Console.WriteLine($"Testing environment '{env.Name}' ...");
             
             Console.WriteLine(".. Testing RKE2 connection ...");

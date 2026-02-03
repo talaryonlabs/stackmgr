@@ -9,13 +9,7 @@ public class StackListCommand : StackManagerCommand
     {
         SetAction(async v =>
         {
-            var name = v.GetRequiredValue<string, EnvironmentOption>().ToLower();
-            var env = Config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
-            if (env is null)
-            {
-                Console.WriteLine($"Environment '{name}' does not exist.");
-                return;
-            }
+            var env = GetEnvironment<EnvironmentOption>(v);
             
             Console.WriteLine($"Listing stacks for {env.Name}");
 

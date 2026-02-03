@@ -2,9 +2,11 @@
 
 namespace stackmgr;
 
-public class StackEnvironment
+public class StackEnvironment : IStackManagerEntity
 {
-    [JsonPropertyName("name")] public string Name { get; set; } = "";
+    [JsonIgnore] public DirectoryInfo LocalDirectory => new(Path.Combine(Environment.CurrentDirectory, Name));
+    
+    [JsonPropertyName("name")] public string Name { get; init; } = "";
     [JsonPropertyName("rke2")] public StackEnvironmentRKE2 RKE2 { get; set; } = new();
     [JsonPropertyName("argocd")] public StackEnvironmentArgoCD ArgoCD { get; set; } = new();
 }

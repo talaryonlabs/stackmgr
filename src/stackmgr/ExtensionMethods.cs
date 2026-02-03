@@ -4,33 +4,18 @@ namespace stackmgr;
 
 public static class ExtensionMethods
 {
-    public static TValue GetRequiredValue<TValue, TSymbol>(this ParseResult parseResult) where TSymbol : Symbol 
+    extension(ParseResult parseResult)
     {
-        var item = Activator.CreateInstance<TSymbol>();
-        return parseResult.GetRequiredValue<TValue>(item.Name);
-    }
-    
-    public static TValue? GetValue<TValue, TSymbol>(this ParseResult parseResult) where TSymbol : Symbol 
-    {
-        var item = Activator.CreateInstance<TSymbol>();
-        return parseResult.GetValue<TValue>(item.Name);
-    }
-
-    extension(StackEnvironment environment)
-    {
-        public string GetStackPath(string stackName)
+        public TValue GetRequiredValue<TValue, TSymbol>() where TSymbol : Symbol 
         {
-            return Path.Combine(Directory.GetCurrentDirectory(), environment.Name.ToLower(), stackName);
+            var item = Activator.CreateInstance<TSymbol>();
+            return parseResult.GetRequiredValue<TValue>(item.Name);
         }
 
-        public string GetStackNamespace(string stackName)
+        public TValue? GetValue<TValue, TSymbol>() where TSymbol : Symbol 
         {
-            return $"{environment.Name.ToLower()}-{stackName}";
-        }
-
-        public bool HasLocalStack(string stackName)
-        {
-            return Directory.Exists(environment.GetStackPath(stackName));
+            var item = Activator.CreateInstance<TSymbol>();
+            return parseResult.GetValue<TValue>(item.Name);
         }
     }
 }

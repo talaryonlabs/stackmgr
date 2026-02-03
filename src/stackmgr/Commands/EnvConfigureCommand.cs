@@ -19,14 +19,7 @@ public class EnvConfigureCommand : StackManagerCommand
         Add(new ArgoCDRepositoryOption());
         SetAction(v =>
         {
-            var name = v.GetRequiredValue<string, EnvironmentArgument>().ToLower();
-            var env = Config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
-            
-            if (env is null)
-            {
-                Console.WriteLine($"Environment '{name}' does not exist.");
-                return;
-            }
+            var env = GetEnvironment<EnvironmentArgument>(v);
             
             var rke2AccessToken = v.GetValue<string, RKE2AccessTokenOption>();
             if (rke2AccessToken is not null)

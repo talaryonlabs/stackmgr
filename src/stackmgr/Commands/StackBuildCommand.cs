@@ -10,7 +10,7 @@ public class StackBuildCommand : StackManagerCommand
     {
         SetAction(v =>
         {
-            var env = v.GetRequiredValue<StackEnvironment, EnvironmentOption>();
+            /*var env = v.GetRequiredValue<StackEnvironment, EnvironmentOption>();
             var name = v.GetRequiredValue<string, StackArgument>();
 
             if (!env.HasLocalStack(name))
@@ -20,7 +20,7 @@ public class StackBuildCommand : StackManagerCommand
             }
             
             var path = env.GetStackPath(name);
-            var conf = StackConfig.Load(env, name);
+            var conf = Stack.Load(env, name);
             if (conf is null)
             {
                 Console.WriteLine($"Stack '{name}' does not have a configuration file");
@@ -38,7 +38,7 @@ public class StackBuildCommand : StackManagerCommand
                     .ToList()
             };
             
-            kustomization.Save(env, name);
+            kustomization.Save(env, name);*/
         });
     }
 }

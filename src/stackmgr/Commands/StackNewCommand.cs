@@ -1,4 +1,5 @@
 ﻿using stackmgr.Arguments;
+using stackmgr.Exceptions;
 using stackmgr.Options;
 
 namespace stackmgr.Commands;
@@ -9,30 +10,25 @@ public class StackNewCommand : StackManagerCommand
     {
         SetAction(v =>
         {
-            var name = v.GetRequiredValue<string, EnvironmentOption>().ToLower();
-            var env = Config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
-            var stack = v.GetRequiredValue<string, StackArgument>();
-            
-            if (env is null)
+            var env = GetEnvironment<EnvironmentOption>(v);
+            var name = GetStackName<StackArgument>(v);
+            var stack = Stack.New(env, name);
+
+            if (stack.LocalDirectory.Exists)
             {
-                Console.WriteLine($"Environment '{name}' does not exist.");
+                throw new StackAlreadyExistsException(stack);
+            }
+
+            HelperMethods.LogInfo($"Creating stack '{stack.Name}' in environment '{env.Name}'.");
+            if (stack.LocalDirectory.Exists)
+            {
+                HelperMethods.LogError("Failed.");
                 return;
             }
+            stack.LocalDirectory.Create();
+            stack.Save();
             
-            var path = env.GetStackPath(stack);
-            if(Directory.Exists(path))
-            {
-                Console.WriteLine($"Stack '{stack}' already exists in environment '{env.Name}'");
-                return;
-            }
-            
-            Console.Write($"Creating stack '{stack}' in environment '{env.Name}' .. ");
-            if (Directory.CreateDirectory(path) is { Exists: false })
-            {
-                Console.WriteLine("Failed.");
-                return;
-            }
-            Console.WriteLine("Done.");
+            HelperMethods.LogSuccess("Done.");
         });
     }
 }

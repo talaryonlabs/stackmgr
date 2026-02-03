@@ -1,5 +1,4 @@
-﻿using stackmgr.Options;
-using YamlDotNet.Serialization;
+﻿using YamlDotNet.Serialization;
 
 namespace stackmgr;
 
@@ -14,7 +13,7 @@ public class Kustomization
     
     public void Save(StackEnvironment env, string stack)
     {
-        var path = env.GetStackPath(stack);
+        var path = env.LocalDirectory.FullName;
         var file = Path.Combine(path, FileName);
         File.WriteAllText(file, new Serializer().Serialize(this));
     }
@@ -22,7 +21,7 @@ public class Kustomization
 
 public class KustomizationImage
 {
-    public static implicit operator KustomizationImage(StackConfigImage image) =>
+    public static implicit operator KustomizationImage(StackImage image) =>
         new()
         {
             Name = image.Name,

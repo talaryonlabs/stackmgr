@@ -1,5 +1,4 @@
-﻿using System.CommandLine;
-using stackmgr.Arguments;
+﻿using stackmgr.Arguments;
 
 namespace stackmgr.Commands;
 
@@ -10,23 +9,25 @@ public class EnvInitCommand : StackManagerCommand
         Add(new EnvironmentArgument());
         SetAction(v =>
         {
-            var env = v.GetRequiredValue<string, EnvironmentArgument>().ToLower();
-            var path = Path.Combine(Environment.CurrentDirectory, env);
-            var directory = new DirectoryInfo(path);
-            
-            if (!directory.Exists)
-                directory.Create();
-            
-            if (Config.Environments.Any(x => x.Name.Equals(env, StringComparison.CurrentCultureIgnoreCase)))
+            var name = GetEnvironmentName<EnvironmentArgument>(v);
+            var env = new StackEnvironment { Name = name };
+
+            if (!env.LocalDirectory.Exists)
             {
-                Console.WriteLine($"Environment '{env}' already exists.");
+                env.LocalDirectory.Create();
+                HelperMethods.LogSuccess($"Directory '{env.LocalDirectory.FullName}' created.");
+            }
+            
+            if (Config.Environments.Any(x => x.Name.Equals(env.Name, StringComparison.CurrentCultureIgnoreCase)))
+            {
+                HelperMethods.LogWarning($"Environment '{env.Name}' already exists.");
                 return;
             }
             
-            Console.WriteLine($"Initializing environment '{env}' ...");
-            Config.Environments.Add(new StackEnvironment { Name = env });
+            HelperMethods.LogInfo($"Initializing environment '{env.Name}' ...");
+            Config.Environments.Add(env);
             Config.Save();
-            Console.WriteLine("Success.");
+            HelperMethods.LogSuccess("Success.");
         });
     }
 }
