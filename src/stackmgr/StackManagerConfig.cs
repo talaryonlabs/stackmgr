@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace stackmgr;
 
-public class StackMgrConfig
+public class StackManagerConfig
 {
     public const string FileName = ".stackmgr";
     
@@ -11,7 +11,7 @@ public class StackMgrConfig
 
     public static bool Exists => new FileInfo(FilePath).Exists;
     
-    public static StackMgrConfig Load() => !Exists ? new() : JsonSerializer.Deserialize<StackMgrConfig>(File.ReadAllText(FilePath)) ?? new();
+    public static StackManagerConfig Load() => !Exists ? new() : JsonSerializer.Deserialize<StackManagerConfig>(File.ReadAllText(FilePath)) ?? new();
 
     [JsonPropertyName("environments")] public List<StackEnvironment> Environments { get; set; } = [];
 

@@ -1,8 +1,6 @@
-﻿using System.CommandLine;
+﻿namespace stackmgr.Commands;
 
-namespace stackmgr.Commands;
-
-public class EnvCommand : Command
+public class EnvCommand : StackManagerCommand
 {
     public EnvCommand() : base("env", "Manage environments")
     {

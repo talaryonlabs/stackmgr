@@ -7,16 +7,15 @@ using YamlDotNet.Serialization.ObjectGraphVisitors;
 
 namespace stackmgr.Commands;
 
-public class EnvTestCommand : Command
+public class EnvTestCommand : StackManagerCommand
 {
     public EnvTestCommand() : base("test", "Test an environment connection (RKE2, ArgoCD)")
     {
         Add(new EnvironmentArgument());
         SetAction(async v =>
         {
-            var config = StackMgrConfig.Load();
             var name = v.GetRequiredValue<string, EnvironmentArgument>().ToLower();
-            var env = config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+            var env = Config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
             
             if (env is null)
             {

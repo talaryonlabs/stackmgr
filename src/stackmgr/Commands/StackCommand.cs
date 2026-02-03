@@ -1,10 +1,9 @@
-﻿using System.CommandLine;
-using stackmgr.Arguments;
+﻿using stackmgr.Arguments;
 using stackmgr.Options;
 
 namespace stackmgr.Commands;
 
-public class StackCommand : Command
+public class StackCommand : StackManagerCommand
 {
     public StackCommand() : base("stack", "Manage stacks")
     {
@@ -17,5 +16,6 @@ public class StackCommand : Command
         Add(new StackDisableCommand {stackName});
         Add(new StackEnableCommand {stackName});
         Add(new StackBuildCommand {stackName});
+        Add(new StackSyncCommand {stackName});
     }
 }

@@ -1,19 +1,17 @@
-﻿using System.CommandLine;
-using stackmgr.Arguments;
+﻿using stackmgr.Arguments;
 using stackmgr.Options;
 using stackmgr.Services;
 
 namespace stackmgr.Commands;
 
-public class StackDeleteCommand : Command
+public class StackDeleteCommand : StackManagerCommand
 {
     public StackDeleteCommand() : base("delete", "Delete a stack")
     {
         SetAction(async v =>
         {
-            var config = StackMgrConfig.Load();
             var name = v.GetRequiredValue<string, EnvironmentOption>().ToLower();
-            var env = config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+            var env = Config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
             var stack = v.GetRequiredValue<string, StackArgument>();
 
             if (env is null)
@@ -25,7 +23,7 @@ public class StackDeleteCommand : Command
             var path = env.GetStackPath(stack);
             var ns = $"{env.Name.ToLower()}-{stack}";
             
-            if (!env.HasStack(stack))
+            if (!env.HasLocalStack(stack))
             {
                 Console.WriteLine($"Stack '{stack}' does not exist in environment '{env.Name}'");
                 return;

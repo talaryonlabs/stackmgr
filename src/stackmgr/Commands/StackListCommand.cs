@@ -1,19 +1,16 @@
-﻿using System.CommandLine;
-using stackmgr.Arguments;
-using stackmgr.Options;
+﻿using stackmgr.Options;
 using stackmgr.Services;
 
 namespace stackmgr.Commands;
 
-public class StackListCommand : Command
+public class StackListCommand : StackManagerCommand
 {
     public StackListCommand() : base("list", "List stacks")
     {
         SetAction(async v =>
         {
-            var config = StackMgrConfig.Load();
             var name = v.GetRequiredValue<string, EnvironmentOption>().ToLower();
-            var env = config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+            var env = Config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
             if (env is null)
             {
                 Console.WriteLine($"Environment '{name}' does not exist.");

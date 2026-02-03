@@ -4,7 +4,7 @@ using stackmgr.Options;
 
 namespace stackmgr.Commands;
 
-public class StackBuildCommand : Command
+public class StackBuildCommand : StackManagerCommand
 {
     public StackBuildCommand() : base("build", "Build a stack")
     {
@@ -13,7 +13,7 @@ public class StackBuildCommand : Command
             var env = v.GetRequiredValue<StackEnvironment, EnvironmentOption>();
             var name = v.GetRequiredValue<string, StackArgument>();
 
-            if (!env.HasStack(name))
+            if (!env.HasLocalStack(name))
             {
                 Console.WriteLine($"Stack '{name}' does not exist in environment '{env}'");
                 return;

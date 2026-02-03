@@ -1,19 +1,16 @@
-﻿using System.CommandLine;
-using stackmgr.Arguments;
+﻿using stackmgr.Arguments;
 using stackmgr.Options;
-using stackmgr.Services;
 
 namespace stackmgr.Commands;
 
-public class StackNewCommand : Command
+public class StackNewCommand : StackManagerCommand
 {
     public StackNewCommand() : base("new", "Create a new stack")
     {
-        SetAction(async v =>
+        SetAction(v =>
         {
-            var config = StackMgrConfig.Load();
             var name = v.GetRequiredValue<string, EnvironmentOption>().ToLower();
-            var env = config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+            var env = Config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
             var stack = v.GetRequiredValue<string, StackArgument>();
             
             if (env is null)
@@ -23,27 +20,19 @@ public class StackNewCommand : Command
             }
             
             var path = env.GetStackPath(stack);
-            var ns = $"{env.Name.ToLower()}-{stack}";
-            
-            Console.WriteLine($"Creating stack '{stack}' in environment '{env.Name}'");
-            if(!Directory.Exists(path))
+            if(Directory.Exists(path))
             {
-                Console.WriteLine($".. Creating directory '{path}'");
-                Directory.CreateDirectory(path);
+                Console.WriteLine($"Stack '{stack}' already exists in environment '{env.Name}'");
+                return;
             }
             
-            if (await RKE2.CreateNamespace(env, ns))
+            Console.Write($"Creating stack '{stack}' in environment '{env.Name}' .. ");
+            if (Directory.CreateDirectory(path) is { Exists: false })
             {
-                Console.WriteLine(".. Stack namespace created.");
+                Console.WriteLine("Failed.");
+                return;
             }
-
-            if (await ArgoCD.CreateApplication(env, stack))
-            {
-                Console.WriteLine(".. ArgoCD application created.");
-            }
-            // StackConfig.Generate(env, stack);
-            
-            
+            Console.WriteLine("Done.");
         });
     }
 }

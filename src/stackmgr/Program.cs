@@ -6,7 +6,8 @@ using stackmgr.Commands;
 var rootCommand = new RootCommand
 {
     new EnvCommand(),
-    new StackCommand()
+    new StackCommand(),
+    new AppCommand()
 };
 
 var parseResult = rootCommand.Parse("stack --env test list");

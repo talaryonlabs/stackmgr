@@ -1,5 +1,4 @@
-﻿using stackmgr.Options;
-using YamlDotNet.Serialization;
+﻿using YamlDotNet.Serialization;
 
 namespace stackmgr;
 
@@ -27,6 +26,7 @@ public class StackConfig
         return new Deserializer().Deserialize<StackConfig>(File.ReadAllText(file));
     }
     
+    [YamlMember(Alias = "autoSync")] public bool AutoSync { get; set; } = false;
     [YamlMember(Alias = "namespace")] public string? Namespace { get; set; }
     [YamlMember(Alias = "images")] public List<StackConfigImage>? Images { get; set; } = [];
     [YamlMember(Alias = "apps")] public List<StackConfigApp>? Apps { get; set; } = [];

@@ -5,7 +5,7 @@ using Talaryon.Toolbox.Extensions;
 
 namespace stackmgr.Commands;
 
-public class EnvConfigureCommand : Command
+public class EnvConfigureCommand : StackManagerCommand
 {
     public EnvConfigureCommand() : base("configure", "Configure environment variables")
     {
@@ -19,9 +19,8 @@ public class EnvConfigureCommand : Command
         Add(new ArgoCDRepositoryOption());
         SetAction(v =>
         {
-            var config = StackMgrConfig.Load();
             var name = v.GetRequiredValue<string, EnvironmentArgument>().ToLower();
-            var env = config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+            var env = Config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
             
             if (env is null)
             {
@@ -78,7 +77,7 @@ public class EnvConfigureCommand : Command
                 Console.WriteLine("ArgoCD repository updated.");
             }
             
-            config.Save();
+            Config.Save();
         });
     }
 }

@@ -62,6 +62,16 @@ public class RKE2
         }
     }
 
+    public static async Task<bool> NamespaceExists(StackEnvironment env, string name)
+    {
+        if (!CheckRequirements(env)) return false;
+        
+        using var client = NewClient(env);
+        var response = await client.GetAsync($"{env.RKE2.Url}/v3/cluster/local/namespaces/{name}");
+        
+        return response.IsSuccessStatusCode;
+    }
+
 
     public static async Task<bool> CreateNamespace(StackEnvironment env, string name)
     {
