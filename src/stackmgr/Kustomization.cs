@@ -11,10 +11,9 @@ public class Kustomization
     [YamlMember(Alias = "resources")] public List<string>? Resources { get; set;}
     [YamlMember(Alias = "namespace")] public string? Namespace { get; set; }
     
-    public void Save(StackEnvironment env, string stack)
+    public void Save(Stack stack)
     {
-        var path = env.LocalDirectory.FullName;
-        var file = Path.Combine(path, FileName);
+        var file = Path.Combine(stack.LocalDirectory.FullName, FileName);
         File.WriteAllText(file, new Serializer().Serialize(this));
     }
 }

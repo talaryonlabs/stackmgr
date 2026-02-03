@@ -6,7 +6,7 @@ namespace stackmgr;
 
 public class Stack : IStackManagerEntity
 {
-    private const string FileName = ".stack.yaml";
+    public const string FileName = ".stack.yaml";
     
     public static Stack Load(StackEnvironment env, string name)
     {
@@ -33,10 +33,26 @@ public class Stack : IStackManagerEntity
         return stack;
     }
     
-    public void Save()
+    public void SaveConfig()
     {
         var file = Path.Combine(LocalDirectory.FullName, FileName);
         File.WriteAllText(file, new Serializer().Serialize(this));
+    }
+
+    public void SaveKustomization()
+    {
+        var kustomization = new Kustomization
+        {
+            Namespace = Namespace,
+            Images = Images?.Select(i => (KustomizationImage)i).ToList(),
+            Resources = LocalDirectory
+                .GetFiles("*.yaml", SearchOption.AllDirectories)
+                .Where(f => !new List<string> { Kustomization.FileName, Stack.FileName }.Contains(f.Name))
+                .Select(f => f.FullName.Replace(LocalDirectory.FullName, "").Replace("\\", "/")[1..])
+                .ToList()
+        };
+            
+        kustomization.Save(this);
     }
     
     [YamlIgnore] public DirectoryInfo LocalDirectory => new (Path.Combine(Environment.LocalDirectory.FullName, Name));

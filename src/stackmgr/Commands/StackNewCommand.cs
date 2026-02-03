@@ -26,7 +26,8 @@ public class StackNewCommand : StackManagerCommand
                 return;
             }
             stack.LocalDirectory.Create();
-            stack.Save();
+            stack.SaveConfig();
+            stack.SaveKustomization();
             
             HelperMethods.LogSuccess("Done.");
         });
