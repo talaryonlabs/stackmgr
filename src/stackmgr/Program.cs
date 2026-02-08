@@ -3,9 +3,11 @@
 using System.CommandLine;
 using stackmgr;
 using stackmgr.Commands;
+using stackmgr.Options;
 
 var rootCommand = new RootCommand
 {
+    new EnvironmentOption { Required = false, Recursive = true },
     new EnvCommand(),
     new StackCommand(),
     new AppCommand()

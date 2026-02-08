@@ -13,6 +13,11 @@ public class AppCreateCommand : StackManagerCommand
         {
             var env = GetEnvironment<EnvironmentOption>(v);
             var stack = GetStack<StackArgument>(v, env);
+            var name = GetAppName<AppArgument>(v);
+            
+            
+            Console.WriteLine(name);
+
         });
     }
 }

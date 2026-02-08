@@ -30,4 +30,13 @@ public class StackManagerCommand(string name, string description) : Command(name
         var name = GetStackName<T>(parseResult);
         return Stack.Load(env, name);
     }
+    
+    protected string GetAppName<T>(ParseResult parseResult) where T : Symbol => parseResult.GetRequiredValue<string, T>().ToLower();
+    
+    protected StackApp GetApp<T>(ParseResult parseResult, Stack stack) 
+        where T : Symbol
+    {
+        var name = GetAppName<T>(parseResult);
+        throw null;
+    }
 }

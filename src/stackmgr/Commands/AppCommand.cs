@@ -10,7 +10,6 @@ public class AppCommand : StackManagerCommand
         var stackName = new StackArgument();
         var appName = new AppArgument();
 
-        Add(new EnvironmentOption { Required = true, Recursive = true });
         Add(new AppCreateCommand { stackName, appName });
         Add(new AppDeleteCommand { stackName, appName });
     }

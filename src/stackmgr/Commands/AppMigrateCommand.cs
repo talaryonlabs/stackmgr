@@ -1,11 +1,11 @@
-﻿using stackmgr.Arguments;
+using stackmgr.Arguments;
 using stackmgr.Options;
 
 namespace stackmgr.Commands;
 
-public class AppDeleteCommand : StackManagerCommand
+public class AppMigrateCommand : StackManagerCommand
 {
-    public AppDeleteCommand() : base("delete", "Delete an application")
+    public AppMigrateCommand() : base("migrate", "Migrate an application from templates")
     {
         SetAction(v =>
         {

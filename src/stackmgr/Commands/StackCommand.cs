@@ -9,7 +9,6 @@ public class StackCommand : StackManagerCommand
     {
         var stackName = new StackArgument();
         
-        Add(new EnvironmentOption { Required = true, Recursive = true });
         Add(new StackListCommand());
         Add(new StackNewCommand {stackName});
         Add(new StackDeleteCommand {stackName});
