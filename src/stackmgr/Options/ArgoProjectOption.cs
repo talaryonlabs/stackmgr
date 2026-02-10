@@ -2,9 +2,9 @@
 
 namespace stackmgr.Options;
 
-public class ArgoCDProjectOption : Option<string>
+public class ArgoProjectOption : Option<string>
 {
-    public ArgoCDProjectOption() : base("--argocd-project")
+    public ArgoProjectOption() : base("--argocd-project")
     {
         Description = "ArgoCD project name (e.g. default)";
     }

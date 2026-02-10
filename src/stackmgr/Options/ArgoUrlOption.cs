@@ -2,9 +2,9 @@
 
 namespace stackmgr.Options;
 
-public class ArgoCDUrlOption : Option<string>
+public class ArgoUrlOption : Option<string>
 {
-    public ArgoCDUrlOption() : base("--argocd-url")
+    public ArgoUrlOption() : base("--argocd-url")
     {
         Description = "ArgoCD API URL (e.g. https://argo-url)";
     }   

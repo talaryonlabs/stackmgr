@@ -4,7 +4,7 @@ using Talaryon.Toolbox.Extensions;
 
 namespace stackmgr.Services;
 
-public class RKE2
+public class Rancher
 {
     private static HttpClient NewClient(StackEnvironment env)
     {

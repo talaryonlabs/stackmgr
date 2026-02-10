@@ -2,9 +2,9 @@
 
 namespace stackmgr.Options;
 
-public class RKE2UrlOption : Option<string>
+public class RancherUrlOption : Option<string>
 {
-    public RKE2UrlOption() : base("--rke2-url")
+    public RancherUrlOption() : base("--rke2-url")
     {
         Description = "RKE2 API URL (e.g. https://rancher-url)";
     }

@@ -3,10 +3,12 @@ using stackmgr.Options;
 
 namespace stackmgr.Commands;
 
-public class StackBuildCommand : StackManagerCommand
+public class BuildCommand : StackManagerCommand
 {
-    public StackBuildCommand() : base("build", "Build a stack")
+    public BuildCommand() : base("build", "Build a stack")
     {
+        Add(new EnvironmentOption());
+        Add(new StackArgument());
         SetAction(v =>
         {
             var env = GetEnvironment<EnvironmentOption>(v);

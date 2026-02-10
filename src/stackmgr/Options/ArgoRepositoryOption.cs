@@ -2,9 +2,9 @@
 
 namespace stackmgr.Options;
 
-public class ArgoCDRepositoryOption : Option<string>
+public class ArgoRepositoryOption : Option<string>
 {
-    public ArgoCDRepositoryOption() : base("--argocd-repository")
+    public ArgoRepositoryOption() : base("--argocd-repository")
     {
         Description = "ArgoCD repository name (e.g. https://github.com/argoproj/argo-cd)";
     }  

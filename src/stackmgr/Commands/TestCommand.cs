@@ -3,9 +3,9 @@ using stackmgr.Services;
 
 namespace stackmgr.Commands;
 
-public class EnvTestCommand : StackManagerCommand
+public class TestCommand : StackManagerCommand
 {
-    public EnvTestCommand() : base("test", "Test an environment connection (RKE2, ArgoCD)")
+    public TestCommand() : base("test", "Test an environment connection (RKE2, ArgoCD)")
     {
         Add(new EnvironmentArgument());
         SetAction(async v =>
@@ -15,10 +15,10 @@ public class EnvTestCommand : StackManagerCommand
             Console.WriteLine($"Testing environment '{env.Name}' ...");
             
             Console.WriteLine(".. Testing RKE2 connection ...");
-            await RKE2.TestConnection(env);
+            await Rancher.TestConnection(env);
             
             Console.WriteLine(".. Testing ArgoCD connection ...");
-            await ArgoCD.TestConnection(env);
+            await Argo.TestConnection(env);
         });
     }
 }

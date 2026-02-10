@@ -27,6 +27,15 @@ public static class HelperMethods
     {
         Console.WriteLine(message);
     }
+
+    public static bool ConfirmWarning(string question)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write($"{question} [y/N]: ");
+        var answer = Console.ReadLine()?.ToLower() == "y";
+        Console.ResetColor();
+        return answer;
+    }
     
     public static void PrintTable(List<string[]> rows)
     {

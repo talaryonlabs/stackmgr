@@ -7,7 +7,7 @@ using Talaryon.Toolbox.Services.ArgoCD.Models;
 
 namespace stackmgr.Services;
 
-public class ArgoCD
+public class Argo
 {
     private static HttpClient NewClient(StackEnvironment env)
     {

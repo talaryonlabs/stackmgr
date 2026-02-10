@@ -5,16 +5,18 @@ namespace stackmgr;
 
 public class StackManagerConfig
 {
-    private const string FileName = ".stackmgr";
-    
-    private static readonly string FilePath = Path.Combine(Directory.GetCurrentDirectory(), FileName);
+    private static readonly string FilePath = Path.Combine(Environment.CurrentDirectory, ".stackmgr");
+    private static StackManagerConfig? _config;
 
-    public static bool Exists => new FileInfo(FilePath).Exists;
-    
-    public static StackManagerConfig Load() => !Exists ? new() : JsonSerializer.Deserialize<StackManagerConfig>(File.ReadAllText(FilePath)) ?? new();
-
-    [JsonPropertyName("environments")] public List<StackEnvironment> Environments { get; set; } = [];
-
+    public static StackManagerConfig Load()
+    {
+        if (File.Exists(FilePath) && _config is null)
+        {
+            var content = File.ReadAllText(FilePath);
+            _config = JsonSerializer.Deserialize<StackManagerConfig>(content);
+        }
+        return _config ?? new StackManagerConfig();
+    }
 
     public void Save()
     {
@@ -23,4 +25,6 @@ public class StackManagerConfig
             WriteIndented = true
         }));
     }
+    
+    [JsonPropertyName("environments")] public List<StackEnvironment> Environments { get; set; } = [];
 }

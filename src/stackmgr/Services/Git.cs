@@ -4,7 +4,7 @@ namespace stackmgr.Services;
 
 public static class Git
 {
-    private static DirectoryInfo Apps => new(Path.Combine(Environment.CurrentDirectory, ".apps"));
+    public static DirectoryInfo Apps => new(Path.Combine(Environment.CurrentDirectory, ".apps"));
     public static bool IsRepository => Directory.Exists(Path.Combine(Environment.CurrentDirectory, ".git"));
     public static bool IsInstalled
     {
@@ -12,9 +12,12 @@ public static class Git
         {
             try
             {
+                var psi = new ProcessStartInfo("git", "--version");
+                psi.RedirectStandardOutput = true;
+                
                 Process
-                    .Start("git", "--version")
-                    .WaitForExit();
+                    .Start(psi)
+                    ?.WaitForExit();
             }
             catch
             {

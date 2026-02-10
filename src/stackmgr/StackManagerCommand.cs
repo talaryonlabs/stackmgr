@@ -5,12 +5,7 @@ namespace stackmgr;
 
 public class StackManagerCommand(string name, string description) : Command(name, description)
 {
-    protected static readonly StackManagerConfig Config;
-    
-    static StackManagerCommand()
-    {
-        Config = StackManagerConfig.Load();
-    }
+    protected static StackManagerConfig Config => StackManagerConfig.Load();
 
     protected string GetEnvironmentName<T>(ParseResult parseResult) where T : Symbol => parseResult.GetRequiredValue<string, T>().ToLower();
 
@@ -37,6 +32,6 @@ public class StackManagerCommand(string name, string description) : Command(name
         where T : Symbol
     {
         var name = GetAppName<T>(parseResult);
-        throw null;
+        return stack.Apps.FirstOrDefault(v => v.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)) ?? throw new AppNotFoundException(name);
     }
 }
