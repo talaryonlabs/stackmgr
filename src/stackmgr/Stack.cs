@@ -6,7 +6,7 @@ namespace stackmgr;
 
 public class Stack : IStackManagerEntity
 {
-    private const string FileName = ".stack.yaml";
+    public const string FileName = ".stack.yaml";
     
     public static Stack Load(StackEnvironment env, string name)
     {

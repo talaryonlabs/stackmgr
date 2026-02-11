@@ -14,21 +14,21 @@ public class GetCommand : StackManagerCommand
         };
         environments.Aliases.Add("env");
         environments.SetAction(Get);
-        
+
         var stacks = new StackManagerCommand("stacks", "List stacks")
         {
             new EnvironmentOption()
         };
         stacks.Aliases.Add("s");
         stacks.SetAction(Get);
-        
+
         var apps = new StackManagerCommand("apps", "List applications")
         {
             new EnvironmentOption(),
             new StackArgument()
         };
         apps.SetAction(Get);
-        
+
         Add(environments);
         Add(stacks);
         Add(apps);
@@ -41,18 +41,18 @@ public class GetCommand : StackManagerCommand
             GetEnvironments(parseResult);
             return;
         }
-        
+
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         if (parseResult.CommandResult.Command.Name == "stacks")
         {
             await GetStacks(env);
             return;
         }
-        
+
         var stack = GetStack<StackArgument>(parseResult, env);
         if (parseResult.CommandResult.Command.Name == "apps")
         {
-            await GetApps(stack);
+            GetApps(stack);
         }
     }
 
@@ -69,13 +69,13 @@ public class GetCommand : StackManagerCommand
         {
             HelperMethods.LogSuccess($"- {env}");
         }
-        
+
         foreach (var env in environments.Where(x => !Config.Environments.Exists(e => e.LocalDirectory.Name == x)))
         {
             HelperMethods.LogWarning($"- {env} (not initialized)");
         }
     }
-    
+
     private async Task GetStacks(StackEnvironment env)
     {
         HelperMethods.LogInfo($"Stacks in environment '{env.Name}': ");
@@ -83,15 +83,15 @@ public class GetCommand : StackManagerCommand
         var directories = env.LocalDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
         using var rancher = new RancherService(env);
         using var argo = new ArgoService(env);
-        
+
         var namespaces = await rancher.GetNamespacesAsync();
         var apps = await argo.GetApplicationsAsync();
 
         var test = directories
+            .Where(v => File.Exists(Path.Combine(v.FullName, Stack.FileName)))
             .Select(v =>
             {
                 var stack = Stack.Load(env, v.Name);
-
                 var app = apps.FirstOrDefault(a => a.Metadata.Name == stack.Namespace);
                 var ns = namespaces.FirstOrDefault(n => n.Name == stack.Namespace);
 
@@ -107,11 +107,11 @@ public class GetCommand : StackManagerCommand
                 "Name", "Namespace", "Rancher synced?", "ArgoCD synced?"
             ])
             .ToList();
-        
+
         HelperMethods.PrintTable(test);
     }
-    
-    private async Task GetApps(Stack stack)
+
+    private void GetApps(Stack stack)
     {
         var apps = stack.LocalDirectory
             .GetDirectories("*", SearchOption.TopDirectoryOnly)
