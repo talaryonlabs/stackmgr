@@ -7,18 +7,19 @@ public class StackEnvironment : IStackManagerEntity
     [JsonIgnore] public DirectoryInfo LocalDirectory => new(Path.Combine(Environment.CurrentDirectory, Name));
     
     [JsonPropertyName("name")] public string Name { get; init; } = "";
-    [JsonPropertyName("rke2")] public StackEnvironmentRKE2 RKE2 { get; set; } = new();
-    [JsonPropertyName("argocd")] public StackEnvironmentArgoCD ArgoCD { get; set; } = new();
+    [JsonPropertyName("appRepository")] public string AppRepository { get; set; } = "";
+    [JsonPropertyName("rke2")] public StackEnvironmentRancher Rancher { get; set; } = new();
+    [JsonPropertyName("argocd")] public StackEnvironmentArgo Argo { get; set; } = new();
 }
 
-public class StackEnvironmentRKE2
+public class StackEnvironmentRancher
 {
     [JsonPropertyName("projectId")] public string ProjectId { get; set; } = "";
     [JsonPropertyName("url")] public string Url { get; set; } = "";
     [JsonPropertyName("access_token")] public string AccessToken { get; set; } = "";
 }
 
-public class StackEnvironmentArgoCD
+public class StackEnvironmentArgo
 {
     [JsonPropertyName("url")] public string Url { get; set; } = "";
     [JsonPropertyName("access_token")] public string AccessToken { get; set; } = "";

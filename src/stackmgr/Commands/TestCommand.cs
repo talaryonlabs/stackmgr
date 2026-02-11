@@ -11,14 +11,18 @@ public class TestCommand : StackManagerCommand
         SetAction(async parseResult =>
         {
             var env = GetEnvironment<EnvironmentArgument>(parseResult);
+            using var argo = new ArgoService(env);
+            using var rancher = new RancherService(env);
             
-            Console.WriteLine($"Testing environment '{env.Name}' ...");
+            HelperMethods.LogInfo($"Testing environment '{env.Name}' ...");
             
-            Console.WriteLine(".. Testing RKE2 connection ...");
-            await Rancher.TestConnection(env);
+            HelperMethods.LogInfo(".. Testing RKE2 connection ...");
+            await rancher.TestAsync();
+            HelperMethods.LogSuccess("Done.");
             
-            Console.WriteLine(".. Testing ArgoCD connection ...");
-            await Argo.TestConnection(env);
+            HelperMethods.LogInfo(".. Testing ArgoCD connection ...");
+            await argo.TestAsync();
+            HelperMethods.LogSuccess("Done.");
         });
     }
 }

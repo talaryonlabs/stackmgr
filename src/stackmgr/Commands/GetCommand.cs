@@ -38,60 +38,90 @@ public class GetCommand : StackManagerCommand
     {
         if (parseResult.CommandResult.Command.Name == "environments")
         {
-            await GetEnvironments(parseResult);
+            GetEnvironments(parseResult);
             return;
         }
         
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         if (parseResult.CommandResult.Command.Name == "stacks")
         {
-            await GetStacks(parseResult, env);
+            await GetStacks(env);
             return;
         }
         
         var stack = GetStack<StackArgument>(parseResult, env);
         if (parseResult.CommandResult.Command.Name == "apps")
         {
-            await GetApps(parseResult, stack);
+            await GetApps(stack);
         }
     }
 
-    private async Task GetEnvironments(ParseResult parseResult)
+    private void GetEnvironments(ParseResult parseResult)
     {
+        var environments = Directory
+            .GetDirectories(Environment.CurrentDirectory, "*", SearchOption.TopDirectoryOnly)
+            .Select(Path.GetFileName)
+            .Where(x => x != ".apps" && x != ".git")
+            .ToList();
+
+        HelperMethods.LogInfo("Environments: ");
+        foreach (var env in environments.Where(x => Config.Environments.Exists(e => e.LocalDirectory.Name == x)))
+        {
+            HelperMethods.LogSuccess($"- {env}");
+        }
         
+        foreach (var env in environments.Where(x => !Config.Environments.Exists(e => e.LocalDirectory.Name == x)))
+        {
+            HelperMethods.LogWarning($"- {env} (not initialized)");
+        }
     }
     
-    private async Task GetStacks(ParseResult parseResult, StackEnvironment env)
+    private async Task GetStacks(StackEnvironment env)
     {
-        Console.WriteLine($"Listing stacks for {env.Name}");
+        HelperMethods.LogInfo($"Stacks in environment '{env.Name}': ");
 
-        var apps = await Argo.ListApplicationsAsync(env);
+        var directories = env.LocalDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
+        using var rancher = new RancherService(env);
+        using var argo = new ArgoService(env);
+        
+        var namespaces = await rancher.GetNamespacesAsync();
+        var apps = await argo.GetApplicationsAsync();
 
-        var test = apps.Select(app =>
-        {
-            return new []
+        var test = directories
+            .Select(v =>
             {
-                app.Metadata.Name,
-                app.Spec.Project,
-                app.Spec.Source.Path
-            };
-        }).ToList();
-            
-        test.Insert(0, new [] {"Name", "Project", "Path"});
-            
-        HelperMethods.PrintTable(test);
+                var stack = Stack.Load(env, v.Name);
 
-        return;
-            
-        var path = Path.Combine(Environment.CurrentDirectory, env.Name.ToLower());
-        foreach (var stack in Directory.GetDirectories(path))
-        {
-            Console.WriteLine(Path.GetFileName(stack));
-        }
+                var app = apps.FirstOrDefault(a => a.Metadata.Name == stack.Namespace);
+                var ns = namespaces.FirstOrDefault(n => n.Name == stack.Namespace);
+
+                return new[]
+                {
+                    stack.Name,
+                    stack.Namespace,
+                    (ns is not null ? "yes" : "no"),
+                    (app is not null ? "yes" : "no")
+                };
+            })
+            .Prepend([
+                "Name", "Namespace", "Rancher synced?", "ArgoCD synced?"
+            ])
+            .ToList();
+        
+        HelperMethods.PrintTable(test);
     }
     
-    private async Task GetApps(ParseResult parseResult, Stack stack)
+    private async Task GetApps(Stack stack)
     {
-        
+        var apps = stack.LocalDirectory
+            .GetDirectories("*", SearchOption.TopDirectoryOnly)
+            .Select(x => x.Name)
+            .ToList();
+
+        HelperMethods.LogInfo($"Apps in stack '{stack.Name}': ");
+        foreach (var app in apps)
+        {
+            HelperMethods.LogSuccess($"- {app}");
+        }
     }
 }

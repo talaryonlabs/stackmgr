@@ -115,12 +115,13 @@ public class NewCommand : StackManagerCommand
         }
 
         HelperMethods.LogInfo($"Creating stack '{stack.Name}' in environment '{env.Name}'.");
+        stack.LocalDirectory.Create();
+        
         if (!stack.LocalDirectory.Exists)
         {
             HelperMethods.LogError("Failed.");
             return;
         }
-        stack.LocalDirectory.Create();
         stack.SaveConfig();
         stack.SaveKustomization();
             

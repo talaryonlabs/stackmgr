@@ -19,59 +19,66 @@ public class SyncCommand : StackManagerCommand
     {
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackArgument>(parseResult, env);
+        var argo = new ArgoService(env);
+        var rancher = new RancherService(env);
 
-        var ns = await GetOrCreateNamespaceAsync(stack);
-        var application = await GetOrCreateApplicationAsync(stack);
+        var ns = await GetOrCreateNamespaceAsync(stack, rancher);
+        var application = await GetOrCreateApplicationAsync(stack, argo);
             
         if (ns is not null && application is not null)
         {
             stack.Application = application;
-            await SetAutoSyncSettingAsync(stack);
+            await SetAutoSyncSettingAsync(stack, argo);
         }
+        argo.Dispose();
+        rancher.Dispose();
     }
     
-    private async Task<string?> GetOrCreateNamespaceAsync(Stack stack)
+    private async Task<string?> GetOrCreateNamespaceAsync(Stack stack, RancherService rancher)
     {
-        if (!await Rancher.NamespaceExists(stack.Environment, stack.Namespace))
+        var ns = await rancher.GetNamespaceAsync(stack);
+        if (ns is null)
         {
-            Console.Write($".. Creating RKE2 namespace '{stack.Namespace}' .. ");
-            await Rancher.CreateNamespace(stack.Environment, stack.Namespace);
-            Console.WriteLine("Done.");
+            HelperMethods.LogInfo($".. Creating RKE2 namespace '{stack.Namespace}' .. ");
+            await rancher.CreateNamespaceAsync(stack);
+            HelperMethods.LogSuccess("Done.");
         }
         else
         {
-            Console.WriteLine(".. RKE2 namespace already exists. (Nothing to do)");
+            HelperMethods.LogInfo(".. RKE2 namespace already exists. (Nothing to do)");
         }
         return stack.Namespace;
     }
 
-    private async Task<V1alpha1Application?> GetOrCreateApplicationAsync(Stack stack)
+    private async Task<V1alpha1Application?> GetOrCreateApplicationAsync(Stack stack, ArgoService argo)
     {
-        var application = await Argo.GetApplication(stack.Environment, stack.Namespace);
-        if (application is not null)
+        var application = await argo.GetApplicationAsync(stack);
+        if (application is null)
         {
-            Console.Write(".. Creating ArgoCD application .. ");
-            if (await Argo.CreateApplication(stack.Environment, stack.Namespace))
+            HelperMethods.LogInfo(".. Creating ArgoCD application .. ");
+            if (await argo.CreateApplicationAsync(stack) is not null)
             {
-                Console.WriteLine("Done.");
+                HelperMethods.LogSuccess("Done.");
             }
         }
         else
         {
-            Console.WriteLine(".. ArgoCD application already exists. (Nothing to do)");
+            HelperMethods.LogInfo(".. ArgoCD application already exists. (Nothing to do)");
         }
         return application;
     }
 
-    private async Task SetAutoSyncSettingAsync(Stack stack)
+    private async Task SetAutoSyncSettingAsync(Stack stack, ArgoService argo)
     {
-        if (stack.Application?.Spec.SyncPolicy is not null)
+        HelperMethods.LogInfo(".. Setting auto-sync setting .. ");
+        if (stack.Application?.Spec.SyncPolicy is null && stack.EnableAutoSync)
         {
-            await Argo.EnableAutoSync(stack.Environment, stack.Namespace);
+            await argo.SetAutoSyncAsync(stack, true);
         }
-        else
+        else if (!stack.EnableAutoSync)
         {
-            await Argo.DisableAutoSync(stack.Environment, stack.Namespace);
+            await argo.SetAutoSyncAsync(stack, false);
         }
+        HelperMethods.LogSuccess("Done.");
     }
 }

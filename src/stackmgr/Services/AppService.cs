@@ -50,13 +50,12 @@ public partial class AppService(Stack stack, StackApp app)
     private async Task<FileSystemInfo[]> GetFiles()
     {
         var infos = app.Template.Split(":");
+        var git = new GitService(stack.Environment);
+        var apps = await git.GetAppsAsync(infos[0]);
         
-        await Git.GetApps();
-        await Git.CheckoutApps(infos[0]);
-
         HelperMethods.LogInfo("");
         
-        var template = Git.Apps.GetDirectories().FirstOrDefault(x => x.Name.Equals(infos[1], StringComparison.CurrentCultureIgnoreCase));
+        var template = apps.FirstOrDefault(x => x.Name.Equals(infos[1], StringComparison.CurrentCultureIgnoreCase));
         return template is null ? throw new TemplateNotFoundException(infos[1]) : template.GetFileSystemInfos("*", SearchOption.AllDirectories);
     }
 

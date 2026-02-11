@@ -56,7 +56,7 @@ public class DeleteCommand : StackManagerCommand
         var stack = GetStack<StackArgument>(parseResult, env);
         if (parseResult.CommandResult.Command.Name == "app")
         {
-            await DeleteApp(parseResult, stack);
+            DeleteApp(parseResult, stack);
         }
     }
 
@@ -82,6 +82,8 @@ public class DeleteCommand : StackManagerCommand
     private async Task DeleteStack(ParseResult parseResult, StackEnvironment env)
     {
         var stack = GetStack<StackArgument>(parseResult, env);
+        using var argo = new ArgoService(env);
+        using var rancher = new RancherService(env);
         
         HelperMethods.LogWarning("ATTENTION: This will also delete all applications in the stack.");
         if (!HelperMethods.ConfirmWarning($"Are you sure you want to delete stack '{stack.Name}' in environment '{env.Name}'?"))
@@ -91,14 +93,19 @@ public class DeleteCommand : StackManagerCommand
         }
         HelperMethods.LogWarning($"Deleting stack '{stack.Name}' in environment '{env.Name}':");
 
-        await Argo.DeleteApplication(env, stack.Name);
-        await Rancher.DeleteNamespace(env, stack.Namespace);
-            
+        HelperMethods.LogInfo(".. Deleting ArgoCD application ...");
+        await argo.DeleteApplicationAsync(stack);
+        
+        HelperMethods.LogInfo(".. Deleting Rancher namespace ...");
+        await rancher.DeleteNamespaceAsync(stack);
+        
+        HelperMethods.LogInfo(".. Deleting local directory ...");
         stack.LocalDirectory.Delete(true);
+        
         HelperMethods.LogSuccess("Done.");
     }
 
-    private async Task DeleteApp(ParseResult parseResult, Stack stack)
+    private void DeleteApp(ParseResult parseResult, Stack stack)
     {
         var app = GetApp<AppArgument>(parseResult, stack);
 

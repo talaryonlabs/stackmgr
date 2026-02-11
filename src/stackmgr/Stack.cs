@@ -57,12 +57,12 @@ public class Stack : IStackManagerEntity
     }
     
     [YamlIgnore] public DirectoryInfo LocalDirectory => new (Path.Combine(Environment.LocalDirectory.FullName, Name));
-    [YamlIgnore] public StackEnvironment Environment { get; set; }
+    [YamlIgnore] public StackEnvironment Environment { get; set; } = new();
     [YamlIgnore] public V1alpha1Application? Application { get; set; }
     
-    [YamlMember(Alias = "name")] public string Name { get; set; }
-    [YamlMember(Alias = "namespace")] public string Namespace { get; set; }
-    [YamlMember(Alias = "vault")] public string Vault { get; set; }
+    [YamlMember(Alias = "name")] public required string Name { get; set; }
+    [YamlMember(Alias = "namespace")] public required string Namespace { get; set; }
+    [YamlMember(Alias = "vault")] public required string Vault { get; set; }
     [YamlMember(Alias = "enableAutoSync")] public bool EnableAutoSync { get; set; }
     [YamlMember(Alias = "images")] public List<StackImage> Images { get; set; } = [];
     [YamlMember(Alias = "apps")] public List<StackApp> Apps { get; set; } = [];
@@ -70,21 +70,21 @@ public class Stack : IStackManagerEntity
 
 public class StackImage
 {
-    [YamlMember(Alias = "name")] public string Name { get; set; }
-    [YamlMember(Alias = "image")] public string Image { get; set; }
+    [YamlMember(Alias = "name")] public required string Name { get; init; }
+    [YamlMember(Alias = "image")] public required string Image { get; set; }
 }
 
 public class StackApp
 {
     [YamlMember(Alias = "name")] public required string Name { get; init; }
-    [YamlMember(Alias = "volume")] public string Volume { get; set; } = "";
-    [YamlMember(Alias = "template")] public string Template { get; set; } = "";
-    [YamlMember(Alias = "host")] public string Host { get; set; } = "";
-    [YamlMember(Alias = "config")] public List<StackAppConfig> Config { get; set; } = [];
+    [YamlMember(Alias = "volume")] public string Volume { get; init; } = "";
+    [YamlMember(Alias = "template")] public string Template { get; init; } = "";
+    [YamlMember(Alias = "host")] public string Host { get; init; } = "";
+    [YamlMember(Alias = "config")] public List<StackAppConfig> Config { get; init; } = [];
 }
 
 public class StackAppConfig
 {
-    [YamlMember(Alias = "name")] public string Name { get; set; }
-    [YamlMember(Alias = "value")] public string Value { get; set; }
+    [YamlMember(Alias = "name")] public required string Name { get; set; }
+    [YamlMember(Alias = "value")] public required string Value { get; set; }
 }

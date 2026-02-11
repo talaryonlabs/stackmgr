@@ -8,6 +8,13 @@
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>stackmgr</ToolCommandName>
         <PackageOutputPath>./bin/nupkg</PackageOutputPath>
+        <Title>Stack Deployment Manager</Title>
+        <Authors>Talaryon Labs</Authors>
+        <PackageProjectUrl>https://github.com/talaryonlabs/stackmgr</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/talaryonlabs/stackmgr</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <Description>Management CLI for Deployment Stack</Description>
+        <PackageLicenseUrl>https://github.com/talaryonlabs/stackmgr/blob/main/LICENSE</PackageLicenseUrl>
     </PropertyGroup>
 
     <ItemGroup>
