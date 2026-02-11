@@ -38,37 +38,52 @@ public class NewCommand : StackManagerCommand
             new WithoutIngressOption()
         };
         app.SetAction(New);
+
+        var image = new StackManagerCommand("image", "Add a new image")
+        {
+            new EnvironmentOption(),
+            new StackArgument(),
+            new ImageArgument(),
+            new NameOption()
+        };
+        image.SetAction(New);
         
         Add(env);
         Add(stack);
         Add(app);
+        Add(image);
     }
 
-    private async Task New(ParseResult v)
+    private async Task New(ParseResult parseResult)
     {
-        if (v.CommandResult.Command.Name == "environment")
+        if (parseResult.CommandResult.Command.Name == "environment")
         {
-            NewEnvironment(v);
+            NewEnvironment(parseResult);
             return;
         }
         
-        var env = GetEnvironment<EnvironmentOption>(v);
-        if (v.CommandResult.Command.Name == "stack")
+        var env = GetEnvironment<EnvironmentOption>(parseResult);
+        if (parseResult.CommandResult.Command.Name == "stack")
         {
-            NewStack(v, env);
+            NewStack(parseResult, env);
             return;
         }
         
-        var stack = GetStack<StackArgument>(v, env);
-        if (v.CommandResult.Command.Name == "app")
+        var stack = GetStack<StackArgument>(parseResult, env);
+        if (parseResult.CommandResult.Command.Name == "app")
         {
-            await NewApp(v, stack);
+            await NewApp(parseResult, stack);
+        }
+
+        if (parseResult.CommandResult.Command.Name == "image")
+        {
+            await NewImage(parseResult, stack);
         }
     }
 
-    private void NewEnvironment(ParseResult v)
+    private void NewEnvironment(ParseResult parseResult)
     {
-        var name = GetEnvironmentName<EnvironmentArgument>(v);
+        var name = GetEnvironmentName<EnvironmentArgument>(parseResult);
         var env = new StackEnvironment { Name = name };
 
         if (!env.LocalDirectory.Exists)
@@ -89,9 +104,9 @@ public class NewCommand : StackManagerCommand
         HelperMethods.LogSuccess("Success.");
     }
     
-    private void NewStack(ParseResult v, StackEnvironment env)
+    private void NewStack(ParseResult parseResult, StackEnvironment env)
     {
-        var name = GetStackName<StackArgument>(v);
+        var name = GetStackName<StackArgument>(parseResult);
         var stack = Stack.New(env, name);
 
         if (stack.LocalDirectory.Exists)
@@ -112,12 +127,12 @@ public class NewCommand : StackManagerCommand
         HelperMethods.LogSuccess("Done.");
     }
 
-    private async Task NewApp(ParseResult v, Stack stack)
+    private async Task NewApp(ParseResult parseResult, Stack stack)
     {
-        var name = GetAppName<AppArgument>(v);
+        var name = GetAppName<AppArgument>(parseResult);
         try
         {
-            var a = GetApp<AppArgument>(v, stack);
+            var a = GetApp<AppArgument>(parseResult, stack);
             throw new AppAlreadyExistsException(stack, a);
         }
         catch (AppNotFoundException) { }
@@ -127,15 +142,15 @@ public class NewCommand : StackManagerCommand
             
         if(!dir.Exists) dir.Create();
 
-        var template = v.GetValue<string, TemplateOption>();
-        var branch = v.GetValue<bool, DevOption>() ? "dev" : "prod";
+        var template = parseResult.GetValue<string, TemplateOption>();
+        var branch = parseResult.GetValue<bool, DevOption>() ? "dev" : "prod";
         var app = new StackApp()
         {
             Name = name,
-            Volume = v.GetValue<string, VolumeOption>() ?? "",
-            Host = v.GetValue<string, HostOption>() ?? "",
+            Volume = parseResult.GetValue<string, VolumeOption>() ?? "",
+            Host = parseResult.GetValue<string, HostOption>() ?? "",
             Template = template is not null ? $"{branch}:{template}" : "",
-            Config = (v.GetValue<string[], ConfigOption>() ?? []).Select(x =>
+            Config = (parseResult.GetValue<string[], ConfigOption>() ?? []).Select(x =>
             {
                 var config = x.Split("=");
                 return new StackAppConfig
@@ -150,7 +165,7 @@ public class NewCommand : StackManagerCommand
         {
             var options = new AppServiceOptions
             {
-                WithoutIngress = v.GetValue<bool, WithoutIngressOption>()
+                WithoutIngress = parseResult.GetValue<bool, WithoutIngressOption>()
             };
             var appService = new AppService(stack, app);
             await appService.Install(options);
@@ -163,5 +178,30 @@ public class NewCommand : StackManagerCommand
         stack.SaveKustomization();
         
         HelperMethods.LogSuccess("App created.");
+    }
+    
+    private async Task NewImage(ParseResult parseResult, Stack stack)
+    {
+        var name = parseResult.GetValue<string, NameOption>();
+        var image = parseResult.GetRequiredValue<string, ImageArgument>();
+
+        if (string.IsNullOrEmpty(name))
+        {
+            var parts = image.Split("/");
+            name = parts[^1].Contains(':') ? parts[^1].Split(":")[0] : parts[^1];
+        }
+
+        if (stack.Images.Any(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)))
+        {
+            throw new Exception($"Image with name '{name}' already exists in stack '{stack.Name}' (use 'stackmgr migrate image' instead)");
+        }
+        
+        stack.Images.Add(new()
+        {
+            Name = name,
+            Image = image
+        });
+        stack.SaveConfig();
+        stack.SaveKustomization();
     }
 }

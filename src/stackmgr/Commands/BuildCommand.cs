@@ -9,10 +9,10 @@ public class BuildCommand : StackManagerCommand
     {
         Add(new EnvironmentOption());
         Add(new StackArgument());
-        SetAction(v =>
+        SetAction(parseResult =>
         {
-            var env = GetEnvironment<EnvironmentOption>(v);
-            var stack = GetStack<StackArgument>(v, env);
+            var env = GetEnvironment<EnvironmentOption>(parseResult);
+            var stack = GetStack<StackArgument>(parseResult, env);
             
             HelperMethods.LogInfo($"Building stack '{stack.Name}' in environment '{env.Name}'");
             stack.SaveKustomization();

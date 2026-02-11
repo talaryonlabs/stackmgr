@@ -34,34 +34,34 @@ public class GetCommand : StackManagerCommand
         Add(apps);
     }
 
-    private async Task Get(ParseResult v)
+    private async Task Get(ParseResult parseResult)
     {
-        if (v.CommandResult.Command.Name == "environments")
+        if (parseResult.CommandResult.Command.Name == "environments")
         {
-            await GetEnvironments(v);
+            await GetEnvironments(parseResult);
             return;
         }
         
-        var env = GetEnvironment<EnvironmentOption>(v);
-        if (v.CommandResult.Command.Name == "stacks")
+        var env = GetEnvironment<EnvironmentOption>(parseResult);
+        if (parseResult.CommandResult.Command.Name == "stacks")
         {
-            await GetStacks(v, env);
+            await GetStacks(parseResult, env);
             return;
         }
         
-        var stack = GetStack<StackArgument>(v, env);
-        if (v.CommandResult.Command.Name == "apps")
+        var stack = GetStack<StackArgument>(parseResult, env);
+        if (parseResult.CommandResult.Command.Name == "apps")
         {
-            await GetApps(v, stack);
+            await GetApps(parseResult, stack);
         }
     }
 
-    private async Task GetEnvironments(ParseResult v)
+    private async Task GetEnvironments(ParseResult parseResult)
     {
         
     }
     
-    private async Task GetStacks(ParseResult v, StackEnvironment env)
+    private async Task GetStacks(ParseResult parseResult, StackEnvironment env)
     {
         Console.WriteLine($"Listing stacks for {env.Name}");
 
@@ -90,7 +90,7 @@ public class GetCommand : StackManagerCommand
         }
     }
     
-    private async Task GetApps(ParseResult v, Stack stack)
+    private async Task GetApps(ParseResult parseResult, Stack stack)
     {
         
     }

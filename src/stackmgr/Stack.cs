@@ -28,7 +28,7 @@ public class Stack : IStackManagerEntity
             Environment = env,
             Namespace = $"{env.Name.ToLower()}-{name.ToLower()}",
             Vault = "",
-            Images = [new() { Name = "nginx", Image = "docker.io/library/nginx", Tag = "latest" }],
+            Images = [new() { Name = "nginx", Image = "docker.io/library/nginx:latest" }],
             Apps = [new() { Name = "web", Template = "", Config = [] }]
         };
         return stack;
@@ -70,9 +70,8 @@ public class Stack : IStackManagerEntity
 
 public class StackImage
 {
-    [YamlMember(Alias = "name")] public string? Name { get; set; }
-    [YamlMember(Alias = "tag")] public string? Tag { get; set; }
-    [YamlMember(Alias = "image")] public string? Image { get; set; }
+    [YamlMember(Alias = "name")] public string Name { get; set; }
+    [YamlMember(Alias = "image")] public string Image { get; set; }
 }
 
 public class StackApp

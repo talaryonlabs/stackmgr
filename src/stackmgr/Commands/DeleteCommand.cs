@@ -37,32 +37,32 @@ public class DeleteCommand : StackManagerCommand
         Add(app);
     }
     
-    private async Task Delete(ParseResult v)
+    private async Task Delete(ParseResult parseResult)
     {
         
-        if (v.CommandResult.Command.Name == "environment")
+        if (parseResult.CommandResult.Command.Name == "environment")
         {
-            DeleteEnvironment(v);
+            DeleteEnvironment(parseResult);
             return;
         }
         
-        var env = GetEnvironment<EnvironmentOption>(v);
-        if (v.CommandResult.Command.Name == "stack")
+        var env = GetEnvironment<EnvironmentOption>(parseResult);
+        if (parseResult.CommandResult.Command.Name == "stack")
         {
-            await DeleteStack(v, env);
+            await DeleteStack(parseResult, env);
             return;
         }
         
-        var stack = GetStack<StackArgument>(v, env);
-        if (v.CommandResult.Command.Name == "app")
+        var stack = GetStack<StackArgument>(parseResult, env);
+        if (parseResult.CommandResult.Command.Name == "app")
         {
-            await DeleteApp(v, stack);
+            await DeleteApp(parseResult, stack);
         }
     }
 
-    private void DeleteEnvironment(ParseResult v)
+    private void DeleteEnvironment(ParseResult parseResult)
     {
-        var env = GetEnvironment<EnvironmentArgument>(v);
+        var env = GetEnvironment<EnvironmentArgument>(parseResult);
         HelperMethods.LogWarning("ATTENTION: This only deletes the environment from the stackmgr config.");
         HelperMethods.LogWarning("It does not delete the environment from Rancher/ArgoCD nor the local directory.");
         HelperMethods.LogWarning("");
@@ -79,9 +79,9 @@ public class DeleteCommand : StackManagerCommand
         HelperMethods.LogSuccess("Success.");
     }
     
-    private async Task DeleteStack(ParseResult v, StackEnvironment env)
+    private async Task DeleteStack(ParseResult parseResult, StackEnvironment env)
     {
-        var stack = GetStack<StackArgument>(v, env);
+        var stack = GetStack<StackArgument>(parseResult, env);
         
         HelperMethods.LogWarning("ATTENTION: This will also delete all applications in the stack.");
         if (!HelperMethods.ConfirmWarning($"Are you sure you want to delete stack '{stack.Name}' in environment '{env.Name}'?"))
@@ -98,9 +98,9 @@ public class DeleteCommand : StackManagerCommand
         HelperMethods.LogSuccess("Done.");
     }
 
-    private async Task DeleteApp(ParseResult v, Stack stack)
+    private async Task DeleteApp(ParseResult parseResult, Stack stack)
     {
-        var app = GetApp<AppArgument>(v, stack);
+        var app = GetApp<AppArgument>(parseResult, stack);
 
         if (!HelperMethods.ConfirmWarning($"Are you sure you want to delete app '{app.Name}' in stack '{stack.Name}'? ({stack.Environment.Name})"))
         {

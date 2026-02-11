@@ -24,8 +24,8 @@ public class KustomizationImage
         new()
         {
             Name = image.Name,
-            NewName = image.Image,
-            NewTag = image.Tag
+            NewName = image.Image.Contains(':') ? image.Image.Split(":")[0] : image.Image,
+            NewTag = image.Image.Contains(':') ? image.Image.Split(":")[1] : "latest"
         };
 
     [YamlMember(Alias = "name")] public string? Name { get; set; }

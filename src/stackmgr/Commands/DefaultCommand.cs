@@ -20,9 +20,9 @@ public class DefaultCommand : StackManagerCommand
         Add(env);
     }
 
-    private void SetEnvironment(ParseResult v)
+    private void SetEnvironment(ParseResult parseResult)
     {
-        var env = v.GetValue<string>("environment");
+        var env = parseResult.GetValue<string>("environment");
         Environment.SetEnvironmentVariable("STACKMGR_ENV", env, EnvironmentVariableTarget.User);
         HelperMethods.LogSuccess($"Environment set to '{env}'.");
         HelperMethods.LogInfo("Use --environment,--env to override this value per command.");

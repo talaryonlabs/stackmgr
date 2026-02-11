@@ -15,10 +15,10 @@ public class SyncCommand : StackManagerCommand
         SetAction(SyncStack);
     }
     
-    private async Task SyncStack(ParseResult v)
+    private async Task SyncStack(ParseResult parseResult)
     {
-        var env = GetEnvironment<EnvironmentOption>(v);
-        var stack = GetStack<StackArgument>(v, env);
+        var env = GetEnvironment<EnvironmentOption>(parseResult);
+        var stack = GetStack<StackArgument>(parseResult, env);
 
         var ns = await GetOrCreateNamespaceAsync(stack);
         var application = await GetOrCreateApplicationAsync(stack);
