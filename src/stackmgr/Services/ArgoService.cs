@@ -118,7 +118,7 @@ public class ArgoService : IDisposable
                     },
                     { "source", new Dictionary<string, object>()
                         {
-                            { "repoURL", "https://github.com/talaryonlabs/stack.git" },
+                            { "repoURL", _argocd.Repository },
                             { "path", $"{stack.Environment.Name}/{stack.Name}" },
                             { "targetRevision", "HEAD" }
                         }
