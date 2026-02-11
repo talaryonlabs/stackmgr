@@ -31,10 +31,20 @@ public class DeleteCommand : StackManagerCommand
             new AppArgument()
         };
         app.SetAction(Delete);
+
+        var image = new StackManagerCommand("image", "Delete an image")
+        {
+            new EnvironmentOption(),
+            new StackArgument(),
+            new ImageArgument()
+        };
+        image.Aliases.Add("i");
+        image.SetAction(Delete);
         
         Add(env);
         Add(stack);
         Add(app);
+        Add(image);
     }
     
     private async Task Delete(ParseResult parseResult)
@@ -57,6 +67,12 @@ public class DeleteCommand : StackManagerCommand
         if (parseResult.CommandResult.Command.Name == "app")
         {
             DeleteApp(parseResult, stack);
+            return;
+        }
+
+        if (parseResult.CommandResult.Command.Name == "image")
+        {
+            DeleteImage(parseResult, stack);
         }
     }
 
@@ -122,5 +138,22 @@ public class DeleteCommand : StackManagerCommand
         var path = Path.Combine(stack.LocalDirectory.FullName, app.Name);
         Directory.Delete(path, true);
         HelperMethods.LogSuccess($"App '{app.Name}' deleted.");
+    }
+    
+    private void DeleteImage(ParseResult parseResult, Stack stack)
+    {
+        var image = parseResult.GetRequiredValue<string, ImageArgument>();
+        
+        var local = stack.Images.FirstOrDefault(x => x.Name.Equals(image, StringComparison.CurrentCultureIgnoreCase));
+        if (local is null)
+        {
+            HelperMethods.LogWarning($"Image '{image}' not found in stack '{stack.Name}' (environment '{stack.Environment.Name}').");
+            return;
+        }
+
+        stack.Images.Remove(local);
+        stack.SaveConfig();
+        stack.SaveKustomization();
+        HelperMethods.LogSuccess($"Image '{image}' deleted.");
     }
 }

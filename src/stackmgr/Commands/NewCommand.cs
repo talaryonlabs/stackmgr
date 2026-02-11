@@ -77,7 +77,7 @@ public class NewCommand : StackManagerCommand
 
         if (parseResult.CommandResult.Command.Name == "image")
         {
-            await NewImage(parseResult, stack);
+            NewImage(parseResult, stack);
         }
     }
 
@@ -181,7 +181,7 @@ public class NewCommand : StackManagerCommand
         HelperMethods.LogSuccess("App created.");
     }
     
-    private async Task NewImage(ParseResult parseResult, Stack stack)
+    private void NewImage(ParseResult parseResult, Stack stack)
     {
         var name = parseResult.GetValue<string, NameOption>();
         var image = parseResult.GetRequiredValue<string, ImageArgument>();
@@ -204,5 +204,7 @@ public class NewCommand : StackManagerCommand
         });
         stack.SaveConfig();
         stack.SaveKustomization();
+        
+        HelperMethods.LogSuccess($"Image '{image}' with name '{name}' added.");
     }
 }

@@ -29,7 +29,8 @@ public class ConfigureCommand : StackManagerCommand
             new EnvironmentOption { Required = true },
             new StackArgument(),
             new AutoSyncOption(),
-            new VaultOption()
+            new VaultOption(),
+            new RegistryCredentialsOption()
         };
         stack.Aliases.Add("s");
         stack.SetAction(ConfigureStack);
@@ -111,6 +112,13 @@ public class ConfigureCommand : StackManagerCommand
         {
             stack.Vault = vault;
             HelperMethods.LogSuccess($"Vault '{vault}' configured for stack '{stack.Name}'.");
+        }
+        
+        var registryCredentials = parseResult.GetValue<string, RegistryCredentialsOption>();
+        if (!string.IsNullOrEmpty(registryCredentials))
+        {
+            stack.RegistryCredentials = registryCredentials;
+            HelperMethods.LogSuccess($"Registry credentials configured for stack '{stack.Name}'.");
         }
         
         stack.EnableAutoSync = parseResult.GetValue<bool, AutoSyncOption>(); // TODO: will always be false if not set

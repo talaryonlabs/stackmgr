@@ -29,6 +29,7 @@ public class SyncCommand : StackManagerCommand
         {
             stack.Application = application;
             await SetAutoSyncSettingAsync(stack, argo);
+            await argo.RefreshApplicationAsync(stack);
         }
         argo.Dispose();
         rancher.Dispose();

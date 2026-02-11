@@ -73,7 +73,7 @@ public class ArgoService : IDisposable
     public async Task<V1alpha1Application?> GetApplicationAsync(Stack stack)
     {
         var apps = await GetApplicationsAsync();
-        if(apps?.Any(x => x.Metadata.Name == stack.Namespace) != true) return null;
+        if(apps.All(x => x.Metadata.Name != stack.Namespace)) return null;
         
         var response =
             await _client.GetAsync(
@@ -196,6 +196,17 @@ public class ArgoService : IDisposable
 
         if (response.IsSuccessStatusCode) return;
         throw new Exception($"Failed to set auto-sync for application '{stack.Namespace}'. Response code: {response.StatusCode} ({await response.Content.ReadAsStringAsync()})");
+    }
+
+    public async Task RefreshApplicationAsync(Stack stack)
+    {
+        var apps = await GetApplicationsAsync();
+        if (apps.All(x => x.Metadata.Name != stack.Namespace))
+        {
+            throw new Exception($"Application '{stack.Namespace}' not found in ArgoCD.");
+        }
+
+        await _client.GetAsync($"{_argocd.Url}/api/v1/applications/{stack.Namespace}?refresh=hard");
     }
 
     public void Dispose() => _client.Dispose();

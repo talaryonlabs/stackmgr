@@ -28,6 +28,7 @@ public class Stack : IStackManagerEntity
             Environment = env,
             Namespace = $"{env.Name.ToLower()}-{name.ToLower()}",
             Vault = "",
+            RegistryCredentials = "",
             Images = [new() { Name = "nginx", Image = "docker.io/library/nginx:latest" }],
             Apps = [new() { Name = "web", Template = "", Config = [] }]
         };
@@ -63,6 +64,7 @@ public class Stack : IStackManagerEntity
     [YamlMember(Alias = "name")] public required string Name { get; set; }
     [YamlMember(Alias = "namespace")] public required string Namespace { get; set; }
     [YamlMember(Alias = "vault")] public required string Vault { get; set; }
+    [YamlMember(Alias = "registryCredentials")] public required string RegistryCredentials { get; set; }
     [YamlMember(Alias = "enableAutoSync")] public bool EnableAutoSync { get; set; }
     [YamlMember(Alias = "images")] public List<StackImage> Images { get; set; } = [];
     [YamlMember(Alias = "apps")] public List<StackApp> Apps { get; set; } = [];
