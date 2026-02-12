@@ -58,20 +58,32 @@ public class GetCommand : StackManagerCommand
 
     private void GetEnvironments(ParseResult parseResult)
     {
-        var environments = Directory
-            .GetDirectories(Environment.CurrentDirectory, "*", SearchOption.TopDirectoryOnly)
-            .Where(x => Path.GetFileName(x) != ".apps" && Path.GetFileName(x) != ".git")
+        var root = new DirectoryInfo(Environment.CurrentDirectory);
+        var directories = root
+            .GetDirectories("*", SearchOption.TopDirectoryOnly)
+            .Where(x => x.Name != ".apps" && x.Name != ".git")
+            .ToList();
+
+        var uninitialized = directories.Where(v => !File.Exists(Path.Combine(v.FullName, StackEnvironment.FileName)));
+        var environments = directories
+            .Where(v => File.Exists(Path.Combine(v.FullName, StackEnvironment.FileName)))
+            .Select(v => StackEnvironment.Load(v.Name))
             .ToList();
 
         HelperMethods.LogInfo("Environments: ");
-        foreach (var env in environments.Where(x => File.Exists(Path.Combine(x, StackEnvironment.FileName))))
+        foreach (var env in environments.Where(x => !x.IsDeleted))
         {
-            HelperMethods.LogSuccess($"- {Path.GetFileName(env)}");
+            HelperMethods.LogSuccess($"- {env.Name}");
         }
 
-        foreach (var env in environments.Where(x => !File.Exists(Path.Combine(x, StackEnvironment.FileName))))
+        foreach (var env in uninitialized)
         {
-            HelperMethods.LogWarning($"- {Path.GetFileName(env)} (not initialized)");
+            HelperMethods.LogWarning($"- {env.Name} (not initialized)");
+        }
+        
+        foreach (var env in environments.Where(x => x.IsDeleted))
+        {
+            HelperMethods.LogError($"- {env.Name} (deleted)");
         }
     }
 

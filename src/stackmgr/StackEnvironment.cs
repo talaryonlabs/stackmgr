@@ -1,4 +1,5 @@
-﻿using stackmgr.Exceptions;
+﻿using System.Net.Mail;
+using stackmgr.Exceptions;
 using YamlDotNet.Serialization;
 
 namespace stackmgr;
@@ -14,7 +15,7 @@ public class StackEnvironment : IStackManagerEntity
         if (!File.Exists(file)) throw new EnvironmentNotFoundException(name);
         var env = new Deserializer().Deserialize<StackEnvironment>(File.ReadAllText(file));
         
-        return env;
+        return env.IsDeleted ? throw new EnvironmentNotFoundException(name) : env;
     }
 
     public static StackEnvironment New(string name)
@@ -36,6 +37,7 @@ public class StackEnvironment : IStackManagerEntity
     
     [YamlIgnore] public DirectoryInfo LocalDirectory => new(Path.Combine(Environment.CurrentDirectory, Name));
 
+    [YamlMember(Alias = "isDeleted")] public bool IsDeleted { get; set; }
     [YamlMember(Alias = "name")] public required string Name { get; init; }
     [YamlMember(Alias = "vault")] public required string Vault { get; set; }
     [YamlMember(Alias = "registryCredentials")] public required string RegistryCredentials { get; set; }

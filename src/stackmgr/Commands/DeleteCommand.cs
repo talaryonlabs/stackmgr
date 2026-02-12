@@ -79,7 +79,7 @@ public class DeleteCommand : StackManagerCommand
     private void DeleteEnvironment(ParseResult parseResult)
     {
         var env = GetEnvironment<EnvironmentArgument>(parseResult);
-        HelperMethods.LogWarning("ATTENTION: This only deletes the environment from the stackmgr config.");
+        HelperMethods.LogWarning("ATTENTION: This only marks the environment 'deleted' in the config file.");
         HelperMethods.LogWarning("It does not delete the environment from Rancher/ArgoCD nor the local directory.");
         HelperMethods.LogWarning("");
         
@@ -89,6 +89,8 @@ public class DeleteCommand : StackManagerCommand
             return;
         }
         HelperMethods.LogInfo($"Removing environment '{env.Name}'.");
+        env.IsDeleted = true;
+        env.SaveConfig();
         HelperMethods.LogSuccess("Success.");
     }
     
