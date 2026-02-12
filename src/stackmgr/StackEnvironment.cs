@@ -8,14 +8,14 @@ public class StackEnvironment : IStackManagerEntity
 {
     public const string FileName = ".env.yaml";
     
-    public static StackEnvironment Load(string name)
+    public static StackEnvironment Load(string name, bool includeDeleted = false)
     {
         var file = Path.Combine(Environment.CurrentDirectory, name, FileName);
         
         if (!File.Exists(file)) throw new EnvironmentNotFoundException(name);
         var env = new Deserializer().Deserialize<StackEnvironment>(File.ReadAllText(file));
         
-        return env.IsDeleted ? throw new EnvironmentNotFoundException(name) : env;
+        return !includeDeleted && env.IsDeleted ? throw new EnvironmentNotFoundException(name) : env;
     }
 
     public static StackEnvironment New(string name)

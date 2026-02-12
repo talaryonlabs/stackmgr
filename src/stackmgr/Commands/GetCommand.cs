@@ -67,7 +67,7 @@ public class GetCommand : StackManagerCommand
         var uninitialized = directories.Where(v => !File.Exists(Path.Combine(v.FullName, StackEnvironment.FileName)));
         var environments = directories
             .Where(v => File.Exists(Path.Combine(v.FullName, StackEnvironment.FileName)))
-            .Select(v => StackEnvironment.Load(v.Name))
+            .Select(v => StackEnvironment.Load(v.Name, true))
             .ToList();
 
         HelperMethods.LogInfo("Environments: ");
