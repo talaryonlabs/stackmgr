@@ -33,9 +33,8 @@ public class BuildCommand : StackManagerCommand
         {
             var credentials = new RegistryCredentials();
             credentials.Metadata.Annotations.Path = stack.Environment.RegistryCredentials;
-            HelperMethods.LogInfo($"Using registry credentials for stack '{stack.Name}'.");
-            
-            File.WriteAllText(file.FullName, new Serializer().Serialize(this));
+            HelperMethods.LogInfo($"Using registry credentials '{stack.Environment.RegistryCredentials}' for stack '{stack.Name}'.");
+            File.WriteAllText(file.FullName, new Serializer().Serialize(credentials));
         }
         else if (file.Exists)
         {

@@ -6,15 +6,15 @@ public class RegistryCredentials
 {
     [YamlMember(Alias = "apiVersion")] public string ApiVersion => "v1";
     [YamlMember(Alias = "kind")] public string Kind => "Secret";
-    [YamlMember(Alias = "metadata")] public RegistryCredentialsMetadata Metadata => new();
-    [YamlMember(Alias = "data")] public RegistryCredentialsData Data => new();
+    [YamlMember(Alias = "metadata")] public RegistryCredentialsMetadata Metadata { get; set; } = new();
+    [YamlMember(Alias = "data")] public RegistryCredentialsData Data { get; set; } = new();
     [YamlMember(Alias = "type")] public string Type => "kubernetes.io/dockerconfigjson";
 }
 
 public class RegistryCredentialsMetadata
 {
     [YamlMember(Alias = "name")] public string Name => "registry-credentials";
-    [YamlMember(Alias = "annotations")] public RegistryCredentialsMetadataAnnotations Annotations => new();
+    [YamlMember(Alias = "annotations")] public RegistryCredentialsMetadataAnnotations Annotations { get; set; } = new();
 }
 
 public class RegistryCredentialsMetadataAnnotations
