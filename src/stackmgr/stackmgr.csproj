@@ -15,7 +15,7 @@
         <RepositoryType>git</RepositoryType>
         <Description>Management CLI for Deployment Stack</Description>
         <PackageLicenseUrl>https://github.com/talaryonlabs/stackmgr/blob/main/LICENSE</PackageLicenseUrl>
-        <PackageId>talaryonlabs.stackmgr</PackageId>
+        <PackageId>Talaryon.StackMgr</PackageId>
         <Version>1.1.2</Version>
     </PropertyGroup>
 
