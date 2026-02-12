@@ -2,9 +2,9 @@
 
 namespace stackmgr.Options;
 
-public class AutoSyncOption : Option<bool>
+public class EnableAutoSyncOption : Option<bool>
 {
-    public AutoSyncOption() : base("--auto-sync")
+    public EnableAutoSyncOption() : base("--enable-auto-sync")
     {
         Description = "Enable/disable auto-sync";
     }

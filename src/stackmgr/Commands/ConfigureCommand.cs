@@ -30,7 +30,7 @@ public class ConfigureCommand : StackManagerCommand
         {
             new EnvironmentOption { Required = true },
             new StackArgument(),
-            new AutoSyncOption(),
+            new EnableAutoSyncOption(),
 
         };
         stack.Aliases.Add("s");
@@ -140,8 +140,12 @@ public class ConfigureCommand : StackManagerCommand
     {
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackArgument>(parseResult, env);
+
+        if (parseResult.Tokens.Any(v => v.Value == "--enable-auto-sync"))
+        {
+            stack.EnableAutoSync = parseResult.GetValue<bool, EnableAutoSyncOption>();
+        }
         
-        stack.EnableAutoSync = parseResult.GetValue<bool, AutoSyncOption>(); // TODO: will always be false if not set
         stack.SaveConfig();
     }
 }
