@@ -78,6 +78,7 @@ public class StackApp
     [YamlMember(Alias = "volume")] public string Volume { get; init; } = "";
     [YamlMember(Alias = "template")] public string Template { get; init; } = "";
     [YamlMember(Alias = "host")] public string Host { get; init; } = "";
+    [YamlMember(Alias = "port")] public short Port { get; init; }
     [YamlMember(Alias = "config")] public List<StackAppConfig> Config { get; init; } = [];
 }
 

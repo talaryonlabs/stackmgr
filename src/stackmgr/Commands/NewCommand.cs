@@ -35,6 +35,7 @@ public class NewCommand : StackManagerCommand
             new VolumeOption(),
             new ConfigOption(),
             new HostOption(),
+            new PortOption(),
             new WithoutIngressOption()
         };
         app.SetAction(New);
@@ -149,6 +150,7 @@ public class NewCommand : StackManagerCommand
             Name = name,
             Volume = parseResult.GetValue<string, VolumeOption>() ?? "",
             Host = parseResult.GetValue<string, HostOption>() ?? "",
+            Port = parseResult.GetValue<short, PortOption>(),
             Template = template is not null ? $"{branch}:{template}" : "",
             Config = (parseResult.GetValue<string[], ConfigOption>() ?? []).Select(x =>
             {

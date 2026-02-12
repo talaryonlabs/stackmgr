@@ -78,6 +78,10 @@ public partial class AppService(Stack stack, StackApp app)
             {
                 throw new Exception("Parameter --host is required for this template.");
             }
+            if (content.Contains("{{app-port}}") && app.Port == 0)
+            {
+                throw new Exception("Parameter --port is required for this template.");
+            }
 
             var conf = ConfigRegex().Matches(content);
             foreach (Match match in conf)
@@ -108,6 +112,7 @@ public partial class AppService(Stack stack, StackApp app)
             if (content.Contains("{{vault-path}}")) content = content.Replace("{{vault-path}}", $"{vault}/{stack.Name}/{app.Name}");
             if (content.Contains("{{app-volume}}")) content = content.Replace("{{app-volume}}", app.Volume);
             if (content.Contains("{{app-host}}")) content = content.Replace("{{app-host}}", app.Host);
+            if (content.Contains("{{app-port}}")) content = content.Replace("{{app-port}}", app.Port.ToString());
 
             content = app.Config.Aggregate(content, (current, config) => current.Replace("{{config." + config.Name + "}}", config.Value));
 
