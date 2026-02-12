@@ -66,9 +66,9 @@ public partial class AppService(Stack stack, StackApp app)
             if (file.Name.StartsWith("ingress.") && serviceOptions.WithoutIngress) continue;
             
             var content = await File.ReadAllTextAsync(file.FullName);
-            if (content.Contains("{{stack-vault}}") && string.IsNullOrEmpty(stack.Vault))
+            if (content.Contains("{{vault-path}}") && string.IsNullOrEmpty(stack.Environment.Vault))
             {
-                throw new Exception("Vault is not configured. Please run 'stackmgr configure stack <stack-name> --vault <vault-path>' first.");
+                throw new Exception("Vault-Path is not configured. Please run 'stackmgr configure env <environment-name> --vault <vault-path>' first.");
             }
             if (content.Contains("{{app-volume}}") && string.IsNullOrEmpty(app.Volume))
             {
@@ -97,12 +97,15 @@ public partial class AppService(Stack stack, StackApp app)
             if (file.Name.StartsWith("ingress.") && serviceOptions.WithoutIngress) continue;
             
             var content = await File.ReadAllTextAsync(file.FullName);
+            var vault = stack.Environment.Vault.EndsWith("/")
+                ? stack.Environment.Vault[..^1]
+                : stack.Environment.Vault;
 
             content = content
                 .Replace("{{app-name}}", app.Name)
                 .Replace("{{stack-name}}", stack.Name);
             
-            if (content.Contains("{{stack-vault}}")) content = content.Replace("{{stack-vault}}", stack.Vault);
+            if (content.Contains("{{vault-path}}")) content = content.Replace("{{vault-path}}", $"{vault}/{stack.Name}/{app.Name}");
             if (content.Contains("{{app-volume}}")) content = content.Replace("{{app-volume}}", app.Volume);
             if (content.Contains("{{app-host}}")) content = content.Replace("{{app-host}}", app.Host);
 

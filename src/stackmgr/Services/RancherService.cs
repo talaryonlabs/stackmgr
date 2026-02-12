@@ -14,7 +14,8 @@ public class RancherService : IDisposable
     {
         _rancher = env.Rancher;
         
-        if (_rancher.AccessToken is null or "")
+        var accessToken = _rancher.GetAccessToken(env);
+        if (accessToken is null or "")
             throw new Exception("No access token provided. Please check your configuration.");
         
         if (_rancher.Url is null or "")
@@ -24,7 +25,7 @@ public class RancherService : IDisposable
             throw new Exception("No RKE2 project ID provided. Please check your configuration.");
         
         _client = new HttpClient();
-        _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_rancher.AccessToken.FromBase64String()}");
+        _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken.FromBase64String()}");
         _client.DefaultRequestHeaders.Add("Accept", "application/json");
     }
 

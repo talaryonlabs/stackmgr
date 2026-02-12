@@ -5,16 +5,12 @@ namespace stackmgr;
 
 public class StackManagerCommand(string name, string description) : Command(name, description)
 {
-    protected static StackManagerConfig Config => StackManagerConfig.Load();
-
     protected string GetEnvironmentName<T>(ParseResult parseResult) where T : Symbol => parseResult.GetRequiredValue<string, T>().ToLower();
 
     protected StackEnvironment GetEnvironment<T>(ParseResult parseResult) where T : Symbol
     {
         var name = GetEnvironmentName<T>(parseResult);
-        var env =
-            Config.Environments.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
-        return env ?? throw new EnvironmentNotFoundException(name);
+        return StackEnvironment.Load(name);
     }
     
     protected string GetStackName<T>(ParseResult parseResult) where T : Symbol => parseResult.GetRequiredValue<string, T>().ToLower();

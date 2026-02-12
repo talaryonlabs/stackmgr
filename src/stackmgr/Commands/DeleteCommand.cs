@@ -89,9 +89,6 @@ public class DeleteCommand : StackManagerCommand
             return;
         }
         HelperMethods.LogInfo($"Removing environment '{env.Name}'.");
-                
-        Config.Environments.Remove(env);
-        Config.Save();
         HelperMethods.LogSuccess("Success.");
     }
     

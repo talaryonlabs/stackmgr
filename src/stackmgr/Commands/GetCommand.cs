@@ -60,19 +60,18 @@ public class GetCommand : StackManagerCommand
     {
         var environments = Directory
             .GetDirectories(Environment.CurrentDirectory, "*", SearchOption.TopDirectoryOnly)
-            .Select(Path.GetFileName)
-            .Where(x => x != ".apps" && x != ".git")
+            .Where(x => Path.GetFileName(x) != ".apps" && Path.GetFileName(x) != ".git")
             .ToList();
 
         HelperMethods.LogInfo("Environments: ");
-        foreach (var env in environments.Where(x => Config.Environments.Exists(e => e.LocalDirectory.Name == x)))
+        foreach (var env in environments.Where(x => File.Exists(Path.Combine(x, StackEnvironment.FileName))))
         {
-            HelperMethods.LogSuccess($"- {env}");
+            HelperMethods.LogSuccess($"- {Path.GetFileName(env)}");
         }
 
-        foreach (var env in environments.Where(x => !Config.Environments.Exists(e => e.LocalDirectory.Name == x)))
+        foreach (var env in environments.Where(x => !File.Exists(Path.Combine(x, StackEnvironment.FileName))))
         {
-            HelperMethods.LogWarning($"- {env} (not initialized)");
+            HelperMethods.LogWarning($"- {Path.GetFileName(env)} (not initialized)");
         }
     }
 

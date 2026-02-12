@@ -84,7 +84,7 @@ public class NewCommand : StackManagerCommand
     private void NewEnvironment(ParseResult parseResult)
     {
         var name = GetEnvironmentName<EnvironmentArgument>(parseResult);
-        var env = new StackEnvironment { Name = name };
+        var env = StackEnvironment.New(name);
 
         if (!env.LocalDirectory.Exists)
         {
@@ -92,15 +92,14 @@ public class NewCommand : StackManagerCommand
             HelperMethods.LogSuccess($"Directory '{env.LocalDirectory.FullName}' created.");
         }
             
-        if (Config.Environments.Any(x => x.Name.Equals(env.Name, StringComparison.CurrentCultureIgnoreCase)))
+        if (File.Exists(Path.Combine(env.LocalDirectory.FullName, StackEnvironment.FileName)))
         {
             HelperMethods.LogWarning($"Environment '{env.Name}' already exists.");
             return;
         }
             
         HelperMethods.LogInfo($"Initializing environment '{env.Name}' ...");
-        Config.Environments.Add(env);
-        Config.Save();
+        env.SaveConfig();
         HelperMethods.LogSuccess("Success.");
     }
     

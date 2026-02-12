@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json;
 using Talaryon.Toolbox.Extensions;
 using Talaryon.Toolbox.Services.ArgoCD.Models;
@@ -16,11 +15,12 @@ public class ArgoService : IDisposable
     {
         _argocd = environment.Argo;
         
+        var accessToken = _argocd.GetAccessToken(environment);
+        if (accessToken is null or "")
+            throw new Exception("No ArgoCD access token provided. Please check your configuration.");
+        
         if (_argocd.Url is null or "")
             throw new Exception("No ArgoCD URL provided. Please check your configuration.");
-
-        if (_argocd.AccessToken is null or "")
-            throw new Exception("No ArgoCD access token provided. Please check your configuration.");
 
         if (_argocd.Project is null or "")
             throw new Exception("No ArgoCD project provided. Please check your configuration.");
@@ -29,7 +29,7 @@ public class ArgoService : IDisposable
             throw new Exception("No ArgoCD repository provided. Please check your configuration.");
         
         _client = new HttpClient();
-        _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_argocd.AccessToken.FromBase64String()}");
+        _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken.FromBase64String()}");
         _client.DefaultRequestHeaders.Add("Accept", [
             "application/json",
             "application/x-www-form-urlencoded"

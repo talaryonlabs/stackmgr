@@ -27,11 +27,14 @@ public class GitService
     }
 
     private readonly StackEnvironment _env;
+    private readonly string _appRepository;
     
     public GitService(StackEnvironment env)
     {
         _env = env;
-        if (_env.AppRepository is null)
+        _appRepository = LocalConfig.Get().AppRepository;
+        
+        if (_appRepository is null)
             throw new Exception("App repository cannot be null");
         
     }
@@ -60,7 +63,7 @@ public class GitService
         if (!apps.Exists || apps.GetDirectories(".git").Length == 0)
         {
             var clone = Process.Start(new ProcessStartInfo("git",
-                $"clone -v {_env.AppRepository} {apps.FullName}")
+                $"clone -v {_appRepository} {apps.FullName}")
             {
                 RedirectStandardOutput = true
             });
