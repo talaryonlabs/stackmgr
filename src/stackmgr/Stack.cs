@@ -28,7 +28,8 @@ public class Stack : IStackManagerEntity
             Environment = env,
             Namespace = $"{env.Name.ToLower()}-{name.ToLower()}",
             Images = [new() { Name = "nginx", Image = "docker.io/library/nginx:latest" }],
-            Apps = [new() { Name = "web", Template = "", Config = [] }]
+            Apps = [new() { Name = "web", Template = "", Config = [] }],
+            Ingresses = []
         };
         return stack;
     }
@@ -62,8 +63,19 @@ public class Stack : IStackManagerEntity
     [YamlMember(Alias = "name")] public required string Name { get; set; }
     [YamlMember(Alias = "namespace")] public required string Namespace { get; set; }
     [YamlMember(Alias = "enableAutoSync")] public bool EnableAutoSync { get; set; }
-    [YamlMember(Alias = "images")] public List<StackImage> Images { get; set; } = [];
-    [YamlMember(Alias = "apps")] public List<StackApp> Apps { get; set; } = [];
+    [YamlMember(Alias = "images")] public List<StackImage> Images { get; init; } = [];
+    [YamlMember(Alias = "apps")] public List<StackApp> Apps { get; init; } = [];
+    [YamlMember(Alias = "ingresses")] public List<StackIngress> Ingresses { get; set; } = [];
+}
+
+public class StackIngress
+{
+    [YamlMember(Alias = "host")] public required string Host { get; init; }
+    [YamlMember(Alias = "app")] public string? App { get; init; }
+    [YamlMember(Alias = "redirectTo")] public string? RedirectTo { get; init; }
+    [YamlMember(Alias = "port")] public string? Port { get; set; }
+    [YamlMember(Alias = "securedBy")] public string? SecuredBy { get; set; }
+    [YamlMember(Alias = "annotations")] public Dictionary<string, string>? Annotations { get; set; } = [];
 }
 
 public class StackImage

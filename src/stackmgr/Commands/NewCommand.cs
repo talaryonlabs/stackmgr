@@ -48,11 +48,23 @@ public class NewCommand : StackManagerCommand
             new NameOption()
         };
         image.SetAction(New);
+
+        var ingress = new StackManagerCommand("ingress", "Create an ingress for an application")
+        {
+            new EnvironmentOption(),
+            new StackArgument(),
+            new HostArgument(),
+            new PortOption(),
+            new NameOption(),
+            new RedirectToOption(),
+            new AnnotationOption()
+        };
         
         Add(env);
         Add(stack);
         Add(app);
         Add(image);
+        Add(ingress);
     }
 
     private async Task New(ParseResult parseResult)
@@ -79,6 +91,11 @@ public class NewCommand : StackManagerCommand
         if (parseResult.CommandResult.Command.Name == "image")
         {
             NewImage(parseResult, stack);
+        }
+        
+        if (parseResult.CommandResult.Command.Name == "ingress")
+        {
+            NewIngress(parseResult, stack);
         }
     }
 
@@ -207,5 +224,56 @@ public class NewCommand : StackManagerCommand
         stack.SaveKustomization();
         
         HelperMethods.LogSuccess($"Image '{image}' with name '{name}' added.");
+    }
+    
+    private void NewIngress(ParseResult parseResult, Stack stack)
+    {
+        var host = parseResult.GetRequiredValue<string, HostArgument>();
+        if (stack.Ingresses.Any(x => x.Host.Equals(host, StringComparison.CurrentCultureIgnoreCase)))
+        {
+            throw new Exception($"Ingress with host '{host}' already exists in stack '{stack.Name}'.");
+        }
+
+        var redirect = parseResult.GetValue<string, RedirectToOption>();
+        var name = parseResult.GetValue<string, NameOption>();
+        
+        if (name is { Length: > 0 })
+        {
+            var port = parseResult.GetRequiredValue<string, PortOption>();
+            
+            stack.Ingresses.Add(new StackIngress
+            {
+                Host = host,
+                App = name,
+                Port = port,
+                Annotations = (parseResult.GetValue<string[], AnnotationOption>() ?? []).Select(x =>
+                {
+                    var annotation = x.Split("=");
+                    return new KeyValuePair<string, string>(annotation[0].Trim(), annotation[1].Trim());
+                }).ToDictionary()
+            });
+        }
+        else if (redirect is { Length: > 0 })
+        {
+            stack.Ingresses.Add(new StackIngress
+            {
+                Host = host,
+                RedirectTo = redirect
+            });
+        }
+        else
+        {
+            throw new Exception("Either --name or --redirect-to must be specified.");
+        }
+        
+        
+        
+        
+        
+        
+        stack.SaveConfig();
+        stack.SaveKustomization();
+        
+        HelperMethods.LogSuccess($"Ingress '{host}' created.");
     }
 }
