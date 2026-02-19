@@ -29,9 +29,17 @@ public class GetCommand : StackManagerCommand
         };
         apps.SetAction(Get);
 
+        var ingresses = new StackManagerCommand("ingresses", "List ingresses")
+        {
+            new EnvironmentOption(),
+            new StackArgument()
+        };
+        ingresses.SetAction(Get);
+
         Add(environments);
         Add(stacks);
         Add(apps);
+        Add(ingresses);
     }
 
     private async Task Get(ParseResult parseResult)
@@ -50,9 +58,14 @@ public class GetCommand : StackManagerCommand
         }
 
         var stack = GetStack<StackArgument>(parseResult, env);
-        if (parseResult.CommandResult.Command.Name == "apps")
+        switch (parseResult.CommandResult.Command.Name)
         {
-            GetApps(stack);
+            case "apps":
+                GetApps(stack);
+                return;
+            case "ingresses":
+                GetIngresses(stack);
+                return;
         }
     }
 
@@ -133,6 +146,15 @@ public class GetCommand : StackManagerCommand
         foreach (var app in apps)
         {
             HelperMethods.LogSuccess($"- {app}");
+        }
+    }
+    
+    private void GetIngresses(Stack stack)
+    {
+        HelperMethods.LogInfo($"Ingresses in stack '{stack.Name}': ");
+        foreach (var ingress in stack.Ingresses)
+        {
+            HelperMethods.LogSuccess($"- {ingress.Host} [{ingress.App ?? ingress.RedirectTo}]");
         }
     }
 }

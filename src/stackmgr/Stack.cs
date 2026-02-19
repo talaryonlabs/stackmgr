@@ -74,7 +74,7 @@ public class StackIngress
     [YamlMember(Alias = "app")] public string? App { get; init; }
     [YamlMember(Alias = "redirectTo")] public string? RedirectTo { get; init; }
     [YamlMember(Alias = "port")] public string? Port { get; set; }
-    [YamlMember(Alias = "securedBy")] public string? SecuredBy { get; set; }
+    [YamlMember(Alias = "secured")] public bool Secured { get; set; }
     [YamlMember(Alias = "annotations")] public Dictionary<string, string>? Annotations { get; set; } = [];
 }
 

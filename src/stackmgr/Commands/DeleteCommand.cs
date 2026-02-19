@@ -40,11 +40,20 @@ public class DeleteCommand : StackManagerCommand
         };
         image.Aliases.Add("i");
         image.SetAction(Delete);
+
+        var ingress = new StackManagerCommand("ingress", "Delete an ingress")
+        {
+            new EnvironmentOption(),
+            new StackArgument(),
+            new HostArgument()
+        };
+        ingress.SetAction(Delete);
         
         Add(env);
         Add(stack);
         Add(app);
         Add(image);
+        Add(ingress);
     }
     
     private async Task Delete(ParseResult parseResult)
@@ -64,16 +73,33 @@ public class DeleteCommand : StackManagerCommand
         }
         
         var stack = GetStack<StackArgument>(parseResult, env);
-        if (parseResult.CommandResult.Command.Name == "app")
+        switch (parseResult.CommandResult.Command.Name)
         {
-            DeleteApp(parseResult, stack);
-            return;
+            case "app":
+                DeleteApp(parseResult, stack);
+                return;
+            case "image":
+                DeleteImage(parseResult, stack);
+                return;
+            case "ingress":
+                DeleteIngress(parseResult, stack);
+                return;
         }
+    }
 
-        if (parseResult.CommandResult.Command.Name == "image")
+    private void DeleteIngress(ParseResult parseResult, Stack stack)
+    {
+        var host = parseResult.GetRequiredValue<string, HostArgument>();
+        if (!stack.Ingresses.Any(x => x.Host.Equals(host, StringComparison.CurrentCultureIgnoreCase)))
         {
-            DeleteImage(parseResult, stack);
+            throw new Exception($"Ingress with host '{host}' does not exist in stack '{stack.Name}'.");
         }
+        
+        stack.Ingresses.RemoveAll(x => x.Host.Equals(host, StringComparison.CurrentCultureIgnoreCase));
+        stack.SaveConfig();
+        stack.SaveKustomization();
+        
+        HelperMethods.LogSuccess($"Ingress '{host}' deleted.");
     }
 
     private void DeleteEnvironment(ParseResult parseResult)

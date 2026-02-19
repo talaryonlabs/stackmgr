@@ -24,6 +24,7 @@ public class StackEnvironment : IStackManagerEntity
         {
             Name = name,
             Vault = "",
+            Outpost = "",
             RegistryCredentials = "",
         };
         return env;
@@ -40,6 +41,7 @@ public class StackEnvironment : IStackManagerEntity
     [YamlMember(Alias = "isDeleted")] public bool IsDeleted { get; set; }
     [YamlMember(Alias = "name")] public required string Name { get; init; }
     [YamlMember(Alias = "vault")] public required string Vault { get; set; }
+    [YamlMember(Alias = "outpost")] public required string Outpost { get; set; }
     [YamlMember(Alias = "registryCredentials")] public required string RegistryCredentials { get; set; }
     [YamlMember(Alias = "rke2")] public StackEnvironmentRancher Rancher { get; set; } = new();
     [YamlMember(Alias = "argocd")] public StackEnvironmentArgo Argo { get; set; } = new();

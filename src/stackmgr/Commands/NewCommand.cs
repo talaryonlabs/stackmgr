@@ -57,7 +57,8 @@ public class NewCommand : StackManagerCommand
             new PortOption(),
             new NameOption(),
             new RedirectToOption(),
-            new AnnotationOption()
+            new AnnotationOption(),
+            new SecuredOption()
         };
         
         Add(env);
@@ -246,6 +247,7 @@ public class NewCommand : StackManagerCommand
                 Host = host,
                 App = name,
                 Port = port,
+                Secured = parseResult.GetValue<bool, SecuredOption>(),
                 Annotations = (parseResult.GetValue<string[], AnnotationOption>() ?? []).Select(x =>
                 {
                     var annotation = x.Split("=");

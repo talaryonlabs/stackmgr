@@ -133,6 +133,13 @@ public class ConfigureCommand : StackManagerCommand
             HelperMethods.LogSuccess($"Registry credentials configured for environment '{env.Name}'.");
         }
         
+        var outpost = parseResult.GetValue<string, OutpostOption>();
+        if (!string.IsNullOrEmpty(outpost))
+        {
+            env.Outpost = outpost;
+            HelperMethods.LogSuccess($"Outpost '{outpost}' configured for environment '{env.Name}'.");
+        }
+        
         env.SaveConfig();
     }
     
