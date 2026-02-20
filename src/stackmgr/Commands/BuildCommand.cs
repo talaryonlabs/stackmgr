@@ -1,5 +1,6 @@
 ﻿using stackmgr.Arguments;
 using stackmgr.Options;
+using stackmgr.Services;
 using YamlDotNet.Serialization;
 
 namespace stackmgr.Commands;
@@ -16,6 +17,11 @@ public class BuildCommand : StackManagerCommand
             var stack = GetStack<StackArgument>(parseResult, env);
             
             HelperMethods.LogInfo($"Building stack '{stack.Name}' in environment '{env.Name}'");
+
+            if (stack.Ingresses.Any(v => v.RedirectTo is { Length: > 0 }))
+            {
+                BuildRedirect(stack);
+            }
             
             BuildRegistryCredentials(stack);
             BuildOutpostService(stack);
@@ -24,6 +30,33 @@ public class BuildCommand : StackManagerCommand
             HelperMethods.LogSuccess($"Stack '{stack.Name}' built.");
             HelperMethods.LogInfo("Run git commit and git push before stack sync.");
         });
+    }
+
+    private void BuildRedirect(Stack stack)
+    {
+        foreach (var v in stack.Ingresses.Where(v => v.RedirectTo is { Length: > 0 }))
+        {
+            var name = v.Host
+                .Replace(".", "-")
+                .ToLower();
+            var redirect = new StackApp()
+            {
+                Name = name,
+                Host = v.Host
+            };
+            stack.Apps.Add(redirect);
+            
+            var appService = new AppService(stack, redirect);
+
+            appService.Install(new());
+            appService.Migrate(new());
+
+        }
+        
+        
+        
+        
+        throw new NotImplementedException();
     }
 
     private void BuildRegistryCredentials(Stack stack)
@@ -68,37 +101,17 @@ public class BuildCommand : StackManagerCommand
 
     private void BuildIngressFiles(Stack stack)
     {
-        var template = Path.Combine(stack.LocalDirectory.FullName, "ingress.[{{name}}].yaml");
+        var filename = Path.Combine(stack.LocalDirectory.FullName, "ingress.[{{name}}].yaml");
+        var authFilename = Path.Combine(stack.LocalDirectory.FullName, "ingress.[{{name}}]-auth.yaml");
 
         foreach (var v in stack.Ingresses)
         {
             var name = v.Host
                 .Replace(".", "-")
                 .ToLower();
-            var ingress = new Ingress()
-            {
-                Metadata = new() { Name = $"ingress-{name}" },
-                Spec = new()
-                {
-                    Rules =
-                    [
-                        new()
-                        {
-                            Host = v.Host,
-                            Http = new()
-                            {
-                                Paths = [new() { Path = "/" }]
-                            }
-                        }
-                    ],
-                    Tls =
-                    [
-                        new() { SecretName = $"letsencrypt-{name}", Hosts = [v.Host] },
-                    ]
-                }
-            };
+            var ingress = 
 
-            var file = template.Replace("{{name}}", v.Host);
+            var file = filename.Replace("{{name}}", v.Host);
             File.WriteAllText(file, new Serializer().Serialize(ingress));
             HelperMethods.LogInfo($"Generated ingress file '{file}' for stack '{stack.Name}' with host '{v.Host}'.");
         }
