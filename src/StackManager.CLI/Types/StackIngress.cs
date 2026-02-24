@@ -112,7 +112,11 @@ public class StackIngress : IStackObject
     {
         var ingress = new Ingress()
         {
-            Metadata = new() { Name = $"ingress-{Name}" },
+            Metadata = new()
+            {
+                Name = $"ingress-{Name}",
+                Annotations = Annotations ?? []
+            },
             Spec = new()
             {
                 Rules =
@@ -147,9 +151,14 @@ public class StackIngress : IStackObject
             }
         };
 
+        if (Stack.Environment.CertIssuer is { Length: >0 })
+        {
+            ingress.Metadata.Annotations.TryAdd("cert-manager.io/cluster-issuer", Stack.Environment.CertIssuer);
+        }
+
         if (IsSecured)
         {
-            ingress.Metadata.Annotations = new Dictionary<string, string>
+            var securingAnnotations = new Dictionary<string, string>
             {
                 {
                     "nginx.ingress.kubernetes.io/auth-url",
@@ -184,6 +193,9 @@ public class StackIngress : IStackObject
                     "true"
                 }
             };
+            
+            foreach(var (key, value) in securingAnnotations) 
+                ingress.Metadata.Annotations.TryAdd(key, value);
         }
 
         return ingress;

@@ -16,7 +16,7 @@
         <Description>Management CLI for Deployment Stack</Description>
         <PackageLicenseUrl>https://github.com/talaryonlabs/stackmgr/blob/main/LICENSE</PackageLicenseUrl>
         <PackageId>Talaryon.StackManager</PackageId>
-        <Version>1.2.2</Version>
+        <Version>1.2.3</Version>
         <RootNamespace>Talaryon.StackManager</RootNamespace>
     </PropertyGroup>
 

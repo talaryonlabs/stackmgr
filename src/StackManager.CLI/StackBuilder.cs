@@ -113,8 +113,13 @@ public class StackBuilder(Stack stack)
             ingress.ToIngress().SaveTo(ingress.LocalFile.FullName);
             HelperMethods.LogInfo($"Apply ingress file '{ingress.LocalFile.FullName}' for host '{ingress.Hostname}'.");
 
-            if (!ingress.IsSecured) continue;
             var authFile = ingress.LocalFile.FullName.Replace(".yaml", "-auth.yaml");
+            if (!ingress.IsSecured)
+            {
+                if(File.Exists(authFile)) File.Delete(authFile);
+                continue;
+            }
+            
             ingress.GetAuthIngress().SaveTo(authFile);
             HelperMethods.LogInfo($"Apply ingress file '{authFile}' for host '{ingress.Hostname}'.");
         }
