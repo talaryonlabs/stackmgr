@@ -2,9 +2,9 @@
 
 namespace Talaryon.StackManager.Options;
 
-public class RedirectToOption : Option<string>
+public class RedirectOption : Option<string>
 {
-    public RedirectToOption() : base("--redirect-to")
+    public RedirectOption() : base("--redirect")
     {
         Description = "Redirect to this host name.";
     }

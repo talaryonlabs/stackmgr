@@ -1,6 +1,6 @@
 ﻿using YamlDotNet.Serialization;
 
-namespace Talaryon.StackManager;
+namespace Talaryon.StackManager.Models;
 
 public class RegistryCredentials
 {

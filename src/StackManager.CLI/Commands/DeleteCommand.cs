@@ -28,7 +28,7 @@ public class DeleteCommand : StackManagerCommand
         var app = new StackManagerCommand("app", "Delete a application")
         {
             new EnvironmentOption(),
-            new StackArgument(),
+            new StackOption(),
             new AppArgument()
         };
         app.SetAction(Delete);
@@ -36,7 +36,7 @@ public class DeleteCommand : StackManagerCommand
         var image = new StackManagerCommand("image", "Delete an image")
         {
             new EnvironmentOption(),
-            new StackArgument(),
+            new StackOption(),
             new ImageArgument()
         };
         image.Aliases.Add("i");
@@ -45,8 +45,8 @@ public class DeleteCommand : StackManagerCommand
         var ingress = new StackManagerCommand("ingress", "Delete an ingress")
         {
             new EnvironmentOption(),
-            new StackArgument(),
-            new HostArgument()
+            new StackOption(),
+            new HostnameArgument()
         };
         ingress.SetAction(Delete);
         
@@ -73,7 +73,7 @@ public class DeleteCommand : StackManagerCommand
             return;
         }
         
-        var stack = GetStack<StackArgument>(parseResult, env);
+        var stack = GetStack<StackOption>(parseResult, env);
         switch (parseResult.CommandResult.Command.Name)
         {
             case "app":
@@ -90,17 +90,22 @@ public class DeleteCommand : StackManagerCommand
 
     private void DeleteIngress(ParseResult parseResult, Stack stack)
     {
-        var host = parseResult.GetRequiredValue<string, HostArgument>();
-        if (!stack.Ingresses.Any(x => x.Host.Equals(host, StringComparison.CurrentCultureIgnoreCase)))
+        var hostname = parseResult.GetRequiredValue<string, HostnameArgument>();
+        var ingress = stack.Ingresses.FirstOrDefault(x => x.Hostname.Equals(hostname, StringComparison.CurrentCultureIgnoreCase));
+        if (ingress is null)
         {
-            throw new Exception($"Ingress with host '{host}' does not exist in stack '{stack.Name}'.");
+            throw new Exception($"Ingress with hostname '{hostname}' does not exist in stack '{stack.Name}'.");
         }
+        ingress.Delete();
+
+        stack
+            .Redirects
+            .Where(v => !stack.Ingresses.Any(x =>
+                (x.Redirect ?? "").Equals(v.Hostname, StringComparison.InvariantCultureIgnoreCase)))
+            .ToList()
+            .ForEach(v => v.Delete());
         
-        stack.Ingresses.RemoveAll(x => x.Host.Equals(host, StringComparison.CurrentCultureIgnoreCase));
-        stack.SaveConfig();
-        stack.SaveKustomization();
-        
-        HelperMethods.LogSuccess($"Ingress '{host}' deleted.");
+        HelperMethods.LogSuccess($"Ingress '{hostname}' deleted.");
     }
 
     private void DeleteEnvironment(ParseResult parseResult)
@@ -157,12 +162,7 @@ public class DeleteCommand : StackManagerCommand
             return;
         }
 
-        stack.Apps.Remove(app);
-        stack.SaveConfig();
-        stack.SaveKustomization();
-        
-        var path = Path.Combine(stack.LocalDirectory.FullName, app.Name);
-        Directory.Delete(path, true);
+        app.Delete();
         HelperMethods.LogSuccess($"App '{app.Name}' deleted.");
     }
     
@@ -176,10 +176,8 @@ public class DeleteCommand : StackManagerCommand
             HelperMethods.LogWarning($"Image '{image}' not found in stack '{stack.Name}' (environment '{stack.Environment.Name}').");
             return;
         }
-
-        stack.Images.Remove(local);
-        stack.SaveConfig();
-        stack.SaveKustomization();
+        local.Delete();
+        
         HelperMethods.LogSuccess($"Image '{image}' deleted.");
     }
 }

@@ -1,6 +1,6 @@
 ﻿using YamlDotNet.Serialization;
 
-namespace Talaryon.StackManager;
+namespace Talaryon.StackManager.Models;
 
 public class Ingress
 {
@@ -8,6 +8,11 @@ public class Ingress
     [YamlMember(Alias = "kind")] public string Kind { get; set; } = "Ingress";
     [YamlMember(Alias = "metadata")] public IngressMetadata Metadata { get; set; } = new();
     [YamlMember(Alias = "spec")] public IngressSpec Spec { get; set; } = new();
+
+    public void SaveTo(string path)
+    {
+        File.WriteAllText(path, new Serializer().Serialize(this));
+    }
 }
 
 public class IngressMetadata

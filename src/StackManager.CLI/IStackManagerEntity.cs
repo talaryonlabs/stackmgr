@@ -1,7 +1,0 @@
-﻿namespace Talaryon.StackManager;
-
-public interface IStackManagerEntity
-{
-    DirectoryInfo LocalDirectory { get; }
-    string Name { get; }
-}

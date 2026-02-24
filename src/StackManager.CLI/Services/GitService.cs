@@ -64,7 +64,7 @@ public class GitService
         if (!apps.Exists || apps.GetDirectories(".git").Length == 0)
         {
             var clone = Process.Start(new ProcessStartInfo("git",
-                $"clone -v {_appRepository} {apps.FullName}")
+                $"clone -q {_appRepository} {apps.FullName}")
             {
                 RedirectStandardOutput = true
             });
@@ -72,15 +72,18 @@ public class GitService
         }
         else
         {
-            var pull = Process.Start(new ProcessStartInfo("git", "pull -v")
+            var pull = Process.Start(new ProcessStartInfo("git", "pull -q")
             {
                 WorkingDirectory = apps.FullName,
-                RedirectStandardOutput = true
             });
-            if(pull is not null) await pull.WaitForExitAsync();
+            if (pull is not null)
+            {
+                HelperMethods.LogInfo($"Pulling {branch}.");
+                await pull.WaitForExitAsync();
+            }
         }
         
-        var checkout = Process.Start(new ProcessStartInfo("git", $"checkout {branch}")
+        var checkout = Process.Start(new ProcessStartInfo("git", $"checkout {branch} -q")
         {
             WorkingDirectory = apps.FullName,
             RedirectStandardOutput = true
@@ -94,7 +97,7 @@ public class GitService
     {
         ApplyIgnoreFile();
         
-        var pull = Process.Start(new ProcessStartInfo("git", "pull -v")
+        var pull = Process.Start(new ProcessStartInfo("git", "pull -q")
         {
             WorkingDirectory = Environment.CurrentDirectory,
         });

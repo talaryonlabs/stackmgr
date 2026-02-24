@@ -26,20 +26,28 @@ public class GetCommand : StackManagerCommand
         var apps = new StackManagerCommand("apps", "List applications")
         {
             new EnvironmentOption(),
-            new StackArgument()
+            new StackOption()
         };
         apps.SetAction(Get);
+
+        var images = new StackManagerCommand("images", "List images")
+        {
+            new EnvironmentOption(),
+            new StackOption()
+        };
+        images.SetAction(Get);
 
         var ingresses = new StackManagerCommand("ingresses", "List ingresses")
         {
             new EnvironmentOption(),
-            new StackArgument()
+            new StackOption()
         };
         ingresses.SetAction(Get);
 
         Add(environments);
         Add(stacks);
         Add(apps);
+        Add(images);
         Add(ingresses);
     }
 
@@ -58,11 +66,14 @@ public class GetCommand : StackManagerCommand
             return;
         }
 
-        var stack = GetStack<StackArgument>(parseResult, env);
+        var stack = GetStack<StackOption>(parseResult, env);
         switch (parseResult.CommandResult.Command.Name)
         {
             case "apps":
                 GetApps(stack);
+                return;
+            case "images":
+                GetImages(stack);
                 return;
             case "ingresses":
                 GetIngresses(stack);
@@ -150,12 +161,21 @@ public class GetCommand : StackManagerCommand
         }
     }
     
+    private void GetImages(Stack stack)
+    {
+        HelperMethods.LogInfo($"Listing images for stack '{stack.Name}' ...");
+        foreach (var image in stack.Images)
+        {
+            HelperMethods.LogSuccess($"- {image.Name}: {image.Image}");
+        }
+    }
+    
     private void GetIngresses(Stack stack)
     {
         HelperMethods.LogInfo($"Ingresses in stack '{stack.Name}': ");
         foreach (var ingress in stack.Ingresses)
         {
-            HelperMethods.LogSuccess($"- {ingress.Host} [{ingress.Service ?? ingress.RedirectTo}]");
+            HelperMethods.LogSuccess($"- {ingress.Hostname} [{ingress.Application ?? ingress.Redirect}]");
         }
     }
 }

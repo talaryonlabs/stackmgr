@@ -21,6 +21,8 @@ public class ConfigureCommand : StackManagerCommand
             new ArgoRepositoryOption(),
             new AppRepositoryOption(),
             new VaultOption(),
+            new OutpostOption(),
+            new CertIssuerOption(),
             new RegistryCredentialsOption()
         };
         env.Aliases.Add("env");
@@ -138,6 +140,13 @@ public class ConfigureCommand : StackManagerCommand
         {
             env.Outpost = outpost;
             HelperMethods.LogSuccess($"Outpost '{outpost}' configured for environment '{env.Name}'.");
+        }
+        
+        var certIssuer = parseResult.GetValue<string, CertIssuerOption>();
+        if (!string.IsNullOrEmpty(certIssuer))
+        {
+            env.CertIssuer = certIssuer;
+            HelperMethods.LogSuccess($"CertIssuer '{certIssuer}' configured for environment '{env.Name}'.");
         }
         
         env.SaveConfig();

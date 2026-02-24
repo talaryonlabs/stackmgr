@@ -4,7 +4,12 @@ using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Types;
 
-public class Stack : IStackManagerEntity
+public interface IStackObject
+{
+    Stack Stack { get; }
+}
+
+public class Stack
 {
     public const string FileName = ".stack.yaml";
     
@@ -16,22 +21,39 @@ public class Stack : IStackManagerEntity
         var stack = new Deserializer().Deserialize<Stack>(File.ReadAllText(file));
 
         stack.Environment = env;
+        stack.ApplyParent();
 
         return stack;
     }
 
-    public static Stack New(StackEnvironment env, string name)
+    public static Stack Create(StackEnvironment env, string name)
     {
         var stack = new Stack
         {
             Name = name,
             Environment = env,
             Namespace = $"{env.Name.ToLower()}-{name.ToLower()}",
-            Images = [new() { Name = "nginx", Image = "docker.io/library/nginx:latest" }],
-            Apps = [new() { Name = "web", Template = "", Config = [] }],
-            Ingresses = []
+            Images = [],
+            Apps = [],
+            Ingresses = [],
+            Redirects = []
         };
+
+        if (stack.LocalFile.Exists)
+            throw new StackAlreadyExistsException(stack);
+        
+        if(!stack.LocalDirectory.Exists)
+            stack.LocalDirectory.Create();
+        
+        stack.SaveConfig();
+        stack.Build();
+        
         return stack;
+    }
+
+    public Task Build()
+    {
+        return new StackBuilder(this).Build();
     }
     
     public void SaveConfig()
@@ -40,22 +62,30 @@ public class Stack : IStackManagerEntity
         File.WriteAllText(file, new Serializer().Serialize(this));
     }
 
-    public void SaveKustomization()
+    private void ApplyParent()
     {
-        var kustomization = new Kustomization
+        lock (Ingresses)
         {
-            Namespace = Namespace,
-            Images = Images.Select(i => (KustomizationImage)i).ToList(),
-            Resources = LocalDirectory
-                .GetFiles("*.yaml", SearchOption.AllDirectories)
-                .Where(f => !new List<string> { Kustomization.FileName, FileName }.Contains(f.Name))
-                .Select(f => f.FullName.Replace(LocalDirectory.FullName, "").Replace("\\", "/")[1..])
-                .ToList()
-        };
-            
-        kustomization.Save(this);
+            Ingresses.ForEach(v => v.Stack = this);
+        }
+        
+        lock(Apps)
+        {
+            Apps.ForEach(v => v.Stack = this);
+        }
+
+        lock (Images)
+        {
+            Images.ForEach(v => v.Stack = this);
+        }
+
+        lock (Redirects)
+        {
+            Redirects.ForEach(v => v.Stack = this);
+        }
     }
     
+    [YamlIgnore] public FileInfo LocalFile => new(Path.Combine(LocalDirectory.FullName, FileName));
     [YamlIgnore] public DirectoryInfo LocalDirectory => new (Path.Combine(Environment.LocalDirectory.FullName, Name));
     [YamlIgnore] public required StackEnvironment Environment { get; set; }
     [YamlIgnore] public V1alpha1Application? Application { get; set; }
@@ -66,4 +96,5 @@ public class Stack : IStackManagerEntity
     [YamlMember(Alias = "images")] public List<StackImage> Images { get; init; } = [];
     [YamlMember(Alias = "apps")] public List<StackApp> Apps { get; init; } = [];
     [YamlMember(Alias = "ingresses")] public List<StackIngress> Ingresses { get; set; } = [];
+    [YamlMember(Alias = "redirects")] public List<StackRedirect> Redirects { get; set; } = [];
 }

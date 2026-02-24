@@ -3,7 +3,7 @@ using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Types;
 
-public class StackEnvironment : IStackManagerEntity
+public class StackEnvironment
 {
     public const string FileName = ".env.yaml";
     
@@ -17,15 +17,29 @@ public class StackEnvironment : IStackManagerEntity
         return !includeDeleted && env.IsDeleted ? throw new EnvironmentNotFoundException(name) : env;
     }
 
-    public static StackEnvironment New(string name)
+    public static StackEnvironment Create(string name)
     {
         var env = new StackEnvironment
         {
             Name = name,
             Vault = "",
             Outpost = "",
-            RegistryCredentials = "",
+            CertIssuer = "",
+            RegistryCredentials = ""
         };
+        
+        if (env.LocalFile.Exists)
+        {
+            throw new EnvironmentAlreadyExistsException(env);
+        }
+
+        if (!env.LocalDirectory.Exists)
+        {
+            env.LocalDirectory.Create();
+        }
+        
+        env.SaveConfig();
+        
         return env;
     }
     
@@ -35,12 +49,14 @@ public class StackEnvironment : IStackManagerEntity
         File.WriteAllText(file, new Serializer().Serialize(this));
     }
     
+    [YamlIgnore] public FileInfo LocalFile => new(Path.Combine(LocalDirectory.FullName, FileName));
     [YamlIgnore] public DirectoryInfo LocalDirectory => new(Path.Combine(Environment.CurrentDirectory, Name));
 
     [YamlMember(Alias = "isDeleted")] public bool IsDeleted { get; set; }
     [YamlMember(Alias = "name")] public required string Name { get; init; }
     [YamlMember(Alias = "vault")] public required string Vault { get; set; }
     [YamlMember(Alias = "outpost")] public required string Outpost { get; set; }
+    [YamlMember(Alias = "certIssuer")] public required string CertIssuer { get; set; }
     [YamlMember(Alias = "registryCredentials")] public required string RegistryCredentials { get; set; }
     [YamlMember(Alias = "rke2")] public StackEnvironmentRancher Rancher { get; set; } = new();
     [YamlMember(Alias = "argocd")] public StackEnvironmentArgo Argo { get; set; } = new();

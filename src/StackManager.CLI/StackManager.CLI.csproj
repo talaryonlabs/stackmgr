@@ -21,16 +21,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.2" />
-      <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
-      <PackageReference Include="System.CommandLine" Version="2.0.2" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+      <PackageReference Include="System.CommandLine" Version="2.0.3" />
+      <PackageReference Include="Talaryon.Toolbox" Version="1.0.0" />
       <PackageReference Include="YamlDotNet" Version="16.3.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Reference Include="Talaryon.Toolbox">
-        <HintPath>..\..\libs\Talaryon.Toolbox.dll</HintPath>
-      </Reference>
     </ItemGroup>
 
 </Project>

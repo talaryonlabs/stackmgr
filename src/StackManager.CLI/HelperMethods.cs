@@ -1,4 +1,6 @@
-﻿namespace Talaryon.StackManager;
+﻿using System.CommandLine;
+
+namespace Talaryon.StackManager;
 
 public static class HelperMethods
 {
@@ -70,4 +72,8 @@ public static class HelperMethods
         }
         PrintSeparator();
     }
+
+    public static string GetSymbolName<T>() where T : Symbol => Activator.CreateInstance<T>().Name;
+    
+    public static string HostToName(string host) => host.Replace(".", "-");
 }

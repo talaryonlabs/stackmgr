@@ -1,0 +1,111 @@
+﻿using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Models;
+using Talaryon.StackManager.Services;
+using Talaryon.StackManager.Types;
+using YamlDotNet.Serialization;
+
+namespace Talaryon.StackManager;
+
+public class StackBuilder(Stack stack)
+{
+    public async Task Build()
+    {
+        BuildRegistryCredentials();
+        BuildOutpostService();
+        BuildIngressFiles();
+        
+        if(stack.Redirects.Count != 0) 
+            await BuildRedirect();
+        
+        var kustomization = new Kustomization
+        {
+            Namespace = stack.Namespace,
+            Images = stack.Images.Select(i => (KustomizationImage)i).ToList(),
+            Resources = stack.LocalDirectory
+                .GetFiles("*.yaml", SearchOption.AllDirectories)
+                .Where(f => !new List<string> { Kustomization.FileName, Stack.FileName }.Contains(f.Name))
+                .Select(f => f.FullName.Replace(stack.LocalDirectory.FullName, "").Replace("\\", "/")[1..])
+                .ToList()
+        };
+            
+        kustomization.Save(stack);
+    }
+    
+    private async Task BuildRedirect()
+    {
+        var git = new GitService(stack.Environment);
+        var apps = await git.GetAppsAsync("prod");
+        var template = apps.FirstOrDefault(x => x.Name.Equals("redirect", StringComparison.CurrentCultureIgnoreCase));
+        if (template is null)
+        {
+            throw new TemplateNotFoundException("redirect");
+        }
+
+        var files = template.GetFileSystemInfos("*", SearchOption.AllDirectories);
+        
+        foreach (var v in stack.Redirects)
+        {
+            await v.Migrate(files);
+        }
+    }
+
+    private void BuildRegistryCredentials()
+    {
+        var path = Path.Combine(stack.LocalDirectory.FullName, "registry-credentials.yaml");
+        var file = new FileInfo(path);
+        
+        if (stack.Environment.RegistryCredentials is { Length: > 0 })
+        {
+            var credentials = new RegistryCredentials();
+            credentials.Metadata.Annotations.Path = stack.Environment.RegistryCredentials;
+            HelperMethods.LogInfo($"Using registry credentials '{stack.Environment.RegistryCredentials}' for stack '{stack.Name}'.");
+            File.WriteAllText(file.FullName, new Serializer().Serialize(credentials));
+        }
+        else if (file.Exists)
+        {
+            file.Delete();
+            HelperMethods.LogInfo($"Registry credentials for stack '{stack.Name}' are empty. {file.Name} removed.");
+        }
+    }
+    
+    private void BuildOutpostService()
+    {
+        if (stack.Environment.Outpost is not { Length: > 0 }) return;
+
+        var service = new Service
+        {
+            Metadata =
+            {
+                Name = $"{stack.Name}-auth"
+            },
+            Spec =
+            {
+                Type = "ExternalName",
+                ExternalName = stack.Environment.Outpost
+            }
+        };
+        
+        var path = Path.Combine(stack.LocalDirectory.FullName, "svc.outpost.yaml");
+        File.WriteAllText(path, new Serializer().Serialize(service));
+    }
+
+    private void BuildIngressFiles()
+    {
+        if (stack.Ingresses.Any(v => v.IsSecured) && stack.Environment.Outpost is not { Length: >0 })
+            throw new Exception("Some ingresses are secured, but there is no environment outpost defined.");
+
+        var folder = new DirectoryInfo(Path.Combine(stack.LocalDirectory.FullName, StackIngress.DirectoryName));
+        if (!folder.Exists) folder.Create();
+        
+        foreach (var ingress in stack.Ingresses)
+        {
+            ingress.ToIngress().SaveTo(ingress.LocalFile.FullName);
+            HelperMethods.LogInfo($"Apply ingress file '{ingress.LocalFile.FullName}' for host '{ingress.Hostname}'.");
+
+            if (!ingress.IsSecured) continue;
+            var authFile = ingress.LocalFile.FullName.Replace(".yaml", "-auth.yaml");
+            ingress.GetAuthIngress().SaveTo(authFile);
+            HelperMethods.LogInfo($"Apply ingress file '{authFile}' for host '{ingress.Hostname}'.");
+        }
+    }
+}

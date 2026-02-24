@@ -68,6 +68,12 @@ Now you can create a new app from a template:
 stackmgr new app teststack testapp --template <template-name>
 ```
 
+## Ingress Management
+### Create a new ingress
+```
+stackmgr new ingress --name testapp test.example.com
+```
+
 
 ## Build you stack
 After you have made changes to your stack, you have to build the kustomization.yaml file

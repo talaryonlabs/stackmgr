@@ -2,9 +2,9 @@
 
 namespace Talaryon.StackManager.Arguments;
 
-public class HostArgument : Argument<string>
+public class HostnameArgument : Argument<string>
 {
-    public HostArgument() : base("host")
+    public HostnameArgument() : base("hostname")
     {
         Description = "host name (e.g. example.com, sub.example.com)";
     }   

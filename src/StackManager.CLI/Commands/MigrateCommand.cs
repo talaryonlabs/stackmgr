@@ -13,8 +13,7 @@ public class MigrateCommand : StackManagerCommand
         {
             new EnvironmentOption(),
             new StackArgument(),
-            new AppArgument(),
-            new WithoutIngressOption()
+            new AppArgument()
         };
         app.SetAction(MigrateApp);
         
@@ -35,26 +34,24 @@ public class MigrateCommand : StackManagerCommand
     {
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackArgument>(parseResult, env);
-        var image = parseResult.GetRequiredValue<string, ImageArgument>();
+        var newImage = parseResult.GetRequiredValue<string, ImageArgument>();
         var name = parseResult.GetValue<string, NameOption>();
         
         if (string.IsNullOrEmpty(name))
         {
-            var parts = image.Split("/");
+            var parts = newImage.Split("/");
             name = parts[^1].Contains(':') ? parts[^1].Split(":")[0] : parts[^1];
         }
         
-        var local = stack.Images.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
-        if (local is null)
+        var image = stack.Images.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+        if (image is null)
         {
             HelperMethods.LogWarning($"Image '{name}' not found in stack '{stack.Name}' (environment '{env.Name}').");
             return;
         }
         
-        local.Image = image;
-        stack.SaveConfig();
-        stack.SaveKustomization();
-        HelperMethods.LogSuccess($"Image '{name}' migrated to '{image}'.");
+        image.Migrate(newImage);
+        HelperMethods.LogSuccess($"Image '{name}' migrated to '{newImage}'.");
     }
 
     private async Task MigrateApp(ParseResult parseResult)
@@ -63,17 +60,8 @@ public class MigrateCommand : StackManagerCommand
         var stack = GetStack<StackArgument>(parseResult, env);
         var app = GetApp<AppArgument>(parseResult, stack);
         
-        
         HelperMethods.LogInfo($"Migrating app '{app.Name}' from template '{app.Template}' ({stack.Name} in environment '{env.Name}')");
-
-        var appService = new AppService(stack, app);
-        await appService.Migrate(new AppServiceOptions()
-        {
-            WithoutIngress = parseResult.GetValue<bool, WithoutIngressOption>()
-        });
-        
-        stack.SaveKustomization();
-        
+        await app.Migrate();
         HelperMethods.LogSuccess("Migration done.");
     }
     
