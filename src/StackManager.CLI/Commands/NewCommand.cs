@@ -164,7 +164,7 @@ public class NewCommand : StackManagerCommand
         {
             var port = parseResult.GetRequiredValue<short, PortOption>();
 
-            StackIngress.Create(stack, hostname, app, port);
+            StackIngress.Create(stack, hostname, app, port, parseResult.GetValue<bool, SecuredOption>());
         }
         else if (redirect is { Length: > 0 })
         {

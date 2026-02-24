@@ -39,7 +39,9 @@ public class StackIngress : IStackObject
         {
             Hostname = hostname,
             Redirect = redirectTo,
-            Stack = stack
+            Stack = stack,
+            Application = $"redirect-{HelperMethods.HostToName(redirectTo)}",
+            Port = 80
         };
         
         stack.Ingresses.Add(ingress);
@@ -120,13 +122,18 @@ public class StackIngress : IStackObject
                         Host = Hostname,
                         Http = new()
                         {
-                            Paths = [
+                            Paths =
+                            [
                                 new()
                                 {
                                     Path = "/",
-                                    Backend = new ()
+                                    Backend = new()
                                     {
-                                        Service = new() { Name = Application, Port = new() { Number = Port } }
+                                        Service = new()
+                                        {
+                                            Name = Application,
+                                            Port = new() { Number = Port }
+                                        }
                                     }
                                 },
                             ]

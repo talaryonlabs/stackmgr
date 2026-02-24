@@ -13,9 +13,7 @@ public class StackBuilder(Stack stack)
         BuildRegistryCredentials();
         BuildOutpostService();
         BuildIngressFiles();
-        
-        if(stack.Redirects.Count != 0) 
-            await BuildRedirect();
+        await BuildRedirect();
         
         var kustomization = new Kustomization
         {
@@ -33,6 +31,8 @@ public class StackBuilder(Stack stack)
     
     private async Task BuildRedirect()
     {
+        if(stack.Redirects.Count == 0) return;
+        
         var git = new GitService(stack.Environment);
         var apps = await git.GetAppsAsync("prod");
         var template = apps.FirstOrDefault(x => x.Name.Equals("redirect", StringComparison.CurrentCultureIgnoreCase));
@@ -40,6 +40,9 @@ public class StackBuilder(Stack stack)
         {
             throw new TemplateNotFoundException("redirect");
         }
+        
+        var folder = new DirectoryInfo(Path.Combine(stack.LocalDirectory.FullName, StackRedirect.DirectoryName));
+        if (!folder.Exists) folder.Create();
 
         var files = template.GetFileSystemInfos("*", SearchOption.AllDirectories);
         
@@ -70,27 +73,35 @@ public class StackBuilder(Stack stack)
     
     private void BuildOutpostService()
     {
-        if (stack.Environment.Outpost is not { Length: > 0 }) return;
-
-        var service = new Service
-        {
-            Metadata =
-            {
-                Name = $"{stack.Name}-auth"
-            },
-            Spec =
-            {
-                Type = "ExternalName",
-                ExternalName = stack.Environment.Outpost
-            }
-        };
-        
         var path = Path.Combine(stack.LocalDirectory.FullName, "svc.outpost.yaml");
-        File.WriteAllText(path, new Serializer().Serialize(service));
+        if (stack.Environment.Outpost is { Length: > 0 } && stack.Ingresses.Any(v => v.IsSecured))
+        {
+            var service = new Service
+            {
+                Metadata =
+                {
+                    Name = $"{stack.Name}-auth"
+                },
+                Spec =
+                {
+                    Type = "ExternalName",
+                    ExternalName = stack.Environment.Outpost
+                }
+            };
+            File.WriteAllText(path, new Serializer().Serialize(service));
+            HelperMethods.LogInfo($"Apply outpost service '{path}'.");
+        }
+        else if (File.Exists(path))
+        {
+            File.Delete(path);
+            HelperMethods.LogInfo($"Delete outpost service '{path}'.");
+        }
     }
 
     private void BuildIngressFiles()
     {
+        if (stack.Ingresses.Count == 0) return;
+        
         if (stack.Ingresses.Any(v => v.IsSecured) && stack.Environment.Outpost is not { Length: >0 })
             throw new Exception("Some ingresses are secured, but there is no environment outpost defined.");
 

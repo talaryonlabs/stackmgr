@@ -30,6 +30,7 @@ if (!GitService.IsRepository)
 
 
 
+
 try
 {
     var parseResult = rootCommand.Parse("--help");
