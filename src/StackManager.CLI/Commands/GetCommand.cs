@@ -149,15 +149,10 @@ public class GetCommand : StackManagerCommand
 
     private void GetApps(Stack stack)
     {
-        var apps = stack.LocalDirectory
-            .GetDirectories("*", SearchOption.TopDirectoryOnly)
-            .Select(x => x.Name)
-            .ToList();
-
         HelperMethods.LogInfo($"Apps in stack '{stack.Name}': ");
-        foreach (var app in apps)
+        foreach (var app in stack.Apps)
         {
-            HelperMethods.LogSuccess($"- {app}");
+            HelperMethods.LogSuccess($"- {app.Name}");
         }
     }
     
