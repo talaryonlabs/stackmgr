@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -8,11 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Talaryon.Toolbox" Version="1.0.0" />
+      <ProjectReference Include="..\StackManager.Shared\StackManager.Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\StackManager.Shared\StackManager.Shared.csproj" />
+      <PackageReference Include="Talaryon.Toolbox.Hosting" Version="1.0.0" />
     </ItemGroup>
 
 </Project>

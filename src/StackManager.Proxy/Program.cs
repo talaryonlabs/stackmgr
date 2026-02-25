@@ -1,11 +1,12 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System.Net.Mime;
-using Microsoft.AspNetCore.Builder.Internal;
-using Microsoft.Extensions.Hosting;
 
-using Talaryon.Toolbox.API.Hosting;
+var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddControllers();
+
+var app = builder.Build();
 
 
 Console.WriteLine("Hello, World!");
+app.Run("http://+:5380");
