@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="src/StackManager.CLI/StackManager.CLI.csproj" />
+  <Project Path="src/StackManager.Proxy/StackManager.Proxy.csproj" />
+  <Project Path="src/StackManager.Shared/StackManager.Shared.csproj" />
 </Solution>

@@ -12,7 +12,7 @@ public class MigrateCommand : StackManagerCommand
         var app = new StackManagerCommand("app", "Migrate an app from a template")
         {
             new EnvironmentOption(),
-            new StackArgument(),
+            new StackOption(),
             new AppArgument()
         };
         app.SetAction(MigrateApp);
@@ -20,7 +20,7 @@ public class MigrateCommand : StackManagerCommand
         var image = new StackManagerCommand("image", "Migrate an image to a new version")
         {
             new EnvironmentOption(),
-            new StackArgument(),
+            new StackOption(),
             new ImageArgument(),
             new NameOption()
         };
@@ -33,7 +33,7 @@ public class MigrateCommand : StackManagerCommand
     private void MigrateImage(ParseResult parseResult)
     {
         var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackArgument>(parseResult, env);
+        var stack = GetStack<StackOption>(parseResult, env);
         var newImage = parseResult.GetRequiredValue<string, ImageArgument>();
         var name = parseResult.GetValue<string, NameOption>();
         
@@ -57,7 +57,7 @@ public class MigrateCommand : StackManagerCommand
     private async Task MigrateApp(ParseResult parseResult)
     {
         var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackArgument>(parseResult, env);
+        var stack = GetStack<StackOption>(parseResult, env);
         var app = GetApp<AppArgument>(parseResult, stack);
         
         HelperMethods.LogInfo($"Migrating app '{app.Name}' from template '{app.Template}' ({stack.Name} in environment '{env.Name}')");

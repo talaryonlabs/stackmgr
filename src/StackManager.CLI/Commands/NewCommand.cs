@@ -56,7 +56,8 @@ public class NewCommand : StackManagerCommand
             new AppOption(),
             new RedirectOption(),
             new AnnotationOption(),
-            new SecuredOption()
+            new SecuredOption(),
+            new GenerateOption()
         };
         ingress.SetAction(New);
         
@@ -153,6 +154,23 @@ public class NewCommand : StackManagerCommand
         var hostname = parseResult.GetRequiredValue<string, HostnameArgument>();
         var redirect = parseResult.GetValue<string, RedirectOption>();
         var app = parseResult.GetValue<string, AppOption>();
+        
+        if(parseResult.GetValue<bool, GenerateOption>())
+        {
+            if(hostname.StartsWith("."))
+                hostname = hostname[1..];
+
+            for (var i = 0; i < 10; i++)
+            {
+                var generated = $"{HelperMethods.GenerateRandomHostname()}-{stack.Name.ToLower()}.{hostname}";
+                if (stack.Ingresses.Count(v =>
+                        v.Hostname.Equals(generated, StringComparison.InvariantCultureIgnoreCase)) == 0)
+                {
+                    hostname = generated;
+                    break;
+                }
+            }
+        }
 
         if (app is not null && redirect is not null)
         {

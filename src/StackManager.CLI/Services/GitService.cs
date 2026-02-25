@@ -34,10 +34,10 @@ public class GitService
     {
         _env = env;
         _appRepository = LocalConfig.Get().AppRepository;
-        
-        if (_appRepository is null)
-            throw new Exception("App repository cannot be null");
-        
+
+        if (_appRepository is not { Length: > 0 })
+            throw new Exception("App repository cannot be null. Please check your configuration.");
+
     }
 
     private void ApplyIgnoreFile()

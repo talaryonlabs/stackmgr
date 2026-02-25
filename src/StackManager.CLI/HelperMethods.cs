@@ -76,4 +76,6 @@ public static class HelperMethods
     public static string GetSymbolName<T>() where T : Symbol => Activator.CreateInstance<T>().Name;
     
     public static string HostToName(string host) => host.Replace(".", "-");
+
+    public static string GenerateRandomHostname() => Guid.NewGuid().ToString("N")[..6];
 }
