@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using Talaryon.StackManager;
 using Talaryon.StackManager.Commands;
+using Talaryon.Toolbox.Api;
 
 var rootCommand = new RootCommand
 {
@@ -35,14 +36,19 @@ try
 {
     var parseResult = rootCommand.Parse("--help");
     if (args.Length > 0)
-    { 
-        parseResult = rootCommand.Parse(args);    
+    {
+        parseResult = rootCommand.Parse(args);
     }
+
     await parseResult.InvokeAsync(new InvocationConfiguration()
     {
         EnableDefaultExceptionHandler = false
-        
+
     });
+}
+catch (ApiError error)
+{
+    HelperMethods.LogError(error.Message);   
 }
 catch (Exception ex)
 {

@@ -27,7 +27,7 @@ public class SyncCommand : StackManagerCommand
 
         ns2.ToList().ForEach(v => Console.WriteLine(v.Name));
         
-        var ns1 = await proxy.CreateNamespaceAsync("my-test-namespace");
+        var ns1 = await proxy.DeleteNamespaceAsync("my-test-namespace");
         
         Console.WriteLine(ns1?.Name);
         
