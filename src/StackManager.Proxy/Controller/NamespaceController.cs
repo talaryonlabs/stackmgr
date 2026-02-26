@@ -7,8 +7,8 @@ using Talaryon.Toolbox.Api.Errors;
 namespace Talaryon.StackManager.Proxy.Controller;
 
 [Authorize]
-[Microsoft.AspNetCore.Mvc.Route("namespaces")]
 [ApiController]
+[Route("namespaces")]
 public class NamespaceController(IRancherService rancherService)
 {
     [HttpGet]

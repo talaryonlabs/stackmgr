@@ -2,7 +2,8 @@
 
 namespace StackManager.Shared.Models;
 
-[ApiEndpoint("namespaces")]
+[ApiEndpoint("namespaces", ApiEndpointType.Many | ApiEndpointType.Create)]
+[ApiEndpoint("namespaces/{name}", ApiEndpointType.Single | ApiEndpointType.Delete)]
 public class Namespace
 {
     public required string Name { get; set; }

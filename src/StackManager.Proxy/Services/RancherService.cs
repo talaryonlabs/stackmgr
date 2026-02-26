@@ -19,20 +19,20 @@ public class RancherOptions : TalaryonOptions<RancherOptions>
 {
     public string? Url { get; set; }
     public string? AccessToken { get; set; }
-    public string? ProjectId { get; set; }
+    public string? Project { get; set; }
 }
 
 public class RancherService : IRancherService
 {
     private readonly HttpClient _client;
-    private readonly string _projectId;
+    private readonly string _project;
 
     public RancherService(HttpClient client, IOptions<RancherOptions> options)
     {
         var url = options.Value.Url ?? throw new ArgumentNullException(nameof(options.Value.Url));
         var token = options.Value.AccessToken ?? throw new ArgumentNullException(nameof(options.Value.AccessToken));
         
-        _projectId = options.Value.ProjectId ?? throw new ArgumentNullException(nameof(options.Value.ProjectId));
+        _project = options.Value.Project ?? throw new ArgumentNullException(nameof(options.Value.Project));
         
         _client = client;
         _client.BaseAddress = new Uri(url);
@@ -42,11 +42,11 @@ public class RancherService : IRancherService
 
     public async ValueTask<IEnumerable<Namespace>> GetNamespacesAsync(CancellationToken cancellationToken)
     {
-        var response = await _client.GetAsync($"/v3/cluster/local/namespaces?projectId={_projectId}", cancellationToken);
+        var response = await _client.GetAsync($"/v3/cluster/local/namespaces?projectId={_project}", cancellationToken);
         if (!response.IsSuccessStatusCode) throw new Exception($"Failed to request namespaces. Response code: {response.StatusCode}");
         var list = await response.Content.ReadFromJsonAsync<RancherServiceNamespaceList>(cancellationToken);
 
-        return list?.Data.Select(v => new Namespace { Name = v.Name, Project = _projectId }) ?? [];
+        return list?.Data.Select(v => new Namespace { Name = v.Name, Project = _project }) ?? [];
     }
     
     public async ValueTask<Namespace> GetNamespaceAsync(string name, CancellationToken cancellationToken)
@@ -65,7 +65,7 @@ public class RancherService : IRancherService
         if (data is null) throw new InternalServerError($"Failed to get namespace '{name}'. (unknown error)");
         return new Namespace
         {
-            Name = data.Name, Project = _projectId
+            Name = data.Name, Project = _project
         };
     }
     
@@ -82,7 +82,7 @@ public class RancherService : IRancherService
         {
             { "containerDefaultResourceLimit", null },
             { "name", name },
-            { "projectId", _projectId },
+            { "projectId", _project },
             { "resourceQuota", null }
         };
         
@@ -96,7 +96,7 @@ public class RancherService : IRancherService
         if (data is null) throw new InternalServerError($"Failed to create namespace '{name}'. (unknown error)");
         return new Namespace
         {
-            Name = data.Name, Project = _projectId
+            Name = data.Name, Project = _project
         };
     }
 

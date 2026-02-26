@@ -83,9 +83,14 @@ builder.Services
     {
         options.Url = builder.Configuration["STACKMGR_RKE2_URL"] ?? throw new Exception("STACKMGR_RKE2_URL not set.");
         options.AccessToken = (builder.Configuration["STACKMGR_RKE2_ACCESS_TOKEN"] ?? throw new Exception("STACKMGR_RKE2_ACCESS_TOKEN not set.")).FromBase64String();
-        options.ProjectId = builder.Configuration["STACKMGR_RKE2_PROJECT"] ?? throw new Exception("STACKMGR_RKE2_PROJECT not set.");
+        options.Project = builder.Configuration["STACKMGR_RKE2_PROJECT"] ?? throw new Exception("STACKMGR_RKE2_PROJECT not set.");
     })
-    .AddSingleton<IArgoService, ArgoService>()
+    .AddSingleton<IArgoService, ArgoService, ArgoOptions>(options =>
+    {
+        options.Url = builder.Configuration["STACKMGR_ARGOCD_URL"] ?? throw new Exception("STACKMGR_ARGOCD_URL not set.");
+        options.AccessToken = (builder.Configuration["STACKMGR_ARGOCD_ACCESS_TOKEN"] ?? throw new Exception("STACKMGR_ARGOCD_ACCESS_TOKEN not set.")).FromBase64String();
+        options.Project = builder.Configuration["STACKMGR_ARGOCD_PROJECT"] ?? throw new Exception("STACKMGR_ARGOCD_PROJECT not set.");
+    })
     .AddHttpClient();
 
 var app = builder.Build();
