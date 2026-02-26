@@ -60,12 +60,23 @@ public class NewCommand : StackManagerCommand
             new GenerateOption()
         };
         ingress.SetAction(New);
+
+        var volume = new StackManagerCommand("volume", "Create a new volume")
+        {
+            new EnvironmentOption(),
+            new StackOption(),
+            new VolumeArgument(),
+            new SizeOption(),
+            new AccessModeOption(),
+        };
+        volume.SetAction(New);       
         
         Add(env);
         Add(stack);
         Add(app);
         Add(image);
         Add(ingress);
+        Add(volume);       
     }
 
     private async Task New(ParseResult parseResult)
@@ -91,6 +102,9 @@ public class NewCommand : StackManagerCommand
                 return;
             case "image":
                 NewImage(parseResult, stack);
+                return;
+            case "volume":
+                NewVolume(parseResult, stack);
                 return;
             case "ingress":
                 NewIngress(parseResult, stack);
@@ -147,6 +161,10 @@ public class NewCommand : StackManagerCommand
             parseResult.GetValue<string, NameOption>()
         );
         HelperMethods.LogSuccess($"Image '{image.Image}' with name '{image.Name}' added.");
+    }
+    
+    private async Task NewVolume(ParseResult parseResult, Stack stack)
+    {
     }
     
     private void NewIngress(ParseResult parseResult, Stack stack)

@@ -36,7 +36,8 @@ public class Stack
             Images = [],
             Apps = [],
             Ingresses = [],
-            Redirects = []
+            Redirects = [],
+            Volumes = [],
         };
 
         if (stack.LocalFile.Exists)
@@ -83,6 +84,11 @@ public class Stack
         {
             Redirects.ForEach(v => v.Stack = this);
         }
+        
+        lock(Volumes)
+        {
+            Volumes.ForEach(v => v.Stack = this);
+        }
     }
     
     [YamlIgnore] public FileInfo LocalFile => new(Path.Combine(LocalDirectory.FullName, FileName));
@@ -95,6 +101,7 @@ public class Stack
     [YamlMember(Alias = "enableAutoSync")] public bool EnableAutoSync { get; set; }
     [YamlMember(Alias = "images")] public List<StackImage> Images { get; init; } = [];
     [YamlMember(Alias = "apps")] public List<StackApp> Apps { get; init; } = [];
-    [YamlMember(Alias = "ingresses")] public List<StackIngress> Ingresses { get; set; } = [];
-    [YamlMember(Alias = "redirects")] public List<StackRedirect> Redirects { get; set; } = [];
+    [YamlMember(Alias = "ingresses")] public List<StackIngress> Ingresses { get; init; } = [];
+    [YamlMember(Alias = "redirects")] public List<StackRedirect> Redirects { get; init; } = [];
+    [YamlMember(Alias = "volumes")] public List<StackVolume> Volumes { get; init; } = [];
 }

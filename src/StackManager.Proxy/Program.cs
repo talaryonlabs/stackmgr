@@ -91,6 +91,15 @@ builder.Services
         options.AccessToken = (builder.Configuration["STACKMGR_ARGOCD_ACCESS_TOKEN"] ?? throw new Exception("STACKMGR_ARGOCD_ACCESS_TOKEN not set.")).FromBase64String();
         options.Project = builder.Configuration["STACKMGR_ARGOCD_PROJECT"] ?? throw new Exception("STACKMGR_ARGOCD_PROJECT not set.");
     })
+    .AddSingleton<ILonghornService, LonghornService, LonghornOptions>(options =>
+    {
+        options.Url = builder.Configuration["STACKMGR_LONGHORN_URL"] ?? throw new Exception("STACKMGR_LONGHORN_URL not set.");
+        
+        // var token = File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
+        // _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+        
+        options.AccessToken = (builder.Configuration["STACKMGR_LONGHORN_ACCESS_TOKEN"] ?? throw new Exception("STACKMGR_LONGHORN_ACCESS_TOKEN not set.")).FromBase64String();
+    })
     .AddHttpClient();
 
 var app = builder.Build();

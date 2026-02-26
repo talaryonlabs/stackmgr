@@ -37,6 +37,13 @@ public class GetCommand : StackManagerCommand
         };
         images.SetAction(Get);
 
+        var volumes = new StackManagerCommand("volumes", "List volumes")
+        {
+            new EnvironmentOption(),
+            new StackOption()
+        };
+        volumes.SetAction(Get);
+
         var ingresses = new StackManagerCommand("ingresses", "List ingresses")
         {
             new EnvironmentOption(),
@@ -48,6 +55,7 @@ public class GetCommand : StackManagerCommand
         Add(stacks);
         Add(apps);
         Add(images);
+        Add(volumes);
         Add(ingresses);
     }
 
@@ -77,6 +85,9 @@ public class GetCommand : StackManagerCommand
                 return;
             case "ingresses":
                 GetIngresses(stack);
+                return;
+            case "volumes":
+                GetVolumes(stack);
                 return;
         }
     }
@@ -162,6 +173,15 @@ public class GetCommand : StackManagerCommand
         foreach (var image in stack.Images)
         {
             HelperMethods.LogSuccess($"- {image.Name}: {image.Image}");
+        }
+    }
+    
+    private void GetVolumes(Stack stack)
+    {
+        HelperMethods.LogInfo($"Listing volumes for stack '{stack.Name}' ...");
+        foreach (var volume in stack.Volumes)
+        {
+            HelperMethods.LogSuccess($"- {volume.Name}: {volume.StorageSize} ({volume.AccessMode})");
         }
     }
     

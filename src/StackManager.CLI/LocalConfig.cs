@@ -37,6 +37,7 @@ public class LocalConfig
     
     [JsonPropertyName("app_repository")] public string AppRepository { get; set; } = "";
     [JsonPropertyName("environments")] public List<LocalConfigEnvironment> Environments { get; init; } = [];
+    [JsonPropertyName("remotes")] public List<LocalConfigRemote> Remotes { get; init; } = [];
 }
 
 public class LocalConfigEnvironment
@@ -44,4 +45,11 @@ public class LocalConfigEnvironment
     [JsonPropertyName("name")] public required string Name { get; init; } = "";
     [JsonPropertyName("rke2_access_token")] public string RancherAccessToken { get; set; } = "";
     [JsonPropertyName("argo_access_token")] public string ArgoAccessToken { get; set; } = "";
+}
+
+public class LocalConfigRemote
+{
+    [JsonPropertyName("name")] public required string Name { get; init; }
+    [JsonPropertyName("url")] public required string Url { get; init; }
+    [JsonPropertyName("access_token")] public required string AccessToken { get; set; }
 }

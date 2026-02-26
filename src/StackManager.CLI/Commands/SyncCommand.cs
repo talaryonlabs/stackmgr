@@ -32,6 +32,12 @@ public class SyncCommand : StackManagerCommand
             await SetAutoSyncSettingAsync(stack, argo);
             await argo.RefreshApplicationAsync(stack);
         }
+
+        if (ns is not null)
+        {
+            await SyncStackVolumes(stack);
+        }
+        
         argo.Dispose();
         rancher.Dispose();
     }
@@ -82,5 +88,10 @@ public class SyncCommand : StackManagerCommand
             await argo.SetAutoSyncAsync(stack, false);
         }
         HelperMethods.LogSuccess("Done.");
+    }
+
+    private async Task SyncStackVolumes(Stack stack)
+    {
+        
     }
 }

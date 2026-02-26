@@ -41,7 +41,15 @@ public class DeleteCommand : StackManagerCommand
         };
         image.Aliases.Add("i");
         image.SetAction(Delete);
-
+        
+        var volume = new StackManagerCommand("volume", "Delete a volume")
+        {
+            new EnvironmentOption(),
+            new StackOption(),
+            new VolumeArgument()
+        };
+        volume.SetAction(Delete);
+        
         var ingress = new StackManagerCommand("ingress", "Delete an ingress")
         {
             new EnvironmentOption(),

@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using StackManager.Shared.Models;
+using Talaryon.StackManager.Proxy.Models;
 using Talaryon.Toolbox;
 using Talaryon.Toolbox.Api.Errors;
 
@@ -13,6 +14,16 @@ public interface IRancherService
     ValueTask<Namespace> GetNamespaceAsync(string name, CancellationToken cancellationToken = default);
     ValueTask<Namespace> CreateNamespaceAsync(string name, CancellationToken cancellationToken = default);
     ValueTask<Namespace> DeleteNamespaceAsync(string name, CancellationToken cancellationToken = default);
+    
+    ValueTask<IEnumerable<PersistentVolumeClaim>> GetVolumeClaimsAsync(string ns, CancellationToken cancellationToken = default);
+    ValueTask<PersistentVolumeClaim> GetVolumeClaimAsync(string ns, string name, CancellationToken cancellationToken = default);
+    ValueTask<PersistentVolumeClaim> CreateVolumeClaimAsync(string ns, PersistentVolumeClaim claim, CancellationToken cancellationToken = default);
+    ValueTask<PersistentVolumeClaim> DeleteVolumeClaimAsync(string namespaceName, string claimName, CancellationToken cancellationToken = default);
+    
+    ValueTask<IEnumerable<PersistentVolume>> GetPersistentVolumesAsync(CancellationToken cancellationToken = default);
+    ValueTask<PersistentVolume> GetPersistentVolumeAsync(string name, CancellationToken cancellationToken = default);
+    ValueTask<PersistentVolume> CreatePersistentVolumeAsync(PersistentVolume pv, CancellationToken cancellationToken = default);
+    ValueTask<PersistentVolume> DeletePersistentVolumeAsync(string name, CancellationToken cancellationToken = default);
 }
 
 public class RancherOptions : TalaryonOptions<RancherOptions>
@@ -22,9 +33,9 @@ public class RancherOptions : TalaryonOptions<RancherOptions>
     public string? Project { get; set; }
 }
 
-public class RancherService : IRancherService
+public partial class RancherService : IRancherService
 {
-    private readonly HttpClient _client;
+    readonly HttpClient _client;
     private readonly string _project;
 
     public RancherService(HttpClient client, IOptions<RancherOptions> options)
@@ -44,7 +55,7 @@ public class RancherService : IRancherService
     {
         var response = await _client.GetAsync($"/v3/cluster/local/namespaces?projectId={_project}", cancellationToken);
         if (!response.IsSuccessStatusCode) throw new Exception($"Failed to request namespaces. Response code: {response.StatusCode}");
-        var list = await response.Content.ReadFromJsonAsync<RancherServiceNamespaceList>(cancellationToken);
+        var list = await response.Content.ReadFromJsonAsync<RancherNamespaceList>(cancellationToken);
 
         return list?.Data.Select(v => new Namespace { Name = v.Name, Project = _project }) ?? [];
     }
@@ -61,7 +72,7 @@ public class RancherService : IRancherService
             };
         }
 
-        var data = await response.Content.ReadFromJsonAsync<RancherServiceNamespace>(cancellationToken);
+        var data = await response.Content.ReadFromJsonAsync<RancherNamespace>(cancellationToken);
         if (data is null) throw new InternalServerError($"Failed to get namespace '{name}'. (unknown error)");
         return new Namespace
         {
@@ -92,7 +103,7 @@ public class RancherService : IRancherService
             throw new InternalServerError($"Failed to create namespace '{name}'. Response code: {response.StatusCode}");
         }
         
-        var data = await response.Content.ReadFromJsonAsync<RancherServiceNamespace>(cancellationToken);
+        var data = await response.Content.ReadFromJsonAsync<RancherNamespace>(cancellationToken);
         if (data is null) throw new InternalServerError($"Failed to create namespace '{name}'. (unknown error)");
         return new Namespace
         {
@@ -110,13 +121,13 @@ public class RancherService : IRancherService
             : ns;
     }
 
-    public class RancherServiceNamespace
+    private class RancherNamespace
     {
         [JsonPropertyName("name")] public required string Name { get; init; }
     }
 
-    public class RancherServiceNamespaceList
+    private class RancherNamespaceList
     {
-        [JsonPropertyName("data")] public List<RancherServiceNamespace> Data { get; init; } = [];
+        [JsonPropertyName("data")] public List<RancherNamespace> Data { get; init; } = [];
     }
 }
