@@ -1,7 +1,6 @@
 ﻿using System.CommandLine;
 using Talaryon.StackManager;
 using Talaryon.StackManager.Commands;
-using Talaryon.StackManager.Services;
 
 var rootCommand = new RootCommand
 {
@@ -13,20 +12,21 @@ var rootCommand = new RootCommand
     new SyncCommand(),
     new DefaultCommand(),
     new MigrateCommand(),
-    new BuildCommand()
+    new BuildCommand(),
+    new RemoteCommand()
 };
 
-if (!GitService.IsInstalled)
-{
-    HelperMethods.LogError("Git command not found. Please install Git and try again.");
-    return;
-}
-
-if (!GitService.IsRepository)
-{
-    HelperMethods.LogError("Not a git repository.");
-    return;
-}
+// if (!GitService.IsInstalled)
+// {
+//     HelperMethods.LogError("Git command not found. Please install Git and try again.");
+//     return;
+// }
+//
+// if (!GitService.IsRepository)
+// {
+//     HelperMethods.LogError("Not a git repository.");
+//     return;
+// }
 
 
 

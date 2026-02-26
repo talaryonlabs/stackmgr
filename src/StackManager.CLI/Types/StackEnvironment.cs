@@ -60,6 +60,7 @@ public class StackEnvironment
     [YamlMember(Alias = "registryCredentials")] public required string RegistryCredentials { get; set; }
     [YamlMember(Alias = "rke2")] public StackEnvironmentRancher Rancher { get; set; } = new();
     [YamlMember(Alias = "argocd")] public StackEnvironmentArgo Argo { get; set; } = new();
+    [YamlMember(Alias = "remote")] public string? Remote { get; set; }
 }
 
 public class StackEnvironmentRancher

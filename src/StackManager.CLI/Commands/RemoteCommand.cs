@@ -27,6 +27,11 @@ public class RemoteCommand : StackManagerCommand
         Add(remove);
         SetAction(_ =>
         {
+            if (LocalConfig.Get().Remotes.Count == 0)
+            {
+                HelperMethods.LogWarning("No remotes found.");
+                return;
+            }
             HelperMethods.LogInfo("Remotes:");
             foreach (var remote in LocalConfig.Get().Remotes)
             {
@@ -49,6 +54,7 @@ public class RemoteCommand : StackManagerCommand
         
         config.Remotes.Add(remote);
         config.Save();
+        HelperMethods.LogSuccess($"Remote {remote.Name} added.");
     }
 
     private void RemoveRemote(ParseResult obj)
@@ -63,5 +69,6 @@ public class RemoteCommand : StackManagerCommand
         
         config.Remotes.Remove(remote);
         config.Save();
+        HelperMethods.LogSuccess($"Remote {remote.Name} removed.");
     }
 }

@@ -23,7 +23,8 @@ public class ConfigureCommand : StackManagerCommand
             new VaultOption(),
             new OutpostOption(),
             new CertIssuerOption(),
-            new RegistryCredentialsOption()
+            new RegistryCredentialsOption(),
+            new RemoteOption()
         };
         env.Aliases.Add("env");
         env.SetAction(ConfigureEnvironment);
@@ -147,6 +148,13 @@ public class ConfigureCommand : StackManagerCommand
         {
             env.CertIssuer = certIssuer;
             HelperMethods.LogSuccess($"CertIssuer '{certIssuer}' configured for environment '{env.Name}'.");
+        }
+        
+        var remote = parseResult.GetValue<string, RemoteOption>();
+        if (!string.IsNullOrEmpty(remote))
+        {
+            env.Remote = remote;
+            HelperMethods.LogSuccess($"Remote '{remote}' configured for environment '{env.Name}'.");
         }
         
         env.SaveConfig();

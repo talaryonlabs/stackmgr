@@ -20,9 +20,23 @@ public class SyncCommand : StackManagerCommand
     {
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackArgument>(parseResult, env);
+
+        var proxy = new ProxyService(env);
+
+        var ns2 = await proxy.GetNamespacesAsync();
+
+        ns2.ToList().ForEach(v => Console.WriteLine(v.Name));
+        
+        var ns1 = await proxy.CreateNamespaceAsync("my-test-namespace");
+        
+        Console.WriteLine(ns1?.Name);
+        
+        return;
+        
         var argo = new ArgoService(env);
         var rancher = new RancherService(env);
-
+        
+        
         var ns = await GetOrCreateNamespaceAsync(stack, rancher);
         var application = await GetOrCreateApplicationAsync(stack, argo);
             
