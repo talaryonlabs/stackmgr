@@ -40,15 +40,9 @@ public class LogBuilder(string content) : ILogBuilderMessage, ILogBuilderQuestio
 
     void ITalaryonRunner.Run()
     {
-        if (_asError)
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-        }
-        
-        if(_asWarning)
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-        }
+        if (_asError) Console.ForegroundColor = ConsoleColor.Red;
+        if (_asWarning) Console.ForegroundColor = ConsoleColor.Yellow;
+        if (_asSuccess) Console.ForegroundColor = ConsoleColor.Green;
 
         if (_newLineBefore) Console.WriteLine();
         if (_noNewLineAfter)
