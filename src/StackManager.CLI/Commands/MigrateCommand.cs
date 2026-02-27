@@ -46,12 +46,12 @@ public class MigrateCommand : StackManagerCommand
         var image = stack.Images.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
         if (image is null)
         {
-            HelperMethods.LogWarning($"Image '{name}' not found in stack '{stack.Name}' (environment '{env.Name}').");
+            LogMessage.AsWarning($"Image '{name}' not found in stack '{stack.Name}' (environment '{env.Name}').");
             return;
         }
         
         image.Migrate(newImage);
-        HelperMethods.LogSuccess($"Image '{name}' migrated to '{newImage}'.");
+        LogMessage.AsSuccess($"Image '{name}' migrated to '{newImage}'.");
     }
 
     private async Task MigrateApp(ParseResult parseResult)
@@ -60,9 +60,9 @@ public class MigrateCommand : StackManagerCommand
         var stack = GetStack<StackOption>(parseResult, env);
         var app = GetApp<AppArgument>(parseResult, stack);
         
-        HelperMethods.LogInfo($"Migrating app '{app.Name}' from template '{app.Template}' ({stack.Name} in environment '{env.Name}')");
+        LogMessage.AsInfo($"Migrating app '{app.Name}' from template '{app.Template}' ({stack.Name} in environment '{env.Name}')");
         await app.Migrate();
-        HelperMethods.LogSuccess("Migration done.");
+        LogMessage.AsSuccess("Migration done.");
     }
     
 }

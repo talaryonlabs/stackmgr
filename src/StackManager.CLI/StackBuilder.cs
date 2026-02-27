@@ -61,13 +61,13 @@ public class StackBuilder(Stack stack)
         {
             var credentials = new RegistryCredentials();
             credentials.Metadata.Annotations.Path = stack.Environment.RegistryCredentials;
-            HelperMethods.LogInfo($"Using registry credentials '{stack.Environment.RegistryCredentials}' for stack '{stack.Name}'.");
+            LogMessage.AsInfo($"Using registry credentials '{stack.Environment.RegistryCredentials}' for stack '{stack.Name}'.");
             File.WriteAllText(file.FullName, new Serializer().Serialize(credentials));
         }
         else if (file.Exists)
         {
             file.Delete();
-            HelperMethods.LogInfo($"Registry credentials for stack '{stack.Name}' are empty. {file.Name} removed.");
+            LogMessage.AsInfo($"Registry credentials for stack '{stack.Name}' are empty. {file.Name} removed.");
         }
     }
     
@@ -89,12 +89,12 @@ public class StackBuilder(Stack stack)
                 }
             };
             File.WriteAllText(path, new Serializer().Serialize(service));
-            HelperMethods.LogInfo($"Apply outpost service '{path}'.");
+            LogMessage.AsInfo($"Apply outpost service '{path}'.");
         }
         else if (File.Exists(path))
         {
             File.Delete(path);
-            HelperMethods.LogInfo($"Delete outpost service '{path}'.");
+            LogMessage.AsInfo($"Delete outpost service '{path}'.");
         }
     }
 
@@ -111,7 +111,7 @@ public class StackBuilder(Stack stack)
         foreach (var ingress in stack.Ingresses)
         {
             ingress.ToIngress().SaveTo(ingress.LocalFile.FullName);
-            HelperMethods.LogInfo($"Apply ingress file '{ingress.LocalFile.FullName}' for host '{ingress.Hostname}'.");
+            LogMessage.AsInfo($"Apply ingress file '{ingress.LocalFile.FullName}' for host '{ingress.Hostname}'.");
 
             var authFile = ingress.LocalFile.FullName.Replace(".yaml", "-auth.yaml");
             if (!ingress.IsSecured)
@@ -121,7 +121,7 @@ public class StackBuilder(Stack stack)
             }
             
             ingress.GetAuthIngress().SaveTo(authFile);
-            HelperMethods.LogInfo($"Apply ingress file '{authFile}' for host '{ingress.Hostname}'.");
+            LogMessage.AsInfo($"Apply ingress file '{authFile}' for host '{ingress.Hostname}'.");
         }
     }
 }

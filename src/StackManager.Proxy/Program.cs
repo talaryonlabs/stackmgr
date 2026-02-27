@@ -1,11 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System.Net.Http.Headers;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.ResponseCompression;
-using StackManager.Shared;
-using Talaryon.StackManager.Proxy;
 using Talaryon.StackManager.Proxy.Services;
 using Talaryon.Toolbox.Extensions;
 using Talaryon.Toolbox.Hosting.Api;

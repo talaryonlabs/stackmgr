@@ -41,7 +41,7 @@ public class StackRedirect : IStackObject
                 .Replace("{{stack-name}}", Stack.Name);
             
             await File.WriteAllTextAsync(Path.Combine(LocalDirectory.FullName, file.Name), content);
-            HelperMethods.LogInfo($"Applied '{file.Name}'.");
+            LogMessage.AsInfo($"Applied '{file.Name}'.");
         }
     }
     

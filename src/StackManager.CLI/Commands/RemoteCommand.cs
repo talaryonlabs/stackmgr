@@ -29,13 +29,13 @@ public class RemoteCommand : StackManagerCommand
         {
             if (LocalConfig.Get().Remotes.Count == 0)
             {
-                HelperMethods.LogWarning("No remotes found.");
+                LogMessage.AsWarning("No remotes found.");
                 return;
             }
-            HelperMethods.LogInfo("Remotes:");
+            LogMessage.AsInfo("Remotes:");
             foreach (var remote in LocalConfig.Get().Remotes)
             {
-                HelperMethods.LogSuccess($"- {remote.Name}: {remote.Url}");
+                LogMessage.AsSuccess($"- {remote.Name}: {remote.Url}");
             }
         });
     }
@@ -54,7 +54,7 @@ public class RemoteCommand : StackManagerCommand
         
         config.Remotes.Add(remote);
         config.Save();
-        HelperMethods.LogSuccess($"Remote {remote.Name} added.");
+        LogMessage.AsSuccess($"Remote {remote.Name} added.");
     }
 
     private void RemoveRemote(ParseResult obj)
@@ -63,12 +63,12 @@ public class RemoteCommand : StackManagerCommand
         var remote = config.Remotes.FirstOrDefault(v => v.Name == obj.GetRequiredValue<string, NameArgument>());
         if (remote is null)
         {
-            HelperMethods.LogError($"Remote {obj.GetRequiredValue<string, NameArgument>()} not found.");
+            LogMessage.AsError($"Remote {obj.GetRequiredValue<string, NameArgument>()} not found.");
             return;
         }
         
         config.Remotes.Remove(remote);
         config.Save();
-        HelperMethods.LogSuccess($"Remote {remote.Name} removed.");
+        LogMessage.AsSuccess($"Remote {remote.Name} removed.");
     }
 }

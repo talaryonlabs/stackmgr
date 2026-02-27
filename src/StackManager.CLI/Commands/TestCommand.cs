@@ -14,15 +14,15 @@ public class TestCommand : StackManagerCommand
             using var argo = new ArgoService(env);
             using var rancher = new RancherService(env);
             
-            HelperMethods.LogInfo($"Testing environment '{env.Name}' ...");
+            LogMessage.AsInfo($"Testing environment '{env.Name}' ...");
             
-            HelperMethods.LogInfo(".. Testing RKE2 connection ...");
+            LogMessage.AsInfo(".. Testing RKE2 connection ...");
             await rancher.TestAsync();
-            HelperMethods.LogSuccess("Done.");
+            LogMessage.AsSuccess("Done.");
             
-            HelperMethods.LogInfo(".. Testing ArgoCD connection ...");
+            LogMessage.AsInfo(".. Testing ArgoCD connection ...");
             await argo.TestAsync();
-            HelperMethods.LogSuccess("Done.");
+            LogMessage.AsSuccess("Done.");
         });
     }
 }

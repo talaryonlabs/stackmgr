@@ -114,21 +114,21 @@ public class NewCommand : StackManagerCommand
 
     private void NewEnvironment(ParseResult parseResult)
     {
-        var name = GetEnvironmentName<EnvironmentArgument>(parseResult);
+        var name = GetName<EnvironmentArgument>(parseResult);
         var env = StackEnvironment.Create(name);
-        HelperMethods.LogSuccess($"Environment '{env.Name}' initialized.");
+        LogMessage.AsSuccess($"Environment '{env.Name}' initialized.");
     }
     
     private void NewStack(ParseResult parseResult, StackEnvironment env)
     {
-        var name = GetStackName<StackArgument>(parseResult);
+        var name = GetName<StackArgument>(parseResult);
         var stack = Stack.Create(env, name);
-        HelperMethods.LogSuccess($"Stack '{stack.Name}' created.");
+        LogMessage.AsSuccess($"Stack '{stack.Name}' created.");
     }
 
     private async Task NewApp(ParseResult parseResult, Stack stack)
     {
-        var name = GetAppName<AppArgument>(parseResult);
+        var name = GetName<AppArgument>(parseResult);
         var template = parseResult.GetValue<string, TemplateOption>();
         var branch = parseResult.GetValue<bool, DevOption>() ? "dev" : "prod";
 
@@ -144,12 +144,12 @@ public class NewCommand : StackManagerCommand
             Config = parseResult.GetValue<string[], ConfigOption>() ?? []
         };
         var app = StackApp.Create(stack, name, options);
-        HelperMethods.LogSuccess($"App '{app.Name}' created.");
+        LogMessage.AsSuccess($"App '{app.Name}' created.");
         
         if (template is not null)
         {
             await app.Migrate();
-            HelperMethods.LogSuccess("Migration done.");
+            LogMessage.AsSuccess("Migration done.");
         }
     }
     
@@ -157,19 +157,43 @@ public class NewCommand : StackManagerCommand
     {
         var image = StackImage.Create(
             stack, 
-            parseResult.GetRequiredValue<string, ImageArgument>(),
+            GetName<ImageArgument>(parseResult),
             parseResult.GetValue<string, NameOption>()
         );
-        HelperMethods.LogSuccess($"Image '{image.Image}' with name '{image.Name}' added.");
+        LogMessage.AsSuccess($"Image '{image.Image}' with name '{image.Name}' added.");
     }
     
-    private async Task NewVolume(ParseResult parseResult, Stack stack)
+    private void NewVolume(ParseResult parseResult, Stack stack)
     {
+        var accessMode = (parseResult.GetValue<string, AccessModeOption>() ?? "ReadWriteOnce").Trim().ToLower() switch
+        {
+            "rwo" => "ReadWriteOnce",
+            "readwrite" => "ReadWriteOnce",
+            "readwriteone" => "ReadWriteOnce",
+            "readwriteonce" => "ReadWriteOnce",
+            "rwx" => "ReadWriteMany",
+            "readwritemany" => "ReadWriteMany",
+            _ => throw new ArgumentException("Invalid access mode. (ReadWriteOnce, ReadWriteMany)")
+        };
+        
+        var size = parseResult.GetValue<string, SizeOption>() ?? "1Gi";
+        if (long.TryParse(size, out var parsedSize))
+        {
+            size = $"{parsedSize}Gi";       
+        }
+        
+        var volume = StackVolume.Create(
+            stack, 
+            GetName<VolumeArgument>(parseResult),
+            size,
+            accessMode
+        );
+        LogMessage.AsSuccess($"Volume '{volume.Name}' created.");       
     }
     
     private void NewIngress(ParseResult parseResult, Stack stack)
     {
-        var hostname = parseResult.GetRequiredValue<string, HostnameArgument>();
+        var hostname = GetName<HostnameArgument>(parseResult);
         var redirect = parseResult.GetValue<string, RedirectOption>();
         var app = parseResult.GetValue<string, AppOption>();
         
@@ -192,7 +216,7 @@ public class NewCommand : StackManagerCommand
 
         if (app is not null && redirect is not null)
         {
-            HelperMethods.LogWarning(
+            LogMessage.AsWarning(
                 $"Both {HelperMethods.GetSymbolName<AppOption>()} and {HelperMethods.GetSymbolName<RedirectOption>()} specified. {HelperMethods.GetSymbolName<RedirectOption>()} will be ignored.");
         }
         
@@ -212,6 +236,6 @@ public class NewCommand : StackManagerCommand
             throw new Exception($"Either {HelperMethods.GetSymbolName<AppOption>()} or {HelperMethods.GetSymbolName<RedirectOption>()} must be specified.");
         }
 
-        HelperMethods.LogSuccess($"Ingress '{hostname}' created.");
+        LogMessage.AsSuccess($"Ingress '{hostname}' created.");
     }
 }

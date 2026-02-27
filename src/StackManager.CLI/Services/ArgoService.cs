@@ -63,7 +63,7 @@ public class ArgoService : IDisposable
         
         if (!response.IsSuccessStatusCode)
         {
-            HelperMethods.LogError($"Failed to get applications. Response code: {response.StatusCode}");
+            LogMessage.AsError($"Failed to get applications. Response code: {response.StatusCode}");
             return [];
         }
         

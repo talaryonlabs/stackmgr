@@ -1,7 +1,10 @@
 ﻿using System.Text.Json.Serialization;
+using Talaryon.Toolbox.Api;
 
 namespace StackManager.Shared.Models;
 
+[ApiEndpoint("volumes", ApiEndpointType.Create)]
+[ApiEndpoint("volumes/{name}", ApiEndpointType.Single | ApiEndpointType.Delete)]
 public class Volume
 {
     [JsonPropertyName("name")] public required string Name { get; init; }
@@ -13,3 +16,6 @@ public class Volume
     [JsonPropertyName("labels")] public Dictionary<string, string> Labels { get; init; } = [];
     [JsonPropertyName("reuseVolume")] public bool ReuseVolume { get; init; }
 }
+
+[ApiEndpoint("volumes")]
+public class VolumeList : List<Volume>;

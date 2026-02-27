@@ -78,7 +78,7 @@ public class GitService
             });
             if (pull is not null)
             {
-                HelperMethods.LogInfo($"Pulling {branch}.");
+                LogMessage.AsInfo($"Pulling {branch}.");
                 await pull.WaitForExitAsync();
             }
         }

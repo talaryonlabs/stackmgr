@@ -62,6 +62,7 @@ public class DeleteCommand : StackManagerCommand
         Add(stack);
         Add(app);
         Add(image);
+        Add(volume);       
         Add(ingress);
     }
     
@@ -93,45 +94,67 @@ public class DeleteCommand : StackManagerCommand
             case "ingress":
                 DeleteIngress(parseResult, stack);
                 return;
+            case "volume":
+                DeleteVolume(parseResult, stack);
+                return;
         }
+    }
+
+    private void DeleteVolume(ParseResult parseResult, Stack stack)
+    {
+        var volume = GetVolume<VolumeArgument>(parseResult, stack);
+        LogBuilder.Question($"Do you really want to delete volume '{volume.Name}'?")
+            .AsYesNo()
+            .AsWarning()
+            .NoNewLineAfter()
+            .WaitFor(result =>
+            {
+                if (!result) return LogBuilder.Message("Aborted.");
+                volume.Delete();
+                return LogBuilder.Message("Done.").AsSuccess();
+            })
+            .Run();
     }
 
     private void DeleteIngress(ParseResult parseResult, Stack stack)
     {
-        var hostname = parseResult.GetRequiredValue<string, HostnameArgument>();
-        var ingress = stack.Ingresses.FirstOrDefault(x => x.Hostname.Equals(hostname, StringComparison.CurrentCultureIgnoreCase));
-        if (ingress is null)
-        {
-            throw new Exception($"Ingress with hostname '{hostname}' does not exist in stack '{stack.Name}'.");
-        }
-        ingress.Delete();
-
+        var ingress = GetIngress<HostnameArgument>(parseResult, stack);
+        LogBuilder.Question($"Do you really want to delete ingress '{ingress.Hostname}'?")
+            .AsYesNo()
+            .AsWarning()
+            .NoNewLineAfter()
+            .WaitFor(result =>
+            {
+                if (!result) return LogBuilder.Message("Aborted.");
+                ingress.Delete();
+                return LogBuilder.Message("Done.").AsSuccess();
+            })
+            .Run();
+        
         stack
             .Redirects
             .Where(v => !stack.Ingresses.Any(x =>
                 (x.Redirect ?? "").Equals(v.Hostname, StringComparison.InvariantCultureIgnoreCase)))
             .ToList()
             .ForEach(v => v.Delete());
-        
-        HelperMethods.LogSuccess($"Ingress '{hostname}' deleted.");
     }
 
     private void DeleteEnvironment(ParseResult parseResult)
     {
         var env = GetEnvironment<EnvironmentArgument>(parseResult);
-        HelperMethods.LogWarning("ATTENTION: This only marks the environment 'deleted' in the config file.");
-        HelperMethods.LogWarning("It does not delete the environment from Rancher/ArgoCD nor the local directory.");
-        HelperMethods.LogWarning("");
+        LogMessage.AsWarning("ATTENTION: This only marks the environment 'deleted' in the config file.");
+        LogMessage.AsWarning("It does not delete the environment from Rancher/ArgoCD nor the local directory.");
+        LogMessage.AsWarning("");
         
         if (!HelperMethods.ConfirmWarning($"Are you sure you want to delete environment '{env.Name}'?"))
         {
-            HelperMethods.LogInfo("Aborted.");
+            LogMessage.AsInfo("Aborted.");
             return;
         }
-        HelperMethods.LogInfo($"Removing environment '{env.Name}'.");
+        LogMessage.AsInfo($"Removing environment '{env.Name}'.");
         env.IsDeleted = true;
         env.SaveConfig();
-        HelperMethods.LogSuccess("Success.");
+        LogMessage.AsSuccess("Success.");
     }
     
     private async Task DeleteStack(ParseResult parseResult, StackEnvironment env)
@@ -140,52 +163,55 @@ public class DeleteCommand : StackManagerCommand
         using var argo = new ArgoService(env);
         using var rancher = new RancherService(env);
         
-        HelperMethods.LogWarning("ATTENTION: This will also delete all applications in the stack.");
+        LogMessage.AsWarning("ATTENTION: This will also delete all applications in the stack.");
         if (!HelperMethods.ConfirmWarning($"Are you sure you want to delete stack '{stack.Name}' in environment '{env.Name}'?"))
         {
-            HelperMethods.LogInfo("Aborted.");
+            LogMessage.AsInfo("Aborted.");
             return;
         }
-        HelperMethods.LogWarning($"Deleting stack '{stack.Name}' in environment '{env.Name}':");
+        LogMessage.AsWarning($"Deleting stack '{stack.Name}' in environment '{env.Name}':");
 
-        HelperMethods.LogInfo(".. Deleting ArgoCD application ...");
+        LogMessage.AsInfo(".. Deleting ArgoCD application ...");
         await argo.DeleteApplicationAsync(stack);
         
-        HelperMethods.LogInfo(".. Deleting Rancher namespace ...");
+        LogMessage.AsInfo(".. Deleting Rancher namespace ...");
         await rancher.DeleteNamespaceAsync(stack);
         
-        HelperMethods.LogInfo(".. Deleting local directory ...");
+        LogMessage.AsInfo(".. Deleting local directory ...");
         stack.LocalDirectory.Delete(true);
         
-        HelperMethods.LogSuccess("Done.");
+        LogMessage.AsSuccess("Done.");
     }
 
     private void DeleteApp(ParseResult parseResult, Stack stack)
     {
         var app = GetApp<AppArgument>(parseResult, stack);
-
-        if (!HelperMethods.ConfirmWarning($"Are you sure you want to delete app '{app.Name}' in stack '{stack.Name}'? ({stack.Environment.Name})"))
-        {
-            HelperMethods.LogInfo("Aborted.");
-            return;
-        }
-
-        app.Delete();
-        HelperMethods.LogSuccess($"App '{app.Name}' deleted.");
+        LogBuilder.Question($"Are you sure you want to delete app '{app.Name}' in stack '{stack.Name}'? ({stack.Environment.Name})")
+            .AsYesNo()
+            .AsWarning()
+            .NoNewLineAfter()
+            .WaitFor(result =>
+            {
+                if (!result) return LogBuilder.Message("Aborted.");
+                app.Delete();
+                return LogBuilder.Message("Done.").AsSuccess();
+            })
+            .Run();
     }
     
     private void DeleteImage(ParseResult parseResult, Stack stack)
     {
-        var image = parseResult.GetRequiredValue<string, ImageArgument>();
-        
-        var local = stack.Images.FirstOrDefault(x => x.Name.Equals(image, StringComparison.CurrentCultureIgnoreCase));
-        if (local is null)
-        {
-            HelperMethods.LogWarning($"Image '{image}' not found in stack '{stack.Name}' (environment '{stack.Environment.Name}').");
-            return;
-        }
-        local.Delete();
-        
-        HelperMethods.LogSuccess($"Image '{image}' deleted.");
+        var image = GetImage<ImageArgument>(parseResult, stack);
+        LogBuilder.Question($"Are you sure you want to delete image '{image.Name}' in stack '{stack.Name}'? ({stack.Environment.Name})")
+            .AsYesNo()
+            .AsWarning()
+            .NoNewLineAfter()
+            .WaitFor(result =>
+            {
+                if (!result) return LogBuilder.Message("Aborted.");
+                image.Delete();
+                return LogBuilder.Message("Done.").AsSuccess();
+            })
+            .Run();
     }
 }

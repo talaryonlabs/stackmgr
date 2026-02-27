@@ -4,31 +4,7 @@ namespace Talaryon.StackManager;
 
 public static class HelperMethods
 {
-    public static void LogError(string message)
-    {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine(message);
-        Console.ResetColor();
-    }
     
-    public static void LogSuccess(string message)
-    {
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine(message);
-        Console.ResetColor();
-    }
-    
-    public static void LogWarning(string message)
-    {
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine(message);
-        Console.ResetColor();
-    }
-    
-    public static void LogInfo(string message)
-    {
-        Console.WriteLine(message);
-    }
 
     public static bool ConfirmWarning(string question)
     {

@@ -112,7 +112,7 @@ public class StackApp : IStackObject
         if(errors.Count == 0) return;
         foreach (var error in errors)
         {
-            HelperMethods.LogError($"- {error.Value}");
+            LogMessage.AsError($"- {error.Value}");
         }
         throw new Exception("Aborted.");
     }
@@ -140,20 +140,20 @@ public class StackApp : IStackObject
         }
         else
         {
-            HelperMethods.LogInfo("The following files will be migrated:");
+            LogMessage.AsInfo("The following files will be migrated:");
             foreach (var existing in files.Where(v => File.Exists(Path.Combine(LocalDirectory.FullName, v.Name))).ToList())
             {
-                HelperMethods.LogWarning($"- {existing.Name} (replace)");
+                LogMessage.AsWarning($"- {existing.Name} (replace)");
             }
         
             foreach (var add in files.Where(v => !File.Exists(Path.Combine(LocalDirectory.FullName, v.Name))).ToList())
             {
-                HelperMethods.LogSuccess($"- {add.Name} (add)");
+                LogMessage.AsSuccess($"- {add.Name} (add)");
             }
 
             if (!HelperMethods.ConfirmWarning("Do you want to migrate all files?"))
             {
-                HelperMethods.LogInfo("Aborted.");
+                LogMessage.AsInfo("Aborted.");
                 return;
             }
         }
@@ -174,7 +174,7 @@ public class StackApp : IStackObject
             content = Config.Aggregate(content, (current, config) => current.Replace("{{config." + config.Name + "}}", config.Value));
 
             await File.WriteAllTextAsync(Path.Combine(LocalDirectory.FullName, file.Name), content);
-            HelperMethods.LogInfo($"Applied '{file.Name}'.");
+            LogMessage.AsInfo($"Applied '{file.Name}'.");
         }
     }
     

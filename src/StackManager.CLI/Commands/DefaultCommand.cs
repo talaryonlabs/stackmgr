@@ -22,8 +22,8 @@ public class DefaultCommand : StackManagerCommand
         
         SetAction(v =>
         {
-            HelperMethods.LogInfo($"Default environment: {Environment.GetEnvironmentVariable("STACKMGR_ENV", EnvironmentVariableTarget.User)}");
-            HelperMethods.LogInfo($"Default stack: {Environment.GetEnvironmentVariable("STACKMGR_STACK", EnvironmentVariableTarget.User)}");
+            LogMessage.AsInfo($"Default environment: {Environment.GetEnvironmentVariable("STACKMGR_ENV", EnvironmentVariableTarget.User)}");
+            LogMessage.AsInfo($"Default stack: {Environment.GetEnvironmentVariable("STACKMGR_STACK", EnvironmentVariableTarget.User)}");
         });
         Add(env);
         Add(stack);
@@ -33,15 +33,15 @@ public class DefaultCommand : StackManagerCommand
     {
         var env = parseResult.GetRequiredValue<string, EnvironmentArgument>();
         Environment.SetEnvironmentVariable("STACKMGR_ENV", env, EnvironmentVariableTarget.User);
-        HelperMethods.LogSuccess($"Environment set to '{env}'.");
-        HelperMethods.LogInfo("Use --environment,--env to override this value per command.");
+        LogMessage.AsSuccess($"Environment set to '{env}'.");
+        LogMessage.AsInfo("Use --environment,--env to override this value per command.");
     }
     
     private void SetStack(ParseResult parseResult)
     {
         var stack = parseResult.GetRequiredValue<string, StackArgument>();
         Environment.SetEnvironmentVariable("STACKMGR_STACK", stack, EnvironmentVariableTarget.User);
-        HelperMethods.LogSuccess($"Default stack set to '{stack}'.");
-        HelperMethods.LogInfo("Use --stack to override this value per command.");
+        LogMessage.AsSuccess($"Default stack set to '{stack}'.");
+        LogMessage.AsInfo("Use --stack to override this value per command.");
     }
 }

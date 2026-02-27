@@ -106,26 +106,26 @@ public class GetCommand : StackManagerCommand
             .Select(v => StackEnvironment.Load(v.Name, true))
             .ToList();
 
-        HelperMethods.LogInfo("Environments: ");
+        LogMessage.AsInfo("Environments: ");
         foreach (var env in environments.Where(x => !x.IsDeleted))
         {
-            HelperMethods.LogSuccess($"- {env.Name}");
+            LogMessage.AsSuccess($"- {env.Name}");
         }
 
         foreach (var env in uninitialized)
         {
-            HelperMethods.LogWarning($"- {env.Name} (not initialized)");
+            LogMessage.AsWarning($"- {env.Name} (not initialized)");
         }
         
         foreach (var env in environments.Where(x => x.IsDeleted))
         {
-            HelperMethods.LogError($"- {env.Name} (deleted)");
+            LogMessage.AsError($"- {env.Name} (deleted)");
         }
     }
 
     private async Task GetStacks(StackEnvironment env)
     {
-        HelperMethods.LogInfo($"Stacks in environment '{env.Name}': ");
+        LogMessage.AsInfo($"Stacks in environment '{env.Name}': ");
 
         var directories = env.LocalDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
         using var rancher = new RancherService(env);
@@ -160,37 +160,37 @@ public class GetCommand : StackManagerCommand
 
     private void GetApps(Stack stack)
     {
-        HelperMethods.LogInfo($"Apps in stack '{stack.Name}': ");
+        LogMessage.AsInfo($"Apps in stack '{stack.Name}': ");
         foreach (var app in stack.Apps)
         {
-            HelperMethods.LogSuccess($"- {app.Name}");
+            LogMessage.AsSuccess($"- {app.Name}");
         }
     }
     
     private void GetImages(Stack stack)
     {
-        HelperMethods.LogInfo($"Listing images for stack '{stack.Name}' ...");
+        LogMessage.AsInfo($"Listing images for stack '{stack.Name}' ...");
         foreach (var image in stack.Images)
         {
-            HelperMethods.LogSuccess($"- {image.Name}: {image.Image}");
+            LogMessage.AsSuccess($"- {image.Name}: {image.Image}");
         }
     }
     
     private void GetVolumes(Stack stack)
     {
-        HelperMethods.LogInfo($"Listing volumes for stack '{stack.Name}' ...");
+        LogMessage.AsInfo($"Listing volumes for stack '{stack.Name}' ...");
         foreach (var volume in stack.Volumes)
         {
-            HelperMethods.LogSuccess($"- {volume.Name}: {volume.StorageSize} ({volume.AccessMode})");
+            LogMessage.AsSuccess($"- {volume.Name}: {volume.StorageSize} ({volume.AccessMode})");
         }
     }
     
     private void GetIngresses(Stack stack)
     {
-        HelperMethods.LogInfo($"Ingresses in stack '{stack.Name}': ");
+        LogMessage.AsInfo($"Ingresses in stack '{stack.Name}': ");
         foreach (var ingress in stack.Ingresses)
         {
-            HelperMethods.LogSuccess($"- {ingress.Hostname} [{ingress.Application ?? ingress.Redirect}]");
+            LogMessage.AsSuccess($"- {ingress.Hostname} [{ingress.Application ?? ingress.Redirect}]");
         }
     }
 }

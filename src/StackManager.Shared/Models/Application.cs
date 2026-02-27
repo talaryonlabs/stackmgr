@@ -3,7 +3,7 @@ using Talaryon.Toolbox.Api;
 
 namespace StackManager.Shared.Models;
 
-[ApiEndpoint("applications", ApiEndpointType.Many | ApiEndpointType.Create)]
+[ApiEndpoint("applications", ApiEndpointType.Create)]
 [ApiEndpoint("applications/{name}", ApiEndpointType.Single | ApiEndpointType.Delete | ApiEndpointType.Update)]
 public class Application
 {
@@ -14,3 +14,6 @@ public class Application
     [JsonPropertyName("targetRevision")] public string? TargetRevision { get; set; }
     [JsonPropertyName("autoSyncEnabled")] public bool IsAutoSyncEnabled { get; set; }
 }
+
+[ApiEndpoint("applications")]
+public class ApplicationList : List<Application>;

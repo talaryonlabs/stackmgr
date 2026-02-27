@@ -48,9 +48,9 @@ try
 }
 catch (ApiError error)
 {
-    HelperMethods.LogError(error.Message);   
+    LogMessage.AsError(error.Message ?? "Unknown error");   
 }
 catch (Exception ex)
 {
-    HelperMethods.LogError(ex.Message);
+    LogMessage.AsError(ex.Message);
 }
