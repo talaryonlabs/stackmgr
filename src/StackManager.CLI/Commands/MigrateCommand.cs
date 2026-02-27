@@ -59,10 +59,16 @@ public class MigrateCommand : StackManagerCommand
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
         var app = GetApp<AppArgument>(parseResult, stack);
-        
-        LogMessage.AsInfo($"Migrating app '{app.Name}' from template '{app.Template}' ({stack.Name} in environment '{env.Name}')");
-        await app.Migrate();
-        LogMessage.AsSuccess("Migration done.");
+
+        await LogBuilder
+            .Message($"Migrating app '{app.Name}' from template '{app.Template}' ... ")
+            .NoNewLineAfter()
+            .WaitFor(async () =>
+            {
+                await app.Migrate();
+                return LogBuilder.Message("Migration done.").AsSuccess();
+            })
+            .RunAsync();
     }
     
 }

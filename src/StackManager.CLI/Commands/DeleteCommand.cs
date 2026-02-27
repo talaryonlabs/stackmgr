@@ -146,7 +146,7 @@ public class DeleteCommand : StackManagerCommand
         LogMessage.AsWarning("It does not delete the environment from Rancher/ArgoCD nor the local directory.");
         LogMessage.AsWarning("");
         
-        if (!HelperMethods.ConfirmWarning($"Are you sure you want to delete environment '{env.Name}'?"))
+        if (!LogMessage.AsConfirmWarning($"Are you sure you want to delete environment '{env.Name}'?"))
         {
             LogMessage.AsInfo("Aborted.");
             return;
@@ -164,7 +164,7 @@ public class DeleteCommand : StackManagerCommand
         using var rancher = new RancherService(env);
         
         LogMessage.AsWarning("ATTENTION: This will also delete all applications in the stack.");
-        if (!HelperMethods.ConfirmWarning($"Are you sure you want to delete stack '{stack.Name}' in environment '{env.Name}'?"))
+        if (!LogMessage.AsConfirmWarning($"Are you sure you want to delete stack '{stack.Name}' in environment '{env.Name}'?"))
         {
             LogMessage.AsInfo("Aborted.");
             return;

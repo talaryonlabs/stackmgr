@@ -1,6 +1,8 @@
-﻿namespace Talaryon.StackManager;
+﻿using System.Collections.Immutable;
 
-public class LogMessage
+namespace Talaryon.StackManager;
+
+public static class LogMessage
 {
     public static void AsError(string message)
     {
@@ -26,5 +28,20 @@ public class LogMessage
     public static void AsInfo(string message)
     {
         Console.WriteLine(message);
+    }
+
+    public static bool AsConfirmInfo(string message)
+    {
+        return LogBuilder.Question(message)
+            .AsYesNo()
+            .Run();
+    }
+    
+    public static bool AsConfirmWarning(string message)
+    {
+        return LogBuilder.Question(message)
+            .AsYesNo()
+            .AsWarning()
+            .Run();
     }
 }

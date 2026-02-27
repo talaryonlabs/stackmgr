@@ -150,8 +150,8 @@ public class StackApp : IStackObject
             {
                 LogMessage.AsSuccess($"- {add.Name} (add)");
             }
-
-            if (!HelperMethods.ConfirmWarning("Do you want to migrate all files?"))
+            
+            if (!LogMessage.AsConfirmWarning("Do you want to migrate all files?"))
             {
                 LogMessage.AsInfo("Aborted.");
                 return;
