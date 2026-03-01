@@ -15,7 +15,7 @@
 
     <ItemGroup>
       <PackageReference Include="Talaryon.Toolbox.Hosting" Version="1.1.0" />
-      <PackageReference Include="Talaryon.Toolbox.Services" Version="1.0.0" />
+      <PackageReference Include="Talaryon.Toolbox.Services" Version="1.0.1" />
     </ItemGroup>
 
 </Project>

@@ -11,12 +11,31 @@ using Talaryon.Toolbox.Hosting.Api.Filters;
 var builder = WebApplication.CreateBuilder(args);
 var mediaType = new ApiMediaType();
 
+var requiredConfig = new[]
+{
+    "STACKMGR_ACCESS_TOKEN",
+    "STACKMGR_RKE2_URL", "STACKMGR_RKE2_ACCESS_TOKEN", "STACKMGR_RKE2_PROJECT",
+    "STACKMGR_ARGOCD_URL", "STACKMGR_ARGOCD_ACCESS_TOKEN", "STACKMGR_ARGOCD_PROJECT", 
+    "STACKMGR_LONGHORN_URL", "STACKMGR_LONGHORN_ACCESS_TOKEN"
+};
+var missingConfig = requiredConfig
+    .Where(x => builder.Configuration.GetValue<string>(x) == null)
+    .ToList();
+if(missingConfig.Count != 0)
+{
+    foreach (var item in missingConfig)
+    {
+        Console.WriteLine($"Missing required config: {item}");
+    }
+    throw new Exception("Missing required configuration.");
+}
 
 var tokens = builder.Configuration
     .GetChildren()
     .Where(x => x.Key.StartsWith("STACKMGR_ACCESS_TOKEN"))
     .Select(x => x.Value)
     .ToList();
+
 
 builder.Services
     .AddAuthentication(BearerTokenDefaults.AuthenticationScheme)
@@ -78,24 +97,24 @@ builder.Services.AddResponseCompression(options =>
 builder.Services
     .AddSingleton<IRancherService, RancherService, RancherOptions>(options =>
     {
-        options.Url = builder.Configuration["STACKMGR_RKE2_URL"] ?? throw new Exception("STACKMGR_RKE2_URL not set.");
-        options.AccessToken = (builder.Configuration["STACKMGR_RKE2_ACCESS_TOKEN"] ?? throw new Exception("STACKMGR_RKE2_ACCESS_TOKEN not set.")).FromBase64String();
-        options.Project = builder.Configuration["STACKMGR_RKE2_PROJECT"] ?? throw new Exception("STACKMGR_RKE2_PROJECT not set.");
+        options.Url = builder.Configuration["STACKMGR_RKE2_URL"];
+        options.AccessToken = builder.Configuration["STACKMGR_RKE2_ACCESS_TOKEN"]!.FromBase64String();
+        options.Project = builder.Configuration["STACKMGR_RKE2_PROJECT"];
     })
     .AddSingleton<IArgoService, ArgoService, ArgoOptions>(options =>
     {
-        options.Url = builder.Configuration["STACKMGR_ARGOCD_URL"] ?? throw new Exception("STACKMGR_ARGOCD_URL not set.");
-        options.AccessToken = (builder.Configuration["STACKMGR_ARGOCD_ACCESS_TOKEN"] ?? throw new Exception("STACKMGR_ARGOCD_ACCESS_TOKEN not set.")).FromBase64String();
-        options.Project = builder.Configuration["STACKMGR_ARGOCD_PROJECT"] ?? throw new Exception("STACKMGR_ARGOCD_PROJECT not set.");
+        options.Url = builder.Configuration["STACKMGR_ARGOCD_URL"];
+        options.AccessToken = builder.Configuration["STACKMGR_ARGOCD_ACCESS_TOKEN"]!.FromBase64String();
+        options.Project = builder.Configuration["STACKMGR_ARGOCD_PROJECT"];
     })
     .AddSingleton<ILonghornService, LonghornService, LonghornOptions>(options =>
     {
-        options.Url = builder.Configuration["STACKMGR_LONGHORN_URL"] ?? throw new Exception("STACKMGR_LONGHORN_URL not set.");
+        options.Url = builder.Configuration["STACKMGR_LONGHORN_URL"];
         
         // var token = File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
         // _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
         
-        options.AccessToken = (builder.Configuration["STACKMGR_LONGHORN_ACCESS_TOKEN"] ?? throw new Exception("STACKMGR_LONGHORN_ACCESS_TOKEN not set.")).FromBase64String();
+        options.AccessToken = builder.Configuration["STACKMGR_LONGHORN_ACCESS_TOKEN"]!.FromBase64String();
     })
     .AddHttpClient();
 
