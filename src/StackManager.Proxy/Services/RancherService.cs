@@ -38,14 +38,14 @@ public partial class RancherService : IRancherService
     readonly HttpClient _client;
     private readonly string _project;
 
-    public RancherService(HttpClient client, IOptions<RancherOptions> options)
+    public RancherService(IHttpClientFactory clientFactory, IOptions<RancherOptions> options)
     {
         var url = options.Value.Url ?? throw new ArgumentNullException(nameof(options.Value.Url));
         var token = options.Value.AccessToken ?? throw new ArgumentNullException(nameof(options.Value.AccessToken));
         
         _project = options.Value.Project ?? throw new ArgumentNullException(nameof(options.Value.Project));
         
-        _client = client;
+        _client = clientFactory.CreateClient();
         _client.BaseAddress = new Uri(url);
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
         _client.DefaultRequestHeaders.Add("Accept", "application/json");

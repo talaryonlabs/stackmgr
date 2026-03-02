@@ -25,12 +25,12 @@ public class LonghornService : ILonghornService
 {
     private readonly HttpClient _client;
 
-    public LonghornService(HttpClient client, IOptions<LonghornOptions> options)
+    public LonghornService(IHttpClientFactory clientFactory, IOptions<LonghornOptions> options)
     {
         var url = options.Value.Url ?? throw new ArgumentNullException(nameof(options.Value.Url));
         var token = options.Value.AccessToken ?? throw new ArgumentNullException(nameof(options.Value.AccessToken));
         
-        _client = client;
+        _client = clientFactory.CreateClient();
         _client.BaseAddress = new Uri(url);
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
         _client.DefaultRequestHeaders.Add("Accept", "application/json");
