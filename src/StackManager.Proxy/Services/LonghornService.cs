@@ -102,7 +102,12 @@ public class LonghornService : ILonghornService
             { "size", TalaryonHelper.ParseNamedSize(volume.Size).ToString() },
             { "numberOfReplicas", volume.NumberOfReplicas },
             { "frontend", volume.Frontend },
-            { "accessMode", volume.AccessMode },
+            { "accessMode", volume.AccessMode switch
+            {
+                "ReadWriteOnce" => "rwo",
+                "ReadWriteMany" => "rwx",
+                _ => throw new ArgumentException($"Invalid access mode: {volume.AccessMode}")
+            } },
             { "labels", volume.Labels }
         };
 
