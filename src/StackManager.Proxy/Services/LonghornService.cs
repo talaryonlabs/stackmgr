@@ -99,8 +99,8 @@ public class LonghornService : ILonghornService
         var request = new Dictionary<string, object>
         {
             { "name", volume.Name },
-            { "size", TalaryonHelper.ParseNamedSize(volume.Size) },
-            { "numberOfReplicas", volume.NumberOfReplicas },
+            { "size", TalaryonHelper.ParseNamedSize(volume.Size).ToString() },
+            { "numberOfReplicas", volume.NumberOfReplicas.ToString() },
             { "frontend", volume.Frontend },
             { "accessMode", volume.AccessMode },
             { "labels", volume.Labels }
