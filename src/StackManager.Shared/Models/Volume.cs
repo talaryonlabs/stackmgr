@@ -14,7 +14,6 @@ public class Volume : IApiResource
     [JsonPropertyName("state")] public string? State { get; init; }
     [JsonPropertyName("frontend")] public string Frontend { get; init; } = "blockdev";
     [JsonPropertyName("labels")] public Dictionary<string, string> Labels { get; init; } = [];
-    [JsonPropertyName("reuseVolume")] public bool ReuseVolume { get; init; }
 }
 
 [ApiEndpoint("volumes/{namespace}")]

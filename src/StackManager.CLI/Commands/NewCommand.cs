@@ -67,7 +67,7 @@ public class NewCommand : StackManagerCommand
             new StackOption(),
             new VolumeArgument(),
             new SizeOption(),
-            new AccessModeOption(),
+            new AccessModeOption()
         };
         volume.SetAction(New);       
         
