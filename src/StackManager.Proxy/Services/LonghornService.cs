@@ -100,7 +100,7 @@ public class LonghornService : ILonghornService
         {
             { "name", volume.Name },
             { "size", TalaryonHelper.ParseNamedSize(volume.Size).ToString() },
-            { "numberOfReplicas", volume.NumberOfReplicas.ToString() },
+            { "numberOfReplicas", volume.NumberOfReplicas },
             { "frontend", volume.Frontend },
             { "accessMode", volume.AccessMode },
             { "labels", volume.Labels }
