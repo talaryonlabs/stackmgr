@@ -7,6 +7,8 @@ namespace Talaryon.StackManager.Services;
 
 public interface IProxyService
 {
+    Task<bool> TestConnectionAsync();
+    
     Task<IReadOnlyList<Namespace>> GetNamespacesAsync();
     Task<Namespace?> GetNamespaceAsync(string name);
     Task<Namespace?> CreateNamespaceAsync(string name);
@@ -14,16 +16,22 @@ public interface IProxyService
     
     Task<IReadOnlyList<Application>> GetApplicationsAsync();
     Task<Application?> GetApplicationAsync(string name);
-    // Task<Application> CreateApplicationAsync(Application body);
+    Task<Application?> CreateApplicationAsync(Application application);
+    Task<Application?> UpdateApplicationAsync(string name, Application application);
     Task<Application?> DeleteApplicationAsync(string name);
-
-    Task<IReadOnlyList<Volume>> GetVolumesAsync();   
-    Task<Volume?> GetVolumeAsync(string name);
-    Task<Volume?> CreateVolumeAsync(Volume volume);
-    Task<Volume?> DeleteVolumeAsync(string name);
+    
+    Task<IReadOnlyList<Repository>> GetRepositoriesAsync();   
+    Task<Repository?> GetRepositoryAsync(string name);
+    Task<Repository?> CreateRepositoryAsync(Repository repository);
+    Task<Repository?> DeleteRepositoryAsync(string name);
+    
+    Task<IReadOnlyList<Volume>> GetVolumesAsync(string ns);   
+    Task<Volume?> GetVolumeAsync(string ns, string name);
+    Task<Volume?> CreateVolumeAsync(string ns, Volume volume);
+    Task<Volume?> DeleteVolumeAsync(string ns, string name);
 }
 
-public class ProxyService : IProxyService
+public class ProxyService : IProxyService, IDisposable
 {
     private readonly StackEnvironment _env;
     private readonly LocalConfig _config;
@@ -42,48 +50,51 @@ public class ProxyService : IProxyService
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_remote.AccessToken.FromBase64String()}");
     }
 
+    public async Task<bool> TestConnectionAsync()
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<IReadOnlyList<Namespace>> GetNamespacesAsync()
     {
         var response = await new ApiRequest<NamespaceList>(_client, _remote.Url)
             .WithType(ApiEndpointType.Many)
             .RunAsync();
 
-        return response ?? [];
+        return response.Data ?? [];
     }
 
     public async Task<Namespace?> GetNamespaceAsync(string name)
     {
-        try
-        {
-            return await new ApiRequest<Namespace>(_client, _remote.Url)
-                .WithType(ApiEndpointType.Single)
-                .WithParam("{name}", name)
-                .RunAsync();
-        }
-        catch (ApiError e)
-        {
-            if (e.Code == 404) return null;
-            throw;
-        }
+        var response = await new ApiRequest<Namespace>(_client, _remote.Url)
+            .WithType(ApiEndpointType.Single)
+            .WithParam("name", name)
+            .RunAsync();
+
+        return response.Data;
     }
 
-    public Task<Namespace?> CreateNamespaceAsync(string name)
+    public async Task<Namespace?> CreateNamespaceAsync(string name)
     {
-        return new ApiRequest<Namespace>(_client, _remote.Url)
+        var response = await new ApiRequest<Namespace>(_client, _remote.Url)
             .WithType(ApiEndpointType.Create)
             .WithContent(new Namespace
             {
                 Name = name
             })
             .RunAsync();
+
+        return response.Data;
     }
 
-    public Task<Namespace?> DeleteNamespaceAsync(string name)
+    public async Task<Namespace?> DeleteNamespaceAsync(string name)
     {
-        return new ApiRequest<Namespace>(_client, _remote.Url)
+        var response = await new ApiRequest<Namespace>(_client, _remote.Url)
             .WithType(ApiEndpointType.Delete)
-            .WithParam("{name}", name)
+            .WithParam("name", name)
             .RunAsync();
+        
+        return response.Data;
     }
 
     public async Task<IReadOnlyList<Application>> GetApplicationsAsync()
@@ -92,71 +103,134 @@ public class ProxyService : IProxyService
             .WithType(ApiEndpointType.Many)
             .RunAsync();
 
-        return response ?? [];
+        return response.Data ?? [];
     }
 
     public async Task<Application?> GetApplicationAsync(string name)
     {
-        try
-        {
-            return await new ApiRequest<Application>(_client, _remote.Url)
-                .WithType(ApiEndpointType.Single)
-                .WithParam("{name}", name)
-                .RunAsync();
-        }
-        catch (ApiError e)
-        {
-            if (e.Code == 404) return null;
-            throw;
-        }
-    }
-
-    public Task<Application?> DeleteApplicationAsync(string name)
-    {
-        return new ApiRequest<Application>(_client, _remote.Url)
-            .WithType(ApiEndpointType.Delete)
-            .WithParam("{name}", name)
+        var response = await new ApiRequest<Application>(_client, _remote.Url)
+            .WithType(ApiEndpointType.Single)
+            .WithParam("name", name)
             .RunAsync();
+        
+        return response.Data;
     }
 
-    public async Task<IReadOnlyList<Volume>> GetVolumesAsync()
+    public async Task<Application?> CreateApplicationAsync(Application application)
     {
-        var response = await new ApiRequest<VolumeList>(_client, _remote.Url)
+        var response = await new ApiRequest<Application>(_client, _remote.Url)
+            .WithType(ApiEndpointType.Create)
+            .WithContent(application)
+            .RunAsync();
+
+        return response.Data;
+    }
+
+    public async Task<Application?> UpdateApplicationAsync(string name, Application application)
+    {
+        var response = await new ApiRequest<Application>(_client, _remote.Url)
+            .WithType(ApiEndpointType.Update)
+            .WithParam("name", name)
+            .WithContent(application)
+            .RunAsync();
+
+        return response.Data;
+    }
+
+    public async Task<Application?> DeleteApplicationAsync(string name)
+    {
+        var response = await new ApiRequest<Application>(_client, _remote.Url)
+            .WithType(ApiEndpointType.Delete)
+            .WithParam("name", name)
+            .RunAsync();
+
+        return response.Data;
+    }
+
+    public async Task<IReadOnlyList<Repository>> GetRepositoriesAsync()
+    {
+        var response = await new ApiRequest<RepositoryList>(_client, _remote.Url)
             .WithType(ApiEndpointType.Many)
             .RunAsync();
 
-        return response ?? [];
+        return response.Data ?? [];
     }
 
-    public async Task<Volume?> GetVolumeAsync(string name)
+    public async Task<Repository?> GetRepositoryAsync(string name)
     {
-        try
-        {
-            return await new ApiRequest<Volume>(_client, _remote.Url)
-                .WithType(ApiEndpointType.Single)
-                .WithParam("{name}", name)
-                .RunAsync();
-        }
-        catch (ApiError e)
-        {
-            if (e.Code == 404) return null;
-            throw;
-        }
+        var response = await new ApiRequest<Repository>(_client, _remote.Url)
+            .WithType(ApiEndpointType.Single)
+            .WithParam("name", name)
+            .RunAsync();
+        
+        return response.Data;
     }
 
-    public Task<Volume?> CreateVolumeAsync(Volume volume)
+    public async Task<Repository?> CreateRepositoryAsync(Repository repository)
     {
-        return new ApiRequest<Volume>(_client, _remote.Url)
+        var response = await new ApiRequest<Repository>(_client, _remote.Url)
             .WithType(ApiEndpointType.Create)
+            .WithContent(repository)
+            .RunAsync();
+
+        return response.Data;
+    }
+
+    public async Task<Repository?> DeleteRepositoryAsync(string name)
+    {
+        var response = await new ApiRequest<Repository>(_client, _remote.Url)
+            .WithType(ApiEndpointType.Delete)
+            .WithParam("name", name)
+            .RunAsync();
+
+        return response.Data;
+    }
+
+    public async Task<IReadOnlyList<Volume>> GetVolumesAsync(string ns)
+    {
+        var response = await new ApiRequest<VolumeList>(_client, _remote.Url)
+            .WithType(ApiEndpointType.Many)
+            .WithParam("namespace", ns)
+            .RunAsync();
+
+        return response.Data ?? [];
+    }
+
+    public async Task<Volume?> GetVolumeAsync(string ns, string name)
+    {
+        var response = await new ApiRequest<Volume>(_client, _remote.Url)
+            .WithType(ApiEndpointType.Single)
+            .WithParam("name", name)
+            .WithParam("namespace", ns)
+            .RunAsync();
+
+        return response.Data;
+    }
+
+    public async Task<Volume?> CreateVolumeAsync(string ns, Volume volume)
+    {
+        var response = await new ApiRequest<Volume>(_client, _remote.Url)
+            .WithType(ApiEndpointType.Create)
+            .WithParam("namespace", ns)
             .WithContent(volume)
             .RunAsync();
+        
+        return response.Data;
     }
 
-    public Task<Volume?> DeleteVolumeAsync(string name)
+    public async Task<Volume?> DeleteVolumeAsync(string ns, string name)
     {
-        return new ApiRequest<Volume>(_client, _remote.Url)
+        var response = await new ApiRequest<Volume>(_client, _remote.Url)
             .WithType(ApiEndpointType.Delete)
-            .WithParam("{name}", name)
+            .WithParam("name", name)
+            .WithParam("namespace", ns)
             .RunAsync();
+
+        return response.Data;
+    }
+
+    public void Dispose()
+    {
+        _client.Dispose();
     }
 }

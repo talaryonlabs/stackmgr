@@ -103,7 +103,7 @@ public class GetCommand : StackManagerCommand
         var uninitialized = directories.Where(v => !File.Exists(Path.Combine(v.FullName, StackEnvironment.FileName)));
         var environments = directories
             .Where(v => File.Exists(Path.Combine(v.FullName, StackEnvironment.FileName)))
-            .Select(v => StackEnvironment.Load(v.Name, true))
+            .Select(v => StackEnvironment.Load(v.Name))
             .ToList();
 
         LogMessage.AsInfo("Environments: ");
@@ -127,35 +127,20 @@ public class GetCommand : StackManagerCommand
     {
         LogMessage.AsInfo($"Stacks in environment '{env.Name}': ");
 
-        var directories = env.LocalDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
-        using var rancher = new RancherService(env);
-        using var argo = new ArgoService(env);
-
-        var namespaces = await rancher.GetNamespacesAsync();
-        var apps = await argo.GetApplicationsAsync();
-
-        var test = directories
-            .Where(v => File.Exists(Path.Combine(v.FullName, Stack.FileName)))
-            .Select(v =>
-            {
-                var stack = Stack.Load(env, v.Name);
-                var app = apps.FirstOrDefault(a => a.Metadata.Name == stack.Namespace);
-                var ns = namespaces.FirstOrDefault(n => n.Name == stack.Namespace);
-
-                return new[]
-                {
-                    stack.Name,
-                    stack.Namespace,
-                    (ns is not null ? "yes" : "no"),
-                    (app is not null ? "yes" : "no")
-                };
-            })
-            .Prepend([
-                "Name", "Namespace", "Rancher synced?", "ArgoCD synced?"
-            ])
+        var files = env.LocalDirectory.GetFiles(Stack.FileName, SearchOption.AllDirectories);
+        var stacks = files
+            .Select(v => Stack.Load(env, v.Directory!.Name))
             .ToList();
-
-        HelperMethods.PrintTable(test);
+        
+        foreach (var stack in stacks.Where(x => !x.IsDeleted))
+        {
+            LogMessage.AsSuccess($"- {stack.Name}");
+        }
+        
+        foreach (var stack in stacks.Where(x => x.IsDeleted))
+        {
+            LogMessage.AsError($"- {stack.Name} (deleted)");
+        }
     }
 
     private void GetApps(Stack stack)

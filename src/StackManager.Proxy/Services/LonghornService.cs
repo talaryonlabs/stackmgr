@@ -46,7 +46,7 @@ public class LonghornService : ILonghornService
         return list?.Data.Select(v => new Volume
         {
             Name = v.Name,
-            Size = v.Size,
+            Size = TalaryonHelper.FormatNamedSize((ulong)v.Size),
             NumberOfReplicas = v.NumberOfReplicas,
             State = v.State,
             AccessMode = v.AccessMode,
@@ -74,7 +74,7 @@ public class LonghornService : ILonghornService
         return new Volume
         {
             Name = data.Name,
-            Size = data.Size,
+            Size = TalaryonHelper.FormatNamedSize((ulong)data.Size),
             NumberOfReplicas = data.NumberOfReplicas,
             State = data.State,
             AccessMode = data.AccessMode,
@@ -95,7 +95,7 @@ public class LonghornService : ILonghornService
         var request = new Dictionary<string, object>
         {
             { "name", volume.Name },
-            { "size", volume.Size },
+            { "size", TalaryonHelper.ParseNamedSize(volume.Size) },
             { "numberOfReplicas", volume.NumberOfReplicas },
             { "frontend", volume.Frontend },
             { "accessMode", volume.AccessMode },
@@ -113,7 +113,7 @@ public class LonghornService : ILonghornService
         return new Volume
         {
             Name = data.Name,
-            Size = data.Size,
+            Size = TalaryonHelper.FormatNamedSize((ulong)data.Size),
             NumberOfReplicas = data.NumberOfReplicas,
             State = data.State,
             AccessMode = data.AccessMode,

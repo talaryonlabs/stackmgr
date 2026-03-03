@@ -9,115 +9,94 @@ namespace Talaryon.StackManager.Proxy.Controller;
 
 [Authorize]
 [ApiController]
-[Route("volumes")]
+[Route("volumes/{namespace}")]
 public class VolumeController(ILonghornService longhornService, IRancherService rancherService)
 {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Volume>))]
-    public ValueTask<IEnumerable<Volume>> ListVolumes(CancellationToken cancellationToken)
+    public async ValueTask<IEnumerable<Volume>> ListVolumes(string @namespace, CancellationToken cancellationToken)
     {
-        return longhornService.GetVolumesAsync(cancellationToken);
+        var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
+        var claims = await rancherService.GetVolumeClaimsAsync(ns.Name, cancellationToken);
+        var volumes = await longhornService.GetVolumesAsync(cancellationToken);
+        
+        return volumes.Where(v => claims.Any(c => c.Name == v.Name));
     }
 
     [HttpGet("{name}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Volume))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundError))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]
-    public ValueTask<Volume> GetVolume(string name, CancellationToken cancellationToken)
+    public async ValueTask<Volume> GetVolume(string @namespace, string name, CancellationToken cancellationToken)
     {
-        return longhornService.GetVolumeAsync(name, cancellationToken);
+        var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
+        var pvc = await rancherService.GetVolumeClaimAsync(ns.Name, name, cancellationToken);
+        
+        return await longhornService.GetVolumeAsync(pvc.VolumeName, cancellationToken);
     }
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Volume))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ConflictError))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]
-    public ValueTask<Volume> PostVolume([FromBody] Volume body, CancellationToken cancellationToken)
+    public async ValueTask<Volume> PostVolume(string @namespace, [FromBody] Volume body, CancellationToken cancellationToken)
     {
-        return longhornService.CreateVolumeAsync(body, cancellationToken);
+        try
+        {
+            await rancherService.GetPersistentVolumeAsync(body.Name, cancellationToken);
+            throw new ConflictError($"Volume with name '{body.Name}' already exists.");
+        }
+        catch (NotFoundError) {}
+
+        Volume volume;
+        try
+        {
+            volume = await longhornService.GetVolumeAsync(body.Name, cancellationToken);
+        }
+        catch (NotFoundError)
+        {
+            volume = await longhornService.CreateVolumeAsync(body, cancellationToken);
+        }
+
+        if (volume is null)
+        {
+            throw new InternalServerError($"Failed to create volume '{body.Name}'.");       
+        }
+        
+        var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
+        var pv = await rancherService.CreatePersistentVolumeAsync(new PersistentVolume
+        {
+            AccessMode = body.AccessMode,
+            Name = volume.Name,
+            StorageSize = body.Size,
+            VolumeHandle = volume.Name,
+        }, cancellationToken);
+        
+        if(pv is null) throw new InternalServerError($"Failed to create persistent volume '{volume.Name}'.");      
+
+        var pvc = await rancherService.CreateVolumeClaimAsync(ns.Name, new PersistentVolumeClaim
+        {
+            Name = pv.Name,
+            VolumeName = pv.Name,
+            AccessMode = pv.AccessMode,
+            StorageSize = pv.StorageSize
+        }, cancellationToken);
+        
+        return pvc is null ? throw new InternalServerError($"Failed to create persistent volume claim '{pv.Name}'.") : volume;
     }
 
     [HttpDelete("{name}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Volume))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]
-    public ValueTask<Volume> DeleteVolume(string name, CancellationToken cancellationToken)
+    public async ValueTask<Volume> DeleteVolume(string @namespace, string name, CancellationToken cancellationToken)
     {
-        return longhornService.DeleteVolumeAsync(name, cancellationToken);
-    }
-    
-    /**
-     * PersistentVolume (PV)
-     */
-    [HttpGet("pv/")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<PersistentVolume>))]
-    public ValueTask<IEnumerable<PersistentVolume>> ListPersistentVolumes(CancellationToken cancellationToken)
-    {
-        return rancherService.GetPersistentVolumesAsync(cancellationToken);
-    }
+        var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
+        var pvc = await rancherService.GetVolumeClaimAsync(ns.Name, name, cancellationToken);
+        var pv = await rancherService.GetPersistentVolumeAsync(pvc.VolumeName, cancellationToken);
 
-    [HttpGet("pv/{pvName}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PersistentVolume))]
-    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundError))]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]
-    public ValueTask<PersistentVolume> GetPersistentVolume(string pvName, CancellationToken cancellationToken)
-    {
-        return rancherService.GetPersistentVolumeAsync(pvName, cancellationToken);
-    }
-
-    [HttpPost("pv/")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PersistentVolume))]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]
-    public ValueTask<PersistentVolume> PostPersistentVolume(
-        [FromBody] PersistentVolume body,
-        CancellationToken cancellationToken)
-    {
-        return rancherService.CreatePersistentVolumeAsync(body, cancellationToken);
-    }
-
-    [HttpDelete("pv/{pvName}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PersistentVolume))]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]
-    public ValueTask<PersistentVolume> DeletePersistentVolume(string pvName, CancellationToken cancellationToken)
-    {
-        return rancherService.DeletePersistentVolumeAsync(pvName, cancellationToken);
-    }
-    
-    /**
-     * PersistentVolumeClaim (PVC)
-     */
-    [HttpGet("pvc/{namespaceName}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<PersistentVolumeClaim>))]
-    public ValueTask<IEnumerable<PersistentVolumeClaim>> ListVolumeClaims(string namespaceName, CancellationToken cancellationToken)
-    {
-        return rancherService.GetVolumeClaimsAsync(namespaceName, cancellationToken);
-    }
-
-    [HttpGet("pvc/{namespaceName}/{claimName}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PersistentVolumeClaim))]
-    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundError))]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]
-    public ValueTask<PersistentVolumeClaim> GetVolumeClaim(string namespaceName, string claimName, CancellationToken cancellationToken)
-    {
-        return rancherService.GetVolumeClaimAsync(namespaceName, claimName, cancellationToken);
-    }
-
-    [HttpPost("pvc/{namespaceName}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PersistentVolumeClaim))]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]
-    public ValueTask<PersistentVolumeClaim> PostVolumeClaim(
-        string namespaceName,
-        [FromBody] PersistentVolumeClaim body,
-        CancellationToken cancellationToken)
-    {
-        body.Namespace = namespaceName;
-        return rancherService.CreateVolumeClaimAsync(namespaceName, body, cancellationToken);
-    }
-
-    [HttpDelete("pvc/{namespaceName}/{claimName}")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PersistentVolumeClaim))]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]
-    public ValueTask<PersistentVolumeClaim> DeleteVolumeClaim(string namespaceName, string claimName, CancellationToken cancellationToken)
-    {
-        return rancherService.DeleteVolumeClaimAsync(namespaceName, claimName, cancellationToken);
+        await rancherService.DeleteVolumeClaimAsync(@namespace, pvc.Name, cancellationToken);
+        await rancherService.DeletePersistentVolumeAsync(pv.Name, cancellationToken);
+        
+        return await longhornService.GetVolumeAsync(pvc.VolumeName, cancellationToken);       
     }
 }

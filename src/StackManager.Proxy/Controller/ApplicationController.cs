@@ -54,6 +54,15 @@ public class ApplicationController(IArgoService argoService)
         return argoService.CreateApplicationAsync(body, cancellationToken);
     }
     
+    [HttpPut("{name}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Application))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundError))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
+    public ValueTask<Application> Put(string name, [FromBody] Application body, CancellationToken cancellationToken)
+    {
+        return argoService.UpdateApplicationAsync(name, body, cancellationToken);
+    }
+    
     [HttpDelete("{name}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
     public ValueTask<Application> Delete(string name, CancellationToken cancellationToken)

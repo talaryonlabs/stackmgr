@@ -12,19 +12,13 @@ public class ConfigureCommand : StackManagerCommand
         var env = new StackManagerCommand("environment", "Configure a stack environment")
         {
             new EnvironmentArgument(),
-            new RancherAccessTokenOption(),
-            new RancherUrlOption(),
-            new RancherProjectIdOption(),
-            new ArgoUrlOption(),
-            new ArgoAccessTokenOption(),
-            new ArgoProjectOption(),
-            new ArgoRepositoryOption(),
             new AppRepositoryOption(),
             new VaultOption(),
             new OutpostOption(),
             new CertIssuerOption(),
             new RegistryCredentialsOption(),
-            new RemoteOption()
+            new RemoteOption(),
+            new RepositoryOption()
         };
         env.Aliases.Add("env");
         env.SetAction(ConfigureEnvironment);
@@ -68,59 +62,13 @@ public class ConfigureCommand : StackManagerCommand
     private void ConfigureEnvironment(ParseResult parseResult)
     {
         var env = GetEnvironment<EnvironmentArgument>(parseResult);
-
-        var rke2AccessToken = parseResult.GetValue<string, RancherAccessTokenOption>();
-        if (rke2AccessToken is not null)
-        {
-            env.Rancher.SetAccessToken(env,
-                rke2AccessToken.StartsWith("base64:") ? rke2AccessToken[7..] : rke2AccessToken.ToBase64String());
-            LogMessage.AsSuccess($"RKE2 access token updated for environment '{env.Name}'.");
-        }
         
-        var argoAccessToken = parseResult.GetValue<string, ArgoAccessTokenOption>();
-        if (argoAccessToken is not null)
+        var repository = parseResult.GetValue<string, RepositoryOption>();
+        if (!string.IsNullOrEmpty(repository))
         {
-            env.Argo.SetAccessToken(env,
-                argoAccessToken.StartsWith("base64:") ? argoAccessToken[7..] : argoAccessToken.ToBase64String());
-            
-            LogMessage.AsSuccess("ArgoCD access token updated.");
+            env.Repository = repository;
+            LogMessage.AsSuccess($"Repository '{repository}' configured for environment '{env.Name}'.");
         }
-        
-        var rke2Url = parseResult.GetValue<string, RancherUrlOption>();
-        if (rke2Url is not null)
-        {
-            env.Rancher.Url = rke2Url;
-            LogMessage.AsSuccess("RKE2 URL updated.");
-        }
-            
-        var rke2ProjectId = parseResult.GetValue<string, RancherProjectIdOption>();
-        if (rke2ProjectId is not null)
-        {
-            env.Rancher.ProjectId = rke2ProjectId;
-            LogMessage.AsSuccess("RKE2 project ID updated.");
-        }
-            
-        var argoUrl = parseResult.GetValue<string, ArgoUrlOption>();
-        if (argoUrl is not null)
-        {
-            env.Argo.Url = argoUrl;
-            LogMessage.AsSuccess("ArgoCD URL updated.");
-        }
-
-        var argoProject = parseResult.GetValue<string, ArgoProjectOption>();
-        if (argoProject is not null)
-        {
-            env.Argo.Project = argoProject;
-            LogMessage.AsSuccess("ArgoCD project updated.");
-        }
-            
-        var argoRepository = parseResult.GetValue<string, ArgoRepositoryOption>();
-        if (argoRepository is not null)
-        {
-            env.Argo.Repository = argoRepository;
-            LogMessage.AsSuccess("ArgoCD repository updated.");
-        }
-        
         
         var vault = parseResult.GetValue<string, VaultOption>();
         if (!string.IsNullOrEmpty(vault))

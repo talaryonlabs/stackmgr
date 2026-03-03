@@ -56,6 +56,18 @@ public class Stack
     {
         return new StackBuilder(this).Build();
     }
+
+    public void Delete(bool complete = false)
+    {
+        if(IsDeleted) throw new StackAlreadyDeletedException(Name);
+        if (!complete)
+        {
+            IsDeleted = true;
+            SaveConfig();
+            return;
+        }
+        LocalDirectory.Delete(true);
+    }
     
     public void SaveConfig()
     {
@@ -96,6 +108,7 @@ public class Stack
     [YamlIgnore] public required StackEnvironment Environment { get; set; }
     [YamlIgnore] public V1alpha1Application? Application { get; set; }
     
+    [YamlMember(Alias = "isDeleted")] public bool IsDeleted { get; set; }
     [YamlMember(Alias = "name")] public required string Name { get; set; }
     [YamlMember(Alias = "namespace")] public required string Namespace { get; set; }
     [YamlMember(Alias = "enableAutoSync")] public bool EnableAutoSync { get; set; }

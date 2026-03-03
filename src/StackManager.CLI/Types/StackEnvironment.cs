@@ -7,14 +7,14 @@ public class StackEnvironment
 {
     public const string FileName = ".env.yaml";
     
-    public static StackEnvironment Load(string name, bool includeDeleted = false)
+    public static StackEnvironment Load(string name)
     {
         var file = Path.Combine(Environment.CurrentDirectory, name, FileName);
         
         if (!File.Exists(file)) throw new EnvironmentNotFoundException(name);
         var env = new Deserializer().Deserialize<StackEnvironment>(File.ReadAllText(file));
         
-        return !includeDeleted && env.IsDeleted ? throw new EnvironmentNotFoundException(name) : env;
+        return env;
     }
 
     public static StackEnvironment Create(string name)
@@ -25,7 +25,9 @@ public class StackEnvironment
             Vault = "",
             Outpost = "",
             CertIssuer = "",
-            RegistryCredentials = ""
+            RegistryCredentials = "",
+            Repository = "",
+            Remote = ""
         };
         
         if (env.LocalFile.Exists)
@@ -58,20 +60,7 @@ public class StackEnvironment
     [YamlMember(Alias = "outpost")] public required string Outpost { get; set; }
     [YamlMember(Alias = "certIssuer")] public required string CertIssuer { get; set; }
     [YamlMember(Alias = "registryCredentials")] public required string RegistryCredentials { get; set; }
-    [YamlMember(Alias = "rke2")] public StackEnvironmentRancher Rancher { get; set; } = new();
-    [YamlMember(Alias = "argocd")] public StackEnvironmentArgo Argo { get; set; } = new();
-    [YamlMember(Alias = "remote")] public string? Remote { get; set; }
-}
-
-public class StackEnvironmentRancher
-{
-    [YamlMember(Alias = "projectId")] public string ProjectId { get; set; } = "";
-    [YamlMember(Alias = "url")] public string Url { get; set; } = "";
-}
-
-public class StackEnvironmentArgo
-{
-    [YamlMember(Alias = "url")] public string Url { get; set; } = "";
-    [YamlMember(Alias = "project")] public string Project { get; set; } = "";
-    [YamlMember(Alias = "repository")] public string Repository { get; set; } = "";
+    [YamlMember(Alias = "repository")] public required string Repository { get; set; }
+    [YamlMember(Alias = "remote")] public required string Remote { get; set; }
+    
 }

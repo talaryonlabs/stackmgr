@@ -11,18 +11,19 @@ public class TestCommand : StackManagerCommand
         SetAction(async parseResult =>
         {
             var env = GetEnvironment<EnvironmentArgument>(parseResult);
-            using var argo = new ArgoService(env);
-            using var rancher = new RancherService(env);
-            
-            LogMessage.AsInfo($"Testing environment '{env.Name}' ...");
-            
-            LogMessage.AsInfo(".. Testing RKE2 connection ...");
-            await rancher.TestAsync();
-            LogMessage.AsSuccess("Done.");
-            
-            LogMessage.AsInfo(".. Testing ArgoCD connection ...");
-            await argo.TestAsync();
-            LogMessage.AsSuccess("Done.");
+            var proxy = new ProxyService(env);
+
+            await LogBuilder.Message($"Testing Connection '{env.Name}' ...")
+                .WaitFor(async () =>
+                {
+                    if (await proxy.TestConnectionAsync())
+                    {
+                        return LogBuilder.Message("Done.").AsSuccess();
+                    }
+                    return LogBuilder.Message("Failed.").AsError();
+                })
+                .NoNewLineAfter()
+                .RunAsync();
         });
     }
 }
