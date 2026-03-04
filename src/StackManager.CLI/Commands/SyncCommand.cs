@@ -50,6 +50,7 @@ public class SyncCommand : StackManagerCommand
         foreach (var volume in volumes)
         {
             await LogBuilder.Message($"- [Volume] {volume.Name} ... ")
+                .NoNewLineAfter()
                 .WaitFor(async () =>
                 {
                     if (await proxy.DeleteVolumeAsync(stack.Namespace, volume.Name) is null)
@@ -65,6 +66,7 @@ public class SyncCommand : StackManagerCommand
         if (application is not null)
         {
             await LogBuilder.Message($"- [Application] {stack.Namespace} ... ")
+                .NoNewLineAfter()
                 .WaitFor(async () =>
                 {
                     if (await proxy.DeleteApplicationAsync(stack.Namespace) is null)
@@ -80,6 +82,7 @@ public class SyncCommand : StackManagerCommand
         if (ns is not null)
         {
             await LogBuilder.Message($"- [Namespace] {stack.Namespace} ... ")
+                .NoNewLineAfter()
                 .WaitFor(async () =>
                 {
                     if (await proxy.DeleteNamespaceAsync(stack.Namespace) is null)
@@ -102,7 +105,8 @@ public class SyncCommand : StackManagerCommand
     private async Task<Namespace?> SyncNamespaceWithRemote(Stack stack, IProxyService proxy)
     {
         var ns = default(Namespace);
-        await LogBuilder.Message($"[Namespace] {stack.Namespace} ... ")
+        await LogBuilder.Message($"- [Namespace] {stack.Namespace} ... ")
+            .NoNewLineAfter()
             .WaitFor(async () =>
             {
                 if ((ns = await proxy.GetNamespaceAsync(stack.Namespace)) is not null)
@@ -119,7 +123,8 @@ public class SyncCommand : StackManagerCommand
     private async Task<Application?> SyncApplicationWithRemote(Stack stack, IProxyService proxy)
     {
         var application = default(Application);
-        await LogBuilder.Message($"[Application] {stack.Namespace} ... ")
+        await LogBuilder.Message($"- [Application] {stack.Namespace} ... ")
+            .NoNewLineAfter()
             .WaitFor(async () =>
             {
                 if ((application = await proxy.GetApplicationAsync(stack.Namespace)) is not null)
@@ -169,23 +174,28 @@ public class SyncCommand : StackManagerCommand
         
         foreach(var volume in local.IntersectBy(remote.Select(v => v.Name), v => v.Name))
         {
-            LogMessage.AsInfo($"Volume '{volume.Name}' already exists in remote.");
+            await LogBuilder.Message($"- [Volume] {volume.Name} ... ")
+                .NoNewLineAfter()
+                .WaitFor(() => LogBuilder.Message("Exists.").AsWarning())
+                .RunAsync();
         }
         
         foreach(var volume in local.ExceptBy(remote.Select(v => v.Name), v => v.Name))
         {
             await LogBuilder
-                .Message($"Creating volume '{volume.Name}' in remote ... ")
+                .Message($"- [Volume] Creating {volume.Name} ... ")
+                .NoNewLineAfter()
                 .WaitFor(async () =>
                 {
-                    await proxy.CreateVolumeAsync(stack.Namespace, new Volume
+                    var v = await proxy.CreateVolumeAsync(stack.Namespace, new Volume
                     {
                         Name = volume.Name,
                         AccessMode = volume.AccessMode,
                         Size = volume.StorageSize
                     });
-                    
-                    return LogBuilder.Message("Volume created successfully.").AsSuccess();
+                    return v is null
+                        ? LogBuilder.Message("Failed.").AsError()
+                        : LogBuilder.Message("Done.").AsSuccess();
                 })
                 .RunAsync();
         }
@@ -193,13 +203,11 @@ public class SyncCommand : StackManagerCommand
         foreach(var volume in remote.ExceptBy(local.Select(v => v.Name), v => v.Name))
         {
             await LogBuilder
-                .Message($"Deleting volume '{volume.Name}' from remote ... ")
-                .WaitFor(async () =>
-                {
-                    await proxy.DeleteVolumeAsync(stack.Namespace, volume.Name);
-                    
-                    return LogBuilder.Message("Volume deleted successfully.").AsSuccess();
-                })
+                .Message($"- [Volume] Deleting {volume.Name} ... ")
+                .NoNewLineAfter()
+                .WaitFor(async () => await proxy.DeleteVolumeAsync(stack.Namespace, volume.Name) is null
+                    ? LogBuilder.Message("Failed.").AsError()
+                    : LogBuilder.Message("Done.").AsSuccess())
                 .RunAsync();
         } 
     }

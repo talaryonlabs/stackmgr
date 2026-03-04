@@ -1,4 +1,5 @@
 ﻿using Talaryon.StackManager.Types;
+using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Models;
@@ -31,5 +32,5 @@ public class KustomizationImage
 
     [YamlMember(Alias = "name")] public string? Name { get; set; }
     [YamlMember(Alias = "newName")] public string? NewName { get; set; }
-    [YamlMember(Alias = "newTag")] public string? NewTag { get; set; }
+    [YamlMember(Alias = "newTag", ScalarStyle = ScalarStyle.DoubleQuoted)] public string? NewTag { get; set; }
 }
