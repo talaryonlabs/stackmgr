@@ -68,7 +68,7 @@ public class ArgoService : IArgoService
         {
             Name = v.Metadata.Name!,
             Project = v.Spec.Project,
-            Repository = repositories.First(x => x.Name == v.Spec.Source.RepoURL).Name,
+            Repository = repositories.First(x => x.Url == v.Spec.Source.RepoURL).Name,
             Path = v.Spec.Source.Path,
             IsAutoSyncEnabled = v.Spec.SyncPolicy is { Automated: not null },
         });
@@ -97,7 +97,7 @@ public class ArgoService : IArgoService
         {
             Name = application.Metadata.Name!,
             Project = application.Spec.Project,
-            Repository = repositories.First(x => x.Name == application.Spec.Source.RepoURL).Name,
+            Repository = repositories.First(x => x.Url == application.Spec.Source.RepoURL).Name,
             Path = application.Spec.Source.Path,
             IsAutoSyncEnabled = application.Spec.SyncPolicy is { Automated: not null },
         };

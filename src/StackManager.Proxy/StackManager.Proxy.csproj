@@ -6,8 +6,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>Talaryon.StackManager.Proxy</RootNamespace>
-        <AssemblyVersion>1.2.0</AssemblyVersion>
-        <Version>1.2.0</Version>
+        <AssemblyVersion>1.2.1</AssemblyVersion>
+        <Version>1.2.1</Version>
     </PropertyGroup>
 
     <ItemGroup>
