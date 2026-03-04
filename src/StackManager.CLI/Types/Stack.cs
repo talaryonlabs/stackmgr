@@ -59,9 +59,9 @@ public class Stack
 
     public void Delete(bool complete = false)
     {
-        if(IsDeleted) throw new StackAlreadyDeletedException(Name);
         if (!complete)
         {
+            if(IsDeleted) throw new StackAlreadyDeletedException(Name);
             IsDeleted = true;
             SaveConfig();
             return;

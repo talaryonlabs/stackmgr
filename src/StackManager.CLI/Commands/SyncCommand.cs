@@ -100,6 +100,7 @@ public class SyncCommand : StackManagerCommand
             throw new Exception("Stack deletion not completed. Please try again.");
         }
         stack.Delete(true);
+        LogMessage.AsSuccess($"Stack '{stack.Name}' deleted successfully.");
     }
 
     private async Task<Namespace?> SyncNamespaceWithRemote(Stack stack, IProxyService proxy)

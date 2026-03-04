@@ -103,4 +103,29 @@ public class GitService
         });
         return pull?.WaitForExitAsync() ?? Task.CompletedTask;
     }
+
+    public Task Noname()
+    {
+        ApplyIgnoreFile();
+        var add = Process.Start(new ProcessStartInfo("git", "add . -q")
+        {
+            WorkingDirectory = Environment.CurrentDirectory,
+        });
+        
+        var commit = Process.Start(new ProcessStartInfo("git", "commit -m \"Update\" -q")
+        {
+            WorkingDirectory = Environment.CurrentDirectory,
+        });
+        
+        var push = Process.Start(new ProcessStartInfo("git", "push -q")
+        {
+            WorkingDirectory = Environment.CurrentDirectory,
+        });
+
+        return Task.WhenAll(
+            add?.WaitForExitAsync() ?? Task.CompletedTask,
+            commit?.WaitForExitAsync() ?? Task.CompletedTask,
+            push?.WaitForExitAsync() ?? Task.CompletedTask
+        );
+    }
 }
