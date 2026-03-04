@@ -62,11 +62,13 @@ public class ArgoService : IArgoService
         var applications = await response.Content.ReadFromJsonAsync<V1alpha1ApplicationList>(cancellationToken);
         if (applications is null) throw new InternalServerError("Failed to request applications. (unknown error)");
         
+        var repositories = await GetRepositoriesAsync(cancellationToken);
+        
         return applications.Items.Select(v => new Application
         {
             Name = v.Metadata.Name!,
             Project = v.Spec.Project,
-            Repository = v.Spec.Source.RepoURL,
+            Repository = repositories.First(x => x.Name == v.Spec.Source.RepoURL).Name,
             Path = v.Spec.Source.Path,
             IsAutoSyncEnabled = v.Spec.SyncPolicy is { Automated: not null },
         });
@@ -89,11 +91,13 @@ public class ArgoService : IArgoService
         var application = await response.Content.ReadFromJsonAsync<V1alpha1Application>(cancellationToken);
         if(application is null) throw new InternalServerError($"Failed to get application '{name}'. (unknown error)");
 
+        var repositories = await GetRepositoriesAsync(cancellationToken);
+        
         return new Application
         {
             Name = application.Metadata.Name!,
             Project = application.Spec.Project,
-            Repository = application.Spec.Source.RepoURL,
+            Repository = repositories.First(x => x.Name == application.Spec.Source.RepoURL).Name,
             Path = application.Spec.Source.Path,
             IsAutoSyncEnabled = application.Spec.SyncPolicy is { Automated: not null },
         };

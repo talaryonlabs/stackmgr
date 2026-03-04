@@ -128,6 +128,12 @@ public class SyncCommand : StackManagerCommand
                         application.Repository != stack.Environment.Repository ||
                         application.IsAutoSyncEnabled != stack.EnableAutoSync)
                     {
+ 
+                        
+                        Console.WriteLine($"{stack.EnableAutoSync} => {application.IsAutoSyncEnabled}");
+                        Console.WriteLine($"{stack.Environment.Name}/{stack.Name} => {application.Path}");
+                        Console.WriteLine($"{stack.Environment.Repository} => {application.Repository}");
+                        
                         application.IsAutoSyncEnabled = stack.EnableAutoSync;
                         application.Path = $"{stack.Environment.Name}/{stack.Name}";
                         application.Repository = stack.Environment.Repository;
