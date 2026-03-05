@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Options;
+using Talaryon.StackManager.Services;
 using Talaryon.Toolbox.Extensions;
 
 namespace Talaryon.StackManager.Commands;
@@ -23,8 +24,15 @@ public class RemoteCommand : StackManagerCommand
         };
         remove.SetAction(RemoveRemote);
         
+        var test = new StackManagerCommand("test", "Test a remote proxy")
+        {
+            new NameArgument()
+        };
+        test.SetAction(TestRemote);
+        
         Add(add);
         Add(remove);
+        Add(test);
         SetAction(_ =>
         {
             if (LocalConfig.Get().Remotes.Count == 0)
@@ -39,10 +47,41 @@ public class RemoteCommand : StackManagerCommand
             }
         });
     }
-    
+
+    private async Task TestRemote(ParseResult obj)
+    {
+        var config = LocalConfig.Get();
+        var remote = config.Remotes.FirstOrDefault(r => r.Name == obj.GetRequiredValue<string, NameArgument>());
+        if (remote == null)
+        {
+            LogMessage.AsError($"Remote not found: {obj.GetRequiredValue<string, NameArgument>()}");
+            return;
+        }
+
+        await LogBuilder.Message($"Testing Connection '{remote.Name}' ...")
+            .WaitFor(async () =>
+            {
+                using var proxy = new ProxyService(remote);
+                if (await proxy.TestConnectionAsync())
+                {
+                    return LogBuilder.Message("Done.").AsSuccess();
+                }
+                return LogBuilder.Message("Failed.").AsError();
+            })
+            .NoNewLineAfter()
+            .RunAsync();
+        
+    }
+
     private void AddRemote(ParseResult parseResult)
     {
         var config = LocalConfig.Get();
+        if (config.Remotes.Any(r => r.Name == parseResult.GetRequiredValue<string, NameArgument>()))
+        {
+            LogMessage.AsError($"Remote already exists: {parseResult.GetRequiredValue<string, NameArgument>()}");
+            return;
+        }
+        
         var remote = new LocalConfigRemote
         {
             Name = parseResult.GetRequiredValue<string, NameArgument>(),

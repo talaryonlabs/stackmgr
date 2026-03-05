@@ -1,12 +1,12 @@
 ﻿using System.CommandLine;
 using Talaryon.StackManager;
 using Talaryon.StackManager.Commands;
+using Talaryon.StackManager.Services;
 using Talaryon.Toolbox.Api;
 
 var rootCommand = new RootCommand
 {
     new NewCommand(),
-    new TestCommand(),
     new GetCommand(),
     new DeleteCommand(),
     new ConfigureCommand(),

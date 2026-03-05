@@ -1,5 +1,4 @@
 ﻿using StackManager.Shared.Models;
-using Talaryon.StackManager.Types;
 using Talaryon.Toolbox.Api;
 using Talaryon.Toolbox.Extensions;
 
@@ -33,18 +32,12 @@ public interface IProxyService
 
 public class ProxyService : IProxyService, IDisposable
 {
-    private readonly StackEnvironment _env;
-    private readonly LocalConfig _config;
     private readonly HttpClient _client;
     private readonly LocalConfigRemote _remote;
     
-    public ProxyService(StackEnvironment env)
+    public ProxyService(LocalConfigRemote remote)
     {
-        _env = env;
-        _config = LocalConfig.Get();
-        _remote = _config.Remotes.FirstOrDefault(x => x.Name == env.Remote) ??
-                  throw new Exception($"Remote '{env.Remote}' not found for environment: {env.Name}");
-        
+        _remote = remote;
         _client = new HttpClient();
         _client.BaseAddress = new Uri(_remote.Url);
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_remote.AccessToken.FromBase64String()}");
@@ -52,7 +45,15 @@ public class ProxyService : IProxyService, IDisposable
 
     public async Task<bool> TestConnectionAsync()
     {
-        throw new NotImplementedException();
+        var response = await new ApiRequest<Namespace>(_client, _remote.Url)
+            .WithType(ApiEndpointType.Many)
+            .WithParam("namespace", "kube-system")
+            .RunAsync();
+
+        if (!response.IsSuccessful)
+            throw response.Error ?? new Exception("Unknown error");
+        
+        return response.IsSuccessful;
     }
 
     public async Task<IReadOnlyList<Namespace>> GetNamespacesAsync()

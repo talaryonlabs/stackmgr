@@ -104,28 +104,87 @@ public class GitService
         return pull?.WaitForExitAsync() ?? Task.CompletedTask;
     }
 
-    public Task Noname()
+    public async Task ApplyAsync(Stack stack)
     {
         ApplyIgnoreFile();
-        var add = Process.Start(new ProcessStartInfo("git", "add . -q")
-        {
-            WorkingDirectory = Environment.CurrentDirectory,
-        });
+        FileInfo[] files = [];
         
-        var commit = Process.Start(new ProcessStartInfo("git", "commit -m \"Update\" -q")
-        {
-            WorkingDirectory = Environment.CurrentDirectory,
-        });
-        
-        var push = Process.Start(new ProcessStartInfo("git", "push -q")
-        {
-            WorkingDirectory = Environment.CurrentDirectory,
-        });
+        await PullAsync();
+        await LogBuilder.Message("[Git] Review changes ... ")
+            .NoNewLineAfter()
+            .WaitFor(async () =>
+            {
+                var reset = Process.Start(new ProcessStartInfo("git", "reset -q")
+                {
+                    WorkingDirectory = Environment.CurrentDirectory,
+                });
+                if (reset is not null) 
+                    await reset.WaitForExitAsync();
+                
+                var diff = Process.Start(new ProcessStartInfo("git", "diff --name-only")
+                {
+                    WorkingDirectory = Environment.CurrentDirectory,
+                    RedirectStandardOutput = true,
+                });
+                if(diff is null) throw new Exception("Diff failed.");
+                files = (await diff!.StandardOutput.ReadToEndAsync())
+                    .Split(Environment.NewLine)
+                    .Where(x => x.Length > 0)
+                    .Select(x => new FileInfo(x))
+                    .ToArray();
 
-        return Task.WhenAll(
-            add?.WaitForExitAsync() ?? Task.CompletedTask,
-            commit?.WaitForExitAsync() ?? Task.CompletedTask,
-            push?.WaitForExitAsync() ?? Task.CompletedTask
-        );
+                return LogBuilder.Message("Done.").AsSuccess();
+
+            })
+            .RunAsync();
+
+        await LogBuilder.Message("[Git] Commit changes ... ")
+            .NoNewLineAfter()
+            .WaitFor(async () =>
+            {
+                if (files.Length == 0) return LogBuilder.Message("No changes.").AsSuccess();
+                
+                var add = Process.Start(new ProcessStartInfo("git", "add .")
+                {
+                    WorkingDirectory = Environment.CurrentDirectory,
+                });
+
+                if (add is not null) 
+                    await add.WaitForExitAsync();
+                
+                var message = string.Join(" -m ", new[]
+                {
+                    "\"Apply changes. (StackManager)\"",
+                    $"\"> Stack: [{stack.Name}]\"",
+                    $"\"> Environment: [{_env.Name}]\"",
+                    "\"> Files: \"",
+                    string.Join(Environment.NewLine, files.Select(x => $"\" - {x.Name.Trim()}\""))
+                });
+                
+                var commit = Process.Start(new ProcessStartInfo("git", $"commit -m {message} -q")
+                {
+                    WorkingDirectory = Environment.CurrentDirectory,
+                });
+                if(commit is not null) 
+                    await commit.WaitForExitAsync();
+                
+                return LogBuilder.Message("Done.").AsSuccess();
+            })
+            .RunAsync();
+
+        await LogBuilder.Message("[Git] Push changes ... ")
+            .NoNewLineAfter()
+            .WaitFor(async () =>
+            {
+                var push = Process.Start(new ProcessStartInfo("git", "push -q")
+                {
+                    WorkingDirectory = Environment.CurrentDirectory,
+                });
+                if(push is not null) 
+                    await push.WaitForExitAsync();
+                
+                return LogBuilder.Message("Done.").AsSuccess();
+            })
+            .RunAsync();
     }
 }

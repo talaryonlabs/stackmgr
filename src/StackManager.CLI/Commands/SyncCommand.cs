@@ -1,10 +1,8 @@
 ﻿using System.CommandLine;
 using StackManager.Shared.Models;
-using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Options;
 using Talaryon.StackManager.Services;
 using Talaryon.StackManager.Types;
-using Talaryon.Toolbox;
 
 namespace Talaryon.StackManager.Commands;
 
@@ -13,16 +11,24 @@ public class SyncCommand : StackManagerCommand
     public SyncCommand() : base("sync", "Sync a stack")
     {
         Add(new EnvironmentOption());
-        Add(new StackArgument());
+        Add(new StackOption());
         SetAction(SyncStack);
     }
     
     private async Task SyncStack(ParseResult parseResult)
     {
+        var config = LocalConfig.Get();
         var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackArgument>(parseResult, env);
+        var stack = GetStack<StackOption>(parseResult, env);
+        var remote = config
+                         .Remotes
+                         .FirstOrDefault(r => r.Name == env.Remote)
+                     ?? throw new Exception($"Remote '{env.Remote}' not found in configuration.");
 
-        using var proxy = new ProxyService(env);
+        var git = new GitService(env);
+        await git.ApplyAsync(stack);
+        
+        using var proxy = new ProxyService(remote);
 
         if (stack.IsDeleted)
         {
