@@ -110,7 +110,7 @@ public class GitService
         FileInfo[] files = [];
         
         await PullAsync();
-        await LogBuilder.Message("[Git] Review changes ... ")
+        await LogBuilder.Message("- [Git] Review changes ... ")
             .NoNewLineAfter()
             .WaitFor(async () =>
             {
@@ -138,11 +138,11 @@ public class GitService
             })
             .RunAsync();
 
-        await LogBuilder.Message("[Git] Commit changes ... ")
+        await LogBuilder.Message("- [Git] Commit changes ... ")
             .NoNewLineAfter()
             .WaitFor(async () =>
             {
-                if (files.Length == 0) return LogBuilder.Message("No changes.").AsSuccess();
+                if (files.Length == 0) return LogBuilder.Message("No changes.").AsWarning();
                 
                 var add = Process.Start(new ProcessStartInfo("git", "add .")
                 {
@@ -172,7 +172,7 @@ public class GitService
             })
             .RunAsync();
 
-        await LogBuilder.Message("[Git] Push changes ... ")
+        await LogBuilder.Message("- [Git] Push changes ... ")
             .NoNewLineAfter()
             .WaitFor(async () =>
             {
