@@ -46,7 +46,7 @@ public class ProxyService : IProxyService, IDisposable
     public async Task<bool> TestConnectionAsync()
     {
         var response = await new ApiRequest<Namespace>(_client, _remote.Url)
-            .WithType(ApiEndpointType.Many)
+            .WithType(ApiEndpointType.Single)
             .WithParam("namespace", "kube-system")
             .RunAsync();
 
