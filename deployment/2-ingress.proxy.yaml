@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  name: ingress-proxy-{{name}}
+spec:
+  rules:
+  - host: {{hostname}}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: proxy-{{name}}
+            port:
+              number: 5380
+  tls:
+  - hosts:
+    - {{hostname}}
+    secretName: letsencrypt-{{name}}

@@ -1,0 +1,11 @@
+metadata:
+  name: proxy-{{name}}-config
+apiVersion: v1
+data:
+  STACKMGR_ARGOCD_PROJECT: "{{argo-project}}"
+  STACKMGR_ARGOCD_URL: "{{argo-url}}"
+  STACKMGR_LONGHORN_URL: "{{longhorn-url}}"
+  STACKMGR_RKE2_PROJECT: "{{rke2-project}}"
+  STACKMGR_RKE2_URL: "{{rke2-url}}"
+kind: ConfigMap
+

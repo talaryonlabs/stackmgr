@@ -23,16 +23,33 @@ public class RemoteCommand : StackManagerCommand
             new NameArgument()
         };
         remove.SetAction(RemoveRemote);
+
+        var set = new StackManagerCommand("set", "Set the access token")
+        {
+            new NameArgument(),
+            new AccessTokenOption()
+        };
+        set.SetAction(SetRemote);
         
         var test = new StackManagerCommand("test", "Test a remote proxy")
         {
             new NameArgument()
         };
         test.SetAction(TestRemote);
+
+        var generate = new StackManagerCommand("generate", "Generate deployment file for kubectl apply.")
+        {
+            new NameArgument(),
+            new HostOption(),
+            new CertIssuerOption()
+        };
+        generate.SetAction(GenerateRemote);
         
         Add(add);
         Add(remove);
         Add(test);
+        Add(set);
+        Add(generate);
         SetAction(_ =>
         {
             if (LocalConfig.Get().Remotes.Count == 0)
@@ -46,6 +63,16 @@ public class RemoteCommand : StackManagerCommand
                 LogMessage.AsSuccess($"- {remote.Name}: {remote.Url}");
             }
         });
+    }
+
+    private void GenerateRemote(ParseResult obj)
+    {
+        // download from https://raw.githubusercontent.com/talaryonlabs/stackmgr/refs/heads/main/deployment/gen.json
+        
+        
+        
+        
+        throw new NotImplementedException();
     }
 
     private async Task TestRemote(ParseResult obj)
@@ -94,6 +121,21 @@ public class RemoteCommand : StackManagerCommand
         config.Remotes.Add(remote);
         config.Save();
         LogMessage.AsSuccess($"Remote {remote.Name} added.");
+    }
+    
+    private void SetRemote(ParseResult obj)
+    {
+        var config = LocalConfig.Get();
+        var remote = config.Remotes.FirstOrDefault(v => v.Name == obj.GetRequiredValue<string, NameArgument>());
+        if (remote is null)
+        {
+            LogMessage.AsError($"Remote {obj.GetRequiredValue<string, NameArgument>()} not found.");
+            return;
+        }
+        
+        remote.AccessToken = obj.GetRequiredValue<string, AccessTokenOption>().ToBase64String();
+        config.Save();
+        LogMessage.AsSuccess($"Remote {remote.Name} updated.");
     }
 
     private void RemoveRemote(ParseResult obj)
