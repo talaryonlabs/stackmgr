@@ -1,6 +1,20 @@
 # stackmgr
 Management CLI for Deployment Stack
 
+## Installation
+### CLI
+https://nuget.pkg.talaryon.dev/packages/talaryon.stackmanager/
+```C#
+dotnet tool install --global Talaryon.StackManager --version 1.4.1
+```
+---
+### Proxy Instance
+http://ghcr.io/talaryonlabs/stackmgr-proxy
+(yaml file for kubectl apply not available yet)
+
+
+# Usage
+
 ## Create a new environment
 ```
 stackmgr new env dev
