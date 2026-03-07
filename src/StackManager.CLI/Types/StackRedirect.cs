@@ -37,7 +37,7 @@ public class StackRedirect : IStackObject
             
             content = content
                 .Replace("{{app-name}}", Name)
-                .Replace("{{app-host}}", Hostname)
+                .Replace("{{app-param.hostname}}", Hostname)
                 .Replace("{{stack-name}}", Stack.Name);
             
             await File.WriteAllTextAsync(Path.Combine(LocalDirectory.FullName, file.Name), content);

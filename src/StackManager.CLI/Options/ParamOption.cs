@@ -2,24 +2,24 @@
 
 namespace Talaryon.StackManager.Options;
 
-public class VolumeOption : Option<string[]>
+public class ParamOption : Option<string[]>
 {
-    public VolumeOption() : base("--volume")
+    public ParamOption() : base("--param")
     {
-        Description = "volume";
+        Description = "parameter (e.g. hostname:hallo)";
         AllowMultipleArgumentsPerToken = true;
     }
-
-    public static Dictionary<string, string> GetVolumes(ParseResult parseResult)
+    
+    public static Dictionary<string, string> GetParams(ParseResult parseResult)
     {
-        var value = parseResult.GetValue<string[], VolumeOption>();
+        var value = parseResult.GetValue<string[], ParamOption>();
         if (value is null) return [];
         
         return value.Select(v =>
             {
                 if (!v.Contains(':'))
                 {
-                    throw new ArgumentException("Volume must be in format 'volume:<name>'.");
+                    throw new ArgumentException("Parameter must be in format 'parameter:<name>'.");
                 }
 
                 var index = v.IndexOf(':');

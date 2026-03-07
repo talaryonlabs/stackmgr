@@ -27,12 +27,10 @@ public class GitService
         }
     }
 
-    private readonly StackEnvironment _env;
     private readonly string _appRepository;
     
-    public GitService(StackEnvironment env)
+    public GitService()
     {
-        _env = env;
         _appRepository = LocalConfig.Get().AppRepository;
 
         if (_appRepository is not { Length: > 0 })
@@ -59,12 +57,10 @@ public class GitService
     {
         ApplyIgnoreFile();
         
-        var apps = new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, ".apps"));
-        
-        if (!apps.Exists || apps.GetDirectories(".git").Length == 0)
+        if (!StackTemplate.AppDirectory.Exists || StackTemplate.AppDirectory.GetDirectories(".git").Length == 0)
         {
             var clone = Process.Start(new ProcessStartInfo("git",
-                $"clone -q {_appRepository} {apps.FullName}")
+                $"clone -q {_appRepository} {StackTemplate.AppDirectory.FullName}")
             {
                 RedirectStandardOutput = true
             });
@@ -74,7 +70,7 @@ public class GitService
         {
             var pull = Process.Start(new ProcessStartInfo("git", "pull -q")
             {
-                WorkingDirectory = apps.FullName,
+                WorkingDirectory = StackTemplate.AppDirectory.FullName,
             });
             if (pull is not null)
             {
@@ -85,12 +81,12 @@ public class GitService
         
         var checkout = Process.Start(new ProcessStartInfo("git", $"checkout {branch} -q")
         {
-            WorkingDirectory = apps.FullName,
+            WorkingDirectory = StackTemplate.AppDirectory.FullName,
             RedirectStandardOutput = true
         });
         if(checkout is not null) await checkout.WaitForExitAsync();
         
-        return apps.GetDirectories();
+        return StackTemplate.AppDirectory.GetDirectories();
     }
     
     public Task PullAsync()
@@ -156,7 +152,7 @@ public class GitService
                 {
                     "\"Apply changes. (StackManager)\"",
                     $"\"> Stack: [{stack.Name}]\"",
-                    $"\"> Environment: [{_env.Name}]\"",
+                    $"\"> Environment: [{stack.Environment.Name}]\"",
                     "\"> Files: \"",
                     string.Join(Environment.NewLine, files.Select(x => $"\" - {x.Name.Trim()}\""))
                 });

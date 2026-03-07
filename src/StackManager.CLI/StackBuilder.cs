@@ -33,9 +33,9 @@ public class StackBuilder(Stack stack)
     {
         if(stack.Redirects.Count == 0) return;
         
-        var git = new GitService(stack.Environment);
+        var git = new GitService();
         var apps = await git.GetAppsAsync("prod");
-        var template = apps.FirstOrDefault(x => x.Name.Equals("redirect", StringComparison.CurrentCultureIgnoreCase));
+        var template = StackTemplate.Load("redirect");
         if (template is null)
         {
             throw new TemplateNotFoundException("redirect");
@@ -44,7 +44,7 @@ public class StackBuilder(Stack stack)
         var folder = new DirectoryInfo(Path.Combine(stack.LocalDirectory.FullName, StackRedirect.DirectoryName));
         if (!folder.Exists) folder.Create();
 
-        var files = template.GetFileSystemInfos("*", SearchOption.AllDirectories);
+        var files = template.LocalDirectory.GetFileSystemInfos("*", SearchOption.AllDirectories);
         
         foreach (var v in stack.Redirects)
         {
