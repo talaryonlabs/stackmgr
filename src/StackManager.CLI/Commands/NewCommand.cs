@@ -30,11 +30,7 @@ public class NewCommand : StackManagerCommand
             new StackOption(),
             new AppArgument(),
             new TemplateOption(),
-            new DevOption(),
-            new VolumeOption(),
-            new ConfigOption(),
-            new HostOption(),
-            new PortOption()
+            new DevOption()
         };
         app.SetAction(New);
 
@@ -79,7 +75,7 @@ public class NewCommand : StackManagerCommand
         Add(volume);       
     }
 
-    private async Task New(ParseResult parseResult)
+    private void New(ParseResult parseResult)
     {
         if (parseResult.CommandResult.Command.Name == "environment")
         {
@@ -98,7 +94,7 @@ public class NewCommand : StackManagerCommand
         switch (parseResult.CommandResult.Command.Name)
         {
             case "app":
-                await NewApp(parseResult, stack);
+                NewApp(parseResult, stack);
                 return;
             case "image":
                 NewImage(parseResult, stack);
@@ -126,30 +122,22 @@ public class NewCommand : StackManagerCommand
         LogMessage.AsSuccess($"Stack '{stack.Name}' created.");
     }
 
-    private async Task NewApp(ParseResult parseResult, Stack stack)
+    private void NewApp(ParseResult parseResult, Stack stack)
     {
         var name = GetName<AppArgument>(parseResult);
         var template = parseResult.GetValue<string, TemplateOption>();
-        var branch = parseResult.GetValue<bool, DevOption>() ? "dev" : "prod";
-
-        if(template is not null)
-            template = $"{branch}:{template}";
-        
-        var options = new StackAppOptions
+        var appTemplate = template is null ? null : new StackAppTemplate
         {
-            Volume = parseResult.GetValue<string, VolumeOption>(),
-            Host = parseResult.GetValue<string, HostOption>(),
-            Port = parseResult.GetValue<short, PortOption>(),
-            Template = template,
-            Config = parseResult.GetValue<string[], ConfigOption>() ?? []
+            Name = StackTemplate.Load(template).Name,
+            Branch = parseResult.GetValue<bool, DevOption>() ? "dev" : "prod",
         };
-        var app = StackApp.Create(stack, name, options);
+
+        var app = StackApp.Create(stack, name, appTemplate);
         LogMessage.AsSuccess($"App '{app.Name}' created.");
-        
-        if (template is not null)
+
+        if (appTemplate is not null)
         {
-            await app.Migrate();
-            LogMessage.AsSuccess("Migration done.");
+            LogMessage.AsWarning($"Call 'stackmgr migrate app {app.Name}'.");
         }
     }
     

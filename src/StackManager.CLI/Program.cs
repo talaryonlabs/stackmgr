@@ -4,6 +4,8 @@ using Talaryon.StackManager.Commands;
 using Talaryon.StackManager.Services;
 using Talaryon.Toolbox.Api;
 
+var debugMode =
+    string.Equals(Environment.GetEnvironmentVariable("STACKMGR_DEBUG_MODE"), "on", StringComparison.CurrentCultureIgnoreCase);
 var rootCommand = new RootCommand
 {
     new NewCommand(),
@@ -14,7 +16,8 @@ var rootCommand = new RootCommand
     new DefaultCommand(),
     new MigrateCommand(),
     new BuildCommand(),
-    new RemoteCommand()
+    new RemoteCommand(),
+    new DescribeCommand(),
 };
 
 // if (!GitService.IsInstalled)
@@ -52,5 +55,5 @@ catch (ApiError error)
 }
 catch (Exception ex)
 {
-    LogMessage.AsError(ex.Message);
+    LogMessage.AsError(debugMode ? ex.ToString() : ex.Message);
 }

@@ -2,24 +2,24 @@
 
 namespace Talaryon.StackManager.Options;
 
-public class VolumeOption : Option<string[]>
+public class RequirementOption : Option<string[]>
 {
-    public VolumeOption() : base("--volume")
+    public RequirementOption() : base("--requirement")
     {
-        Description = "volume";
+        Description = "";
         AllowMultipleArgumentsPerToken = true;
     }
 
-    public static Dictionary<string, string> GetVolumes(ParseResult parseResult)
+    public static Dictionary<string, string> GetRequirements(ParseResult parseResult)
     {
-        var value = parseResult.GetValue<string[], VolumeOption>();
+        var value = parseResult.GetValue<string[], RequirementOption>();
         if (value is null) return [];
         
         return value.Select(v =>
             {
                 if (!v.Contains(':'))
                 {
-                    throw new ArgumentException("Volume must be in format 'volume:<name>'.");
+                    throw new ArgumentException("Requirement must be in format 'requirement:<name>'.");
                 }
 
                 var index = v.IndexOf(':');

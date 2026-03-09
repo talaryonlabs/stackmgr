@@ -2,6 +2,7 @@
 using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Options;
 using Talaryon.StackManager.Services;
+using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Commands;
 
@@ -13,7 +14,10 @@ public class MigrateCommand : StackManagerCommand
         {
             new EnvironmentOption(),
             new StackOption(),
-            new AppArgument()
+            new AppArgument(),
+            new VolumeOption(),
+            new RequirementOption(),
+            new ParamOption()
         };
         app.SetAction(MigrateApp);
         
@@ -60,12 +64,72 @@ public class MigrateCommand : StackManagerCommand
         var stack = GetStack<StackOption>(parseResult, env);
         var app = GetApp<AppArgument>(parseResult, stack);
 
+        if (app.Template is null)
+        {
+            LogMessage.AsWarning($"App '{app.Name}' has no template.");
+            return;
+        }
+
+        var git = new GitService();
+        await git.GetAppsAsync(app.Template.Branch);
+        
+        var template = StackTemplate.Load(app.Template.Name);
+        var volumes = VolumeOption.GetVolumes(parseResult);
+        var requirements = RequirementOption.GetRequirements(parseResult);
+        var parameters = ParamOption.GetParams(parseResult);
+
+        var errors = new List<string>();
+        foreach (var volume in template.Volumes.Where(volume => !app.Volumes.ContainsKey(volume)))
+        {
+            if (!volumes.TryGetValue(volume, out var vol))
+            {
+                errors.Add($"Missing volume --volume {volume}:<name>");
+                continue;
+            }
+            app.Volumes.Add(volume, vol);
+        }
+
+        foreach (var requirement in template.Requirements.Where(requirement => !app.Requirements.ContainsKey(requirement)))
+        {
+            if (!requirements.TryGetValue(requirement, out var req))
+            {
+                errors.Add($"Missing requirement --requirement {requirement}:<name>");
+                continue;
+            }
+            app.Requirements.Add(requirement, req);
+        }
+        
+        foreach (var parameter in template.Params.Where(parameter => !app.Params.ContainsKey(parameter)))
+        {
+            if (!parameters.TryGetValue(parameter, out var param))
+            {
+                errors.Add($"Missing parameter --param {parameter}:<value>");
+                continue;
+            }
+            app.Params.Add(parameter, param);
+        }
+
+        if (errors.Count > 0)
+        {
+            foreach (var error in errors)
+            {
+                LogMessage.AsError(error);
+            }
+            return;
+        }
+        app.Stack.SaveConfig();
+
+        if (!await app.CheckRequirements(template))
+        {
+            return;
+        }
+
         await LogBuilder
-            .Message($"Migrating app '{app.Name}' from template '{app.Template}' ... ")
+            .Message($"Migrating app '{app.Name}' from template '{app.Template.Name}' ({app.Template.Branch}) ... ")
             .NoNewLineAfter()
             .WaitFor(async () =>
             {
-                await app.Migrate();
+                await app.Migrate(template);
                 return LogBuilder.Message("Migration done.").AsSuccess();
             })
             .RunAsync();
