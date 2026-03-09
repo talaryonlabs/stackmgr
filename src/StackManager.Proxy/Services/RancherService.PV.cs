@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text.Json.Serialization;
 using Talaryon.StackManager.Proxy.Models;
+using Talaryon.StackManager.Proxy.Utilities;
 using Talaryon.Toolbox.Api.Errors;
 
 namespace Talaryon.StackManager.Proxy.Services;
@@ -50,6 +51,31 @@ public partial class RancherService
 
     public async ValueTask<PersistentVolume> CreatePersistentVolumeAsync(PersistentVolume pv, CancellationToken cancellationToken = default)
     {
+        // Input validation
+        if (string.IsNullOrWhiteSpace(pv.Name))
+            throw new BadRequestError("Persistent volume name cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(pv.VolumeHandle))
+            throw new BadRequestError("Volume handle cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(pv.AccessMode))
+            throw new BadRequestError("Access mode cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(pv.StorageSize))
+            throw new BadRequestError("Storage size cannot be null or empty.");
+            
+        // Validate name format
+        if (!RegexPatterns.IsValidKubernetesName(pv.Name))
+            throw new BadRequestError("Persistent volume name must be valid Kubernetes DNS name (alphanumeric and hyphens only, max 63 chars).");
+            
+        // Validate access mode
+        if (pv.AccessMode != "ReadWriteOnce" && pv.AccessMode != "ReadOnlyMany" && pv.AccessMode != "ReadWriteMany")
+            throw new BadRequestError("Access mode must be one of: ReadWriteOnce, ReadOnlyMany, ReadWriteMany");
+            
+        // Validate storage size format
+        if (!RegexPatterns.IsValidStorageSize(pv.StorageSize))
+            throw new BadRequestError("Storage size must be a valid quantity (e.g., 10Gi, 500M).");
+        
         try
         {
             await GetPersistentVolumeAsync(pv.Name, cancellationToken);

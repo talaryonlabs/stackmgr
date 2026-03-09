@@ -1,8 +1,7 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.RateLimiting;
 using Talaryon.StackManager.Proxy.Services;
 using Talaryon.Toolbox.Extensions;
 using Talaryon.Toolbox.Hosting.Api;
@@ -73,6 +72,17 @@ builder.Services
 builder.Services
     .AddAuthorization();
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("fixed", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.PermitLimit = 100; // 100 requests per minute per endpoint
+        opt.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 2; // Small queue for burst handling
+    });
+});
+
 
 builder.Services
     .AddMvcCore()
@@ -110,22 +120,30 @@ builder.Services
     .AddSingleton<ILonghornService, LonghornService, LonghornOptions>(options =>
     {
         options.Url = builder.Configuration["STACKMGR_LONGHORN_URL"];
-        
-        // var token = File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
-        // _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
-        
         options.AccessToken = builder.Configuration["STACKMGR_LONGHORN_ACCESS_TOKEN"]!.FromBase64String();
     })
     .AddHttpClient();
 
 var app = builder.Build();
 
-app
-    .UseAuthentication()
-    .UseAuthorization();
-    
 app.MapControllers();
 
-app.UseResponseCompression();
+app
+    .UseAuthentication()
+    .UseAuthorization()
+    .UseRateLimiter()
+    .UseResponseCompression()
+    .Use((context, next) =>
+    {
+        context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+        context.Response.Headers.Append("X-Frame-Options", "DENY");
+        context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+        context.Response.Headers.Append("Referrer-Policy", "no-referrer");
+        context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'");
+        return next();
+    })
+    .Use((context, next) => context.Request.ContentLength > 1024 * 1024
+        ? Task.FromResult<object>(context.Response.StatusCode = 413)
+        : next());
 
 app.Run("http://+:5380");

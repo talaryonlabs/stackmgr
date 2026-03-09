@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using StackManager.Shared.Models;
 using Talaryon.StackManager.Proxy.Models;
 using Talaryon.StackManager.Proxy.Services;
+using Talaryon.StackManager.Proxy.Utilities;
 using Talaryon.Toolbox.Api.Errors;
 
 namespace Talaryon.StackManager.Proxy.Controller;
@@ -37,10 +38,27 @@ public class VolumeController(ILonghornService longhornService, IRancherService 
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Volume))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(BadRequestError))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ConflictError))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]
     public async ValueTask<Volume> PostVolume(string @namespace, [FromBody] Volume body, CancellationToken cancellationToken)
     {
+        // Input validation
+        if (string.IsNullOrWhiteSpace(@namespace))
+            throw new BadRequestError("Namespace cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(body.Name))
+            throw new BadRequestError("Volume name cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(body.Size))
+            throw new BadRequestError("Volume size cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(body.AccessMode))
+            throw new BadRequestError("Access mode cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(body.Frontend))
+            throw new BadRequestError("Frontend cannot be null or empty.");
+        
         try
         {
             await rancherService.GetPersistentVolumeAsync(body.Name, cancellationToken);
@@ -87,9 +105,17 @@ public class VolumeController(ILonghornService longhornService, IRancherService 
 
     [HttpDelete("{name}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Volume))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(BadRequestError))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]
     public async ValueTask<Volume> DeleteVolume(string @namespace, string name, CancellationToken cancellationToken)
     {
+        // Input validation
+        if (string.IsNullOrWhiteSpace(@namespace))
+            throw new BadRequestError("Namespace cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(name))
+            throw new BadRequestError("Volume name cannot be null or empty.");
+        
         var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
         var pvc = await rancherService.GetVolumeClaimAsync(ns.Name, name, cancellationToken);
         var pv = await rancherService.GetPersistentVolumeAsync(pvc.VolumeName, cancellationToken);

@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using StackManager.Shared.Models;
+using Talaryon.StackManager.Proxy.Utilities;
 using Talaryon.Toolbox;
 using Talaryon.Toolbox.Api.Errors;
 
@@ -21,7 +22,7 @@ public class LonghornOptions : TalaryonOptions<LonghornOptions>
     public string? AccessToken { get; set; }   
 }
 
-public class LonghornService : ILonghornService
+public partial class LonghornService : ILonghornService
 {
     private readonly HttpClient _client;
 
@@ -89,6 +90,35 @@ public class LonghornService : ILonghornService
 
     public async ValueTask<Volume> CreateVolumeAsync(Volume volume, CancellationToken cancellationToken = default)
     {
+        // Input validation
+        if (string.IsNullOrWhiteSpace(volume.Name))
+            throw new BadRequestError("Volume name cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(volume.Size))
+            throw new BadRequestError("Volume size cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(volume.AccessMode))
+            throw new BadRequestError("Access mode cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(volume.Frontend))
+            throw new BadRequestError("Frontend cannot be null or empty.");
+            
+        // Validate name format
+        if (!RegexPatterns.IsValidKubernetesName(volume.Name))
+            throw new BadRequestError("Volume name must be valid Kubernetes DNS name (alphanumeric and hyphens only, max 63 chars).");
+            
+        // Validate access mode
+        if (volume.AccessMode != "ReadWriteOnce" && volume.AccessMode != "ReadWriteMany" && volume.AccessMode != "ReadOnlyMany")
+            throw new BadRequestError("Access mode must be one of: ReadWriteOnce, ReadWriteMany, ReadOnlyMany");
+            
+        // Validate frontend
+        if (volume.Frontend != "blockdev")
+            throw new BadRequestError("Frontend must be 'blockdev'");
+            
+        // Validate storage size format
+        if (!RegexPatterns.IsValidStorageSize(volume.Size))
+            throw new BadRequestError("Volume size must be a valid quantity (e.g., 10Gi, 500M).");
+        
         try
         {
             await GetVolumeAsync(volume.Name, cancellationToken);

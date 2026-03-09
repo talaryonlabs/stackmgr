@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Microsoft.Extensions.Options;
 using StackManager.Shared.Models;
+using Talaryon.StackManager.Proxy.Utilities;
 using Talaryon.Toolbox;
 using Talaryon.Toolbox.Api.Errors;
 using Talaryon.Toolbox.Services.ArgoCD.Models;
@@ -30,7 +31,7 @@ public class ArgoOptions : TalaryonOptions<ArgoOptions>
     public string? Project { get; set; }
 }
 
-public class ArgoService : IArgoService
+public partial class ArgoService : IArgoService
 {
     private readonly HttpClient _client;
     private readonly string _project;
@@ -56,7 +57,7 @@ public class ArgoService : IArgoService
         var response = await _client.GetAsync($"/api/v1/applications?project={_project}", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            throw new InternalServerError($"Failed to request applications. Response code: {response.StatusCode}");
+            throw new InternalServerError("Failed to request applications. Please try again later.");
         }
         
         var applications = await response.Content.ReadFromJsonAsync<V1alpha1ApplicationList>(cancellationToken);
@@ -85,11 +86,11 @@ public class ArgoService : IArgoService
         var response = await _client.GetAsync($"/api/v1/applications/{name}", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            throw new InternalServerError($"Failed to get application '{name}'. Response code: {response.StatusCode}");
+            throw new InternalServerError("Failed to get application. Please try again later.");
         }
         
         var application = await response.Content.ReadFromJsonAsync<V1alpha1Application>(cancellationToken);
-        if(application is null) throw new InternalServerError($"Failed to get application '{name}'. (unknown error)");
+        if(application is null) throw new InternalServerError("Failed to get application due to an unexpected error.");
 
         var repositories = await GetRepositoriesAsync(cancellationToken);
         
@@ -105,6 +106,20 @@ public class ArgoService : IArgoService
 
     public async ValueTask<Application> CreateApplicationAsync(Application body, CancellationToken cancellationToken = default)
     {
+        // Input validation
+        if (string.IsNullOrWhiteSpace(body.Name))
+            throw new BadRequestError("Application name cannot be null or empty.");
+        
+        if (string.IsNullOrWhiteSpace(body.Repository))
+            throw new BadRequestError("Repository cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(body.Path))
+            throw new BadRequestError("Path cannot be null or empty.");
+        
+        // Validate name format (alphanumeric and hyphens only, max 63 chars)
+        if (!RegexPatterns.IsValidKubernetesName(body.Name))
+            throw new BadRequestError("Application name must be valid Kubernetes DNS name (alphanumeric and hyphens only, max 63 chars).");
+        
         try
         {
             await GetApplicationAsync(body.Name, cancellationToken);
@@ -131,8 +146,8 @@ public class ArgoService : IArgoService
                     },
                     { "source", new Dictionary<string, object>()
                         {
-                            { "repoURL", repository.Url ?? throw new BadRequestError() },
-                            { "path", body.Path ?? throw new BadRequestError() },
+                            { "repoURL", repository.Url ?? throw new BadRequestError("Missing repository URL.") },
+                            { "path", body.Path ?? throw new BadRequestError("Missing path.") },
                             { "targetRevision", "HEAD" }
                         }
                     }
@@ -155,6 +170,16 @@ public class ArgoService : IArgoService
 
     public async ValueTask<Application> UpdateApplicationAsync(string name, Application body, CancellationToken cancellationToken = default)
     {
+        // Input validation
+        if (string.IsNullOrWhiteSpace(name))
+            throw new BadRequestError("Application name cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(body.Repository))
+            throw new BadRequestError("Repository cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(body.Path))
+            throw new BadRequestError("Path cannot be null or empty.");
+        
         var application = await GetApplicationAsync(name, cancellationToken);
         var repository = await GetRepositoryAsync(body.Repository, cancellationToken);
         var json = JsonSerializer.Serialize(new Dictionary<string, object>
@@ -308,6 +333,21 @@ public class ArgoService : IArgoService
 
     public async ValueTask<Repository> CreateRepositoryAsync(Repository body, CancellationToken cancellationToken = default)
     {
+        // Input validation
+        if (string.IsNullOrWhiteSpace(body.Name))
+            throw new BadRequestError("Repository name cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(body.Url))
+            throw new BadRequestError("Repository URL cannot be null or empty.");
+            
+        // Validate URL format
+        if (!RegexPatterns.IsValidUrl(body.Url))
+            throw new BadRequestError("Repository URL must be a valid absolute URI.");
+            
+        // Validate name format (alphanumeric and hyphens only, max 63 chars)
+        if (!RegexPatterns.IsValidKubernetesName(body.Name))
+            throw new BadRequestError("Repository name must be valid Kubernetes DNS name (alphanumeric and hyphens only, max 63 chars).");
+        
         var repository = (await GetRepositoriesAsync(cancellationToken))
             .SingleOrDefault(x => x.Name == body.Name || x.Url == body.Url);
         if (repository is not null)
@@ -320,8 +360,8 @@ public class ArgoService : IArgoService
         {
             { "name", body.Name },
             { "repo", body.Url },
-            { "username", body.Username },
-            { "password", body.Password }
+            { "username", string.IsNullOrWhiteSpace(body.Username) ? "" : body.Username },
+            { "password", string.IsNullOrWhiteSpace(body.Password) ? "" : body.Password }
         });
 
         var response = await _client.PostAsync("/api/v1/repositories?validate=false", new StringContent(json)
@@ -331,11 +371,10 @@ public class ArgoService : IArgoService
 
         if (!response.IsSuccessStatusCode)
         {
-            // authentication required: Invalid username or token.
             var error = await response.Content.ReadAsStringAsync(cancellationToken);
             if (error.Contains("Invalid username or token"))
             {
-                throw new InternalServerError($"Failed to create repository '{body.Name}'. Invalid username or token.");
+                throw new InternalServerError($"Failed to create repository '{body.Name}'. Authentication failed.");
             }
             
             throw new InternalServerError(
@@ -355,8 +394,7 @@ public class ArgoService : IArgoService
 
         if (!response.IsSuccessStatusCode)
         {
-            throw new InternalServerError(
-                $"Failed to delete repository '{repository.Name}'. Response code: {response.StatusCode}");
+            throw new InternalServerError("Failed to delete repository. Please try again later.");
         }
 
         return repository;

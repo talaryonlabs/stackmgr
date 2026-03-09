@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using StackManager.Shared.Models;
 using Talaryon.StackManager.Proxy.Models;
+using Talaryon.StackManager.Proxy.Utilities;
 using Talaryon.Toolbox;
 using Talaryon.Toolbox.Api.Errors;
 
@@ -82,6 +83,14 @@ public partial class RancherService : IRancherService
     
     public async ValueTask<Namespace> CreateNamespaceAsync(string name, CancellationToken cancellationToken)
     {
+        // Input validation
+        if (string.IsNullOrWhiteSpace(name))
+            throw new BadRequestError("Namespace name cannot be null or empty.");
+            
+        // Validate name format (Kubernetes DNS-1123 label)
+        if (!RegexPatterns.IsValidKubernetesName(name))
+            throw new BadRequestError("Namespace name must be valid Kubernetes DNS name (alphanumeric and hyphens only, max 63 chars).");
+        
         try
         {
             await GetNamespaceAsync(name, cancellationToken);

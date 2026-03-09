@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text.Json.Serialization;
 using Talaryon.StackManager.Proxy.Models;
+using Talaryon.StackManager.Proxy.Utilities;
 using Talaryon.Toolbox.Api.Errors;
 
 namespace Talaryon.StackManager.Proxy.Services;
@@ -62,6 +63,34 @@ public partial class RancherService
         PersistentVolumeClaim claim,
         CancellationToken cancellationToken)
     {
+        // Input validation
+        if (string.IsNullOrWhiteSpace(ns))
+            throw new BadRequestError("Namespace cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(claim.Name))
+            throw new BadRequestError("Volume claim name cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(claim.VolumeName))
+            throw new BadRequestError("Volume name cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(claim.AccessMode))
+            throw new BadRequestError("Access mode cannot be null or empty.");
+            
+        if (string.IsNullOrWhiteSpace(claim.StorageSize))
+            throw new BadRequestError("Storage size cannot be null or empty.");
+            
+        // Validate name formats
+        if (!RegexPatterns.IsValidKubernetesName(claim.Name))
+            throw new BadRequestError("Volume claim name must be valid Kubernetes DNS name (alphanumeric and hyphens only, max 63 chars).");
+            
+        // Validate access mode
+        if (claim.AccessMode != "ReadWriteOnce" && claim.AccessMode != "ReadOnlyMany" && claim.AccessMode != "ReadWriteMany")
+            throw new BadRequestError("Access mode must be one of: ReadWriteOnce, ReadOnlyMany, ReadWriteMany");
+            
+        // Validate storage size format
+        if (!RegexPatterns.IsValidStorageSize(claim.StorageSize))
+            throw new BadRequestError("Storage size must be a valid quantity (e.g., 10Gi, 500M).");
+        
         try
         {
             await GetVolumeClaimAsync(ns, claim.Name, cancellationToken);
