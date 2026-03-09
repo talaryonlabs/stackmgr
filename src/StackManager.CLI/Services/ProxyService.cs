@@ -1,6 +1,5 @@
 ﻿using StackManager.Shared.Models;
 using Talaryon.Toolbox.Api;
-using Talaryon.Toolbox.Extensions;
 
 namespace Talaryon.StackManager.Services;
 
@@ -40,7 +39,7 @@ public class ProxyService : IProxyService, IDisposable
         _remote = remote;
         _client = new HttpClient();
         _client.BaseAddress = new Uri(_remote.Url);
-        _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_remote.AccessToken.FromBase64String()}");
+        _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_remote.AccessToken}");
     }
 
     public async Task<bool> TestConnectionAsync()

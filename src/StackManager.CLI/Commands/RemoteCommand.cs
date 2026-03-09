@@ -40,7 +40,7 @@ public class RemoteCommand : StackManagerCommand
         var generate = new StackManagerCommand("generate", "Generate deployment file for kubectl apply.")
         {
             new NameArgument(),
-            new HostOption(),
+            new HostnameArgument(),
             new CertIssuerOption()
         };
         generate.SetAction(GenerateRemote);
@@ -113,9 +113,7 @@ public class RemoteCommand : StackManagerCommand
         {
             Name = parseResult.GetRequiredValue<string, NameArgument>(),
             Url = parseResult.GetRequiredValue<string, RemoteArgument>(),
-            AccessToken = parseResult
-                .GetRequiredValue<string, AccessTokenOption>()
-                .ToBase64String()
+            AccessToken = parseResult.GetRequiredValue<string, AccessTokenOption>()
         };
         
         config.Remotes.Add(remote);
@@ -133,7 +131,7 @@ public class RemoteCommand : StackManagerCommand
             return;
         }
         
-        remote.AccessToken = obj.GetRequiredValue<string, AccessTokenOption>().ToBase64String();
+        remote.AccessToken = obj.GetRequiredValue<string, AccessTokenOption>();
         config.Save();
         LogMessage.AsSuccess($"Remote {remote.Name} updated.");
     }

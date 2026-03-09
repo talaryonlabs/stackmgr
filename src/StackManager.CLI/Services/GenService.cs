@@ -41,12 +41,17 @@ public class GenService : IDisposable, ITalaryonRunner<string>
         
         var tasks = _info.Files.Select(v => _client.GetStringAsync(v, CancellationToken.None));
         
-        await Task.WaitAll(tasks.ToArray());
+        await Task.WhenAll(tasks.ToArray());
     }
 
     public void Dispose()
     {
         _client.Dispose();
+    }
+
+    public Task<string> RunAsync(CancellationToken cancellationToken = new CancellationToken())
+    {
+        throw new NotImplementedException();
     }
 }
 
