@@ -88,12 +88,19 @@ public class RemoteCommand : StackManagerCommand
         await LogBuilder.Message($"Testing Connection '{remote.Name}' ...")
             .WaitFor(async () =>
             {
-                using var proxy = new ProxyService(remote);
-                if (await proxy.TestConnectionAsync())
+                try
                 {
-                    return LogBuilder.Message("Done.").AsSuccess();
+                    using var proxy = new ProxyService(remote);
+                    if (await proxy.TestConnectionAsync())
+                    {
+                        return LogBuilder.Message("Done.").AsSuccess();
+                    }
+                    return LogBuilder.Message("Failed.").AsError();
                 }
-                return LogBuilder.Message("Failed.").AsError();
+                catch (Exception ex)
+                {
+                    return LogBuilder.Message($"Failed: {ex}").AsError();
+                }
             })
             .NoNewLineAfter()
             .RunAsync();

@@ -4,7 +4,7 @@ using Talaryon.Toolbox.Api;
 namespace StackManager.Shared.Models;
 
 [ApiEndpoint("namespaces", ApiEndpointType.Create)]
-[ApiEndpoint("namespaces/{name}", ApiEndpointType.Single | ApiEndpointType.Delete)]
+[ApiEndpoint("namespaces/{namespace}", ApiEndpointType.Single | ApiEndpointType.Delete)]
 public class Namespace : IApiResource
 {
     [JsonPropertyName("name")] public required string Name { get; set; }

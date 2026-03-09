@@ -48,7 +48,22 @@ public class LocalConfig
     
     public void Save()
     {
-        File.WriteAllText(FilePath, JsonSerializer.Serialize(this, new JsonSerializerOptions
+        // Create a copy of remotes with encrypted tokens
+        var remotesForSerialization = Remotes.Select(r => new 
+        {
+            name = r.Name,
+            url = r.Url,
+            access_token = Encrypt(r.AccessToken) // Manually encrypt the token
+        }).ToList();
+        
+        // Create anonymous object for serialization
+        var configForSerialization = new 
+        {
+            app_repository = AppRepository,
+            remotes = remotesForSerialization
+        };
+        
+        File.WriteAllText(FilePath, JsonSerializer.Serialize(configForSerialization, new JsonSerializerOptions
         {
             WriteIndented = true
         }));
@@ -89,12 +104,13 @@ public class LocalConfigRemote
     [JsonPropertyName("name")] public required string Name { get; init; }
     [JsonPropertyName("url")] public required string Url { get; init; }
     
-    private string _accessToken = "";
-    
     [JsonPropertyName("access_token")]
+    public string _encryptedAccessToken { get; set; } = "";
+    
+    [JsonIgnore]
     public string AccessToken
     {
-        get => LocalConfig.Decrypt(_accessToken);
-        set => _accessToken = LocalConfig.Encrypt(value);
+        get => LocalConfig.Decrypt(_encryptedAccessToken);
+        set => _encryptedAccessToken = LocalConfig.Encrypt(value);
     }
 }

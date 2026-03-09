@@ -50,7 +50,12 @@ public class ProxyService : IProxyService, IDisposable
             .RunAsync();
 
         if (!response.IsSuccessful)
-            throw response.Error ?? new Exception("Unknown error");
+        {
+            if (response.Error != null)
+                throw response.Error;
+            else
+                throw new Exception($"Connection failed. Status: {response.StatusCode}, URL: {_remote.Url}");
+        }
         
         return response.IsSuccessful;
     }
