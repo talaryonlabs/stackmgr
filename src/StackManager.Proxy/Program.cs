@@ -5,6 +5,7 @@ using Talaryon.Toolbox.Hosting.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var serviceAccountToken = File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token").Trim();
 var requiredConfig = new[]
 {
     "STACKMGR_ACCESS_TOKEN",
@@ -55,7 +56,7 @@ builder.Services
     .AddSingleton<ILonghornService, LonghornService, LonghornOptions>(opt =>
     {
         opt.Url = builder.Configuration["STACKMGR_LONGHORN_URL"];
-        opt.AccessToken = builder.Configuration["STACKMGR_LONGHORN_ACCESS_TOKEN"]!.FromBase64String();
+        opt.AccessToken = serviceAccountToken; // builder.Configuration["STACKMGR_LONGHORN_ACCESS_TOKEN"]!.FromBase64String();
     })
     .AddHttpClient();
 
