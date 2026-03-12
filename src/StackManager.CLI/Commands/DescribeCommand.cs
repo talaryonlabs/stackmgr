@@ -65,7 +65,7 @@ public class DescribeCommand : StackManagerCommand
         
         await LogBuilder.Message("Template: ")
             .NoNewLineAfter()
-            .WaitFor(() => LogBuilder.Message(template.Name).AsSuccess())
+            .WaitFor(() => LogBuilder.Message($"{template.Name} (port: {template.Port})").AsSuccess())
             .RunAsync();
         
         await LogBuilder.Message(" Required apps: ")
