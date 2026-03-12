@@ -139,6 +139,7 @@ public class GetCommand : StackManagerCommand
         if (stacks.Count == 0)
         {
             LogMessage.AsWarning("No stacks in this environment.");
+            return;      
         }
         
         LogMessage.AsInfo($"Stacks in environment '{env.Name}': ");
