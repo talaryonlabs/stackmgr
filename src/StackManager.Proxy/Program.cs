@@ -55,8 +55,14 @@ builder.Services
     {
         opt.Url = builder.Configuration["STACKMGR_LONGHORN_URL"];
         // opt.AccessToken = builder.Configuration["STACKMGR_LONGHORN_ACCESS_TOKEN"]!.FromBase64String();
-    })
-    .AddHttpClient();
+    });
+
+builder.Services
+    .AddHttpClient()
+    .ConfigureHttpClientDefaults(conf => conf.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+    }));
 
 var app = builder.BuildAsApi(options);
 
