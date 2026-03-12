@@ -73,7 +73,7 @@ public class ProxyService : IProxyService, IDisposable
     {
         var response = await new ApiRequest<Namespace>(_client, _remote.Url)
             .WithType(ApiEndpointType.Single)
-            .WithParam("name", name)
+            .WithParam("namespace", name)
             .RunAsync();
 
         return response.Data;
@@ -96,7 +96,7 @@ public class ProxyService : IProxyService, IDisposable
     {
         var response = await new ApiRequest<Namespace>(_client, _remote.Url)
             .WithType(ApiEndpointType.Delete)
-            .WithParam("name", name)
+            .WithParam("namespace", name)
             .RunAsync();
         
         return response.Data;

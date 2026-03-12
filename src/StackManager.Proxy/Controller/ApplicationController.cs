@@ -15,7 +15,15 @@ public class ApplicationController(IArgoService argoService)
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Application>))]
     public ValueTask<IEnumerable<Application>> List(CancellationToken cancellationToken)
     {
-        return argoService.GetApplicationsAsync(cancellationToken);
+        try
+        {
+            return argoService.GetApplicationsAsync(cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [HttpGet("{name}")]
@@ -24,7 +32,15 @@ public class ApplicationController(IArgoService argoService)
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
     public ValueTask<Application> Get(string name, CancellationToken cancellationToken)
     {
-        return argoService.GetApplicationAsync(name, cancellationToken);
+        try
+        {
+            return argoService.GetApplicationAsync(name, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [HttpGet("{name}/refresh")]
@@ -33,7 +49,15 @@ public class ApplicationController(IArgoService argoService)
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
     public async Task Refresh(string name, CancellationToken cancellationToken)
     {
-        await argoService.RefreshApplicationAsync(name, cancellationToken);
+        try
+        {
+            await argoService.RefreshApplicationAsync(name, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [HttpGet("{name}/sync")]
@@ -42,7 +66,15 @@ public class ApplicationController(IArgoService argoService)
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
     public async Task Sync(string name, CancellationToken cancellationToken)
     {
-        await argoService.SyncApplicationAsync(name, cancellationToken);
+        try
+        {
+            await argoService.SyncApplicationAsync(name, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [HttpPost]
@@ -51,7 +83,15 @@ public class ApplicationController(IArgoService argoService)
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
     public ValueTask<Application> Post([FromBody] Application body, CancellationToken cancellationToken)
     {
-        return argoService.CreateApplicationAsync(body, cancellationToken);
+        try
+        {
+            return argoService.CreateApplicationAsync(body, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [HttpPut("{name}")]
@@ -60,13 +100,29 @@ public class ApplicationController(IArgoService argoService)
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
     public ValueTask<Application> Put(string name, [FromBody] Application body, CancellationToken cancellationToken)
     {
-        return argoService.UpdateApplicationAsync(name, body, cancellationToken);
+        try
+        {
+            return argoService.UpdateApplicationAsync(name, body, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [HttpDelete("{name}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
     public ValueTask<Application> Delete(string name, CancellationToken cancellationToken)
     {
-        return argoService.DeleteApplicationAsync(name, cancellationToken);
+        try
+        {
+            return argoService.DeleteApplicationAsync(name, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 }

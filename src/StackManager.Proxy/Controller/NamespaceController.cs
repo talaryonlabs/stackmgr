@@ -15,7 +15,15 @@ public class NamespaceController(IRancherService rancherService)
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Namespace>))]
     public ValueTask<IEnumerable<Namespace>> List(CancellationToken cancellationToken)
     {
-        return rancherService.GetNamespacesAsync(cancellationToken);
+        try
+        {
+            return rancherService.GetNamespacesAsync(cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [HttpGet("{name}")]
@@ -24,7 +32,15 @@ public class NamespaceController(IRancherService rancherService)
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
     public ValueTask<Namespace> Get(string name, CancellationToken cancellationToken)
     {
-        return rancherService.GetNamespaceAsync(name, cancellationToken);
+        try
+        {
+            return rancherService.GetNamespaceAsync(name, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [HttpPost]
@@ -33,13 +49,29 @@ public class NamespaceController(IRancherService rancherService)
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
     public ValueTask<Namespace> Post([FromBody] Namespace body, CancellationToken cancellationToken)
     {
-        return rancherService.CreateNamespaceAsync(body.Name, cancellationToken);
+        try
+        {
+            return rancherService.CreateNamespaceAsync(body.Name, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [HttpDelete("{name}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
     public ValueTask<Namespace> Delete(string name, CancellationToken cancellationToken)
     {
-        return rancherService.DeleteNamespaceAsync(name, cancellationToken);
+        try
+        {
+            return rancherService.DeleteNamespaceAsync(name, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 }

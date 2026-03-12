@@ -15,7 +15,15 @@ public class RepositoryController(IArgoService argoService)
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Repository>))]
     public ValueTask<IEnumerable<Repository>> List(CancellationToken cancellationToken)
     {
-        return argoService.GetRepositoriesAsync(cancellationToken);
+        try
+        {
+            return argoService.GetRepositoriesAsync(cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [HttpGet("{name}")]
@@ -24,7 +32,15 @@ public class RepositoryController(IArgoService argoService)
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
     public ValueTask<Repository> Get(string name, CancellationToken cancellationToken)
     {
-        return argoService.GetRepositoryAsync(name, cancellationToken);
+        try
+        {
+            return argoService.GetRepositoryAsync(name, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [HttpPost]
@@ -33,13 +49,29 @@ public class RepositoryController(IArgoService argoService)
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
     public ValueTask<Repository> Post([FromBody] Repository body, CancellationToken cancellationToken)
     {
-        return argoService.CreateRepositoryAsync(body, cancellationToken);
+        try
+        {
+            return argoService.CreateRepositoryAsync(body, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [HttpDelete("{name}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
     public ValueTask<Repository> Delete(string name, CancellationToken cancellationToken)
     {
-        return argoService.DeleteRepositoryAsync(name, cancellationToken);
+        try
+        {
+            return argoService.DeleteRepositoryAsync(name, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 }

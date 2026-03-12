@@ -17,11 +17,19 @@ public class VolumeController(ILonghornService longhornService, IRancherService 
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Volume>))]
     public async ValueTask<IEnumerable<Volume>> ListVolumes(string @namespace, CancellationToken cancellationToken)
     {
-        var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
-        var claims = await rancherService.GetVolumeClaimsAsync(ns.Name, cancellationToken);
-        var volumes = await longhornService.GetVolumesAsync(cancellationToken);
-        
-        return volumes.Where(v => claims.Any(c => c.Name == v.Name));
+        try
+        {
+            var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
+            var claims = await rancherService.GetVolumeClaimsAsync(ns.Name, cancellationToken);
+            var volumes = await longhornService.GetVolumesAsync(cancellationToken);
+
+            return volumes.Where(v => claims.Any(c => c.Name == v.Name));
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     [HttpGet("{name}")]
@@ -30,10 +38,18 @@ public class VolumeController(ILonghornService longhornService, IRancherService 
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]
     public async ValueTask<Volume> GetVolume(string @namespace, string name, CancellationToken cancellationToken)
     {
-        var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
-        var pvc = await rancherService.GetVolumeClaimAsync(ns.Name, name, cancellationToken);
-        
-        return await longhornService.GetVolumeAsync(pvc.VolumeName, cancellationToken);
+        try
+        {
+            var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
+            var pvc = await rancherService.GetVolumeClaimAsync(ns.Name, name, cancellationToken);
+
+            return await longhornService.GetVolumeAsync(pvc.VolumeName, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     [HttpPost]
@@ -58,49 +74,57 @@ public class VolumeController(ILonghornService longhornService, IRancherService 
             
         if (string.IsNullOrWhiteSpace(body.Frontend))
             throw new BadRequestError("Frontend cannot be null or empty.");
-        
+
         try
         {
-            await rancherService.GetPersistentVolumeAsync(body.Name, cancellationToken);
-            throw new ConflictError($"Volume with name '{body.Name}' already exists.");
-        }
-        catch (NotFoundError) {}
+            try
+            {
+                await rancherService.GetPersistentVolumeAsync(body.Name, cancellationToken);
+                throw new ConflictError($"Volume with name '{body.Name}' already exists.");
+            }
+            catch (NotFoundError) {}
 
-        Volume volume;
-        try
-        {
-            volume = await longhornService.GetVolumeAsync(body.Name, cancellationToken);
-        }
-        catch (NotFoundError)
-        {
-            volume = await longhornService.CreateVolumeAsync(body, cancellationToken);
-        }
+            Volume volume;
+            try
+            {
+                volume = await longhornService.GetVolumeAsync(body.Name, cancellationToken);
+            }
+            catch (NotFoundError)
+            {
+                volume = await longhornService.CreateVolumeAsync(body, cancellationToken);
+            }
 
-        if (volume is null)
-        {
-            throw new InternalServerError($"Failed to create volume '{body.Name}'.");       
-        }
+            if (volume is null)
+            {
+                throw new InternalServerError($"Failed to create volume '{body.Name}'.");       
+            }
         
-        var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
-        var pv = await rancherService.CreatePersistentVolumeAsync(new PersistentVolume
-        {
-            AccessMode = body.AccessMode,
-            Name = volume.Name,
-            StorageSize = body.Size,
-            VolumeHandle = volume.Name,
-        }, cancellationToken);
+            var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
+            var pv = await rancherService.CreatePersistentVolumeAsync(new PersistentVolume
+            {
+                AccessMode = body.AccessMode,
+                Name = volume.Name,
+                StorageSize = body.Size,
+                VolumeHandle = volume.Name,
+            }, cancellationToken);
         
-        if(pv is null) throw new InternalServerError($"Failed to create persistent volume '{volume.Name}'.");      
+            if(pv is null) throw new InternalServerError($"Failed to create persistent volume '{volume.Name}'.");      
 
-        var pvc = await rancherService.CreateVolumeClaimAsync(ns.Name, new PersistentVolumeClaim
-        {
-            Name = pv.Name,
-            VolumeName = pv.Name,
-            AccessMode = pv.AccessMode,
-            StorageSize = pv.StorageSize
-        }, cancellationToken);
+            var pvc = await rancherService.CreateVolumeClaimAsync(ns.Name, new PersistentVolumeClaim
+            {
+                Name = pv.Name,
+                VolumeName = pv.Name,
+                AccessMode = pv.AccessMode,
+                StorageSize = pv.StorageSize
+            }, cancellationToken);
         
-        return pvc is null ? throw new InternalServerError($"Failed to create persistent volume claim '{pv.Name}'.") : volume;
+            return pvc is null ? throw new InternalServerError($"Failed to create persistent volume claim '{pv.Name}'.") : volume;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     [HttpDelete("{name}")]
@@ -115,14 +139,22 @@ public class VolumeController(ILonghornService longhornService, IRancherService 
             
         if (string.IsNullOrWhiteSpace(name))
             throw new BadRequestError("Volume name cannot be null or empty.");
-        
-        var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
-        var pvc = await rancherService.GetVolumeClaimAsync(ns.Name, name, cancellationToken);
-        var pv = await rancherService.GetPersistentVolumeAsync(pvc.VolumeName, cancellationToken);
 
-        await rancherService.DeleteVolumeClaimAsync(@namespace, pvc.Name, cancellationToken);
-        await rancherService.DeletePersistentVolumeAsync(pv.Name, cancellationToken);
+        try
+        {
+            var ns = await rancherService.GetNamespaceAsync(@namespace, cancellationToken);
+            var pvc = await rancherService.GetVolumeClaimAsync(ns.Name, name, cancellationToken);
+            var pv = await rancherService.GetPersistentVolumeAsync(pvc.VolumeName, cancellationToken);
+
+            await rancherService.DeleteVolumeClaimAsync(@namespace, pvc.Name, cancellationToken);
+            await rancherService.DeletePersistentVolumeAsync(pv.Name, cancellationToken);
         
-        return await longhornService.GetVolumeAsync(pvc.VolumeName, cancellationToken);       
+            return await longhornService.GetVolumeAsync(pvc.VolumeName, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }  
     }
 }

@@ -190,6 +190,7 @@ public partial class ArgoService : IArgoService
             {
                 "spec", new Dictionary<string, object>
                 {
+                    { "project", _project },
                     { "destination", new Dictionary<string, object>()
                         {
                             { "server", "https://kubernetes.default.svc" }

@@ -37,12 +37,12 @@ public class SyncCommand : StackManagerCommand
         }
         
         var ns = await SyncNamespaceWithRemote(stack, proxy);
-        var application = await SyncApplicationWithRemote(stack, proxy);
-
         if (ns is not null)
         {
             await SyncStackVolumes(stack, proxy);
         }
+        
+        var application = await SyncApplicationWithRemote(stack, proxy);
     }
 
     private async Task DeleteStackFromRemote(Stack stack, IProxyService proxy)
@@ -116,7 +116,7 @@ public class SyncCommand : StackManagerCommand
             .NoNewLineAfter()
             .WaitFor(async () =>
             {
-                if ((ns = await proxy.GetNamespaceAsync(stack.Namespace)) is null)
+                if ((ns = await proxy.GetNamespaceAsync(stack.Namespace)) is not null)
                     return LogBuilder.Message("Already exists.").AsWarning();
 
                 return (ns = await proxy.CreateNamespaceAsync(stack.Namespace)) is not null
@@ -145,12 +145,6 @@ public class SyncCommand : StackManagerCommand
                         application.Repository != stack.Environment.Repository ||
                         application.IsAutoSyncEnabled != stack.EnableAutoSync)
                     {
- 
-                        
-                        Console.WriteLine($"{stack.EnableAutoSync} => {application.IsAutoSyncEnabled}");
-                        Console.WriteLine($"{stack.Environment.Name}/{stack.Name} => {application.Path}");
-                        Console.WriteLine($"{stack.Environment.Repository} => {application.Repository}");
-                        
                         application.IsAutoSyncEnabled = stack.EnableAutoSync;
                         application.Path = $"{stack.Environment.Name}/{stack.Name}";
                         application.Repository = stack.Environment.Repository;
