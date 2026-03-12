@@ -1,7 +1,5 @@
 ﻿using System.CommandLine;
-using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Options;
-using Talaryon.StackManager.Services;
 using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Commands;
@@ -70,7 +68,7 @@ public class GetCommand : StackManagerCommand
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         if (parseResult.CommandResult.Command.Name == "stacks")
         {
-            await GetStacks(env);
+            GetStacks(env);
             return;
         }
 
@@ -100,11 +98,19 @@ public class GetCommand : StackManagerCommand
             .Where(x => x.Name != ".apps" && x.Name != ".git")
             .ToList();
 
-        var uninitialized = directories.Where(v => !File.Exists(Path.Combine(v.FullName, StackEnvironment.FileName)));
+        var uninitialized = directories
+            .Where(v => !File.Exists(Path.Combine(v.FullName, StackEnvironment.FileName)))
+            .ToList();
         var environments = directories
             .Where(v => File.Exists(Path.Combine(v.FullName, StackEnvironment.FileName)))
             .Select(v => StackEnvironment.Load(v.Name))
             .ToList();
+        
+        if(environments.Count == 0 && uninitialized.Count == 0)
+        {
+            LogMessage.AsWarning("No environments found.");
+            return;
+        }
 
         LogMessage.AsInfo("Environments: ");
         foreach (var env in environments.Where(x => !x.IsDeleted))
@@ -123,15 +129,19 @@ public class GetCommand : StackManagerCommand
         }
     }
 
-    private async Task GetStacks(StackEnvironment env)
+    private void GetStacks(StackEnvironment env)
     {
-        LogMessage.AsInfo($"Stacks in environment '{env.Name}': ");
-
         var files = env.LocalDirectory.GetFiles(Stack.FileName, SearchOption.AllDirectories);
         var stacks = files
             .Select(v => Stack.Load(env, v.Directory!.Name))
             .ToList();
+
+        if (stacks.Count == 0)
+        {
+            LogMessage.AsWarning("No stacks in this environment.");
+        }
         
+        LogMessage.AsInfo($"Stacks in environment '{env.Name}': ");
         foreach (var stack in stacks.Where(x => !x.IsDeleted))
         {
             LogMessage.AsSuccess($"- {stack.Name}");
@@ -145,7 +155,13 @@ public class GetCommand : StackManagerCommand
 
     private void GetApps(Stack stack)
     {
-        LogMessage.AsInfo($"Apps in stack '{stack.Name}': ");
+        if (stack.Apps.Count == 0)
+        {
+            LogMessage.AsWarning("No apps in this stack.");
+            return;       
+        }
+        
+        LogMessage.AsInfo($"Apps in '{stack.Name}': ");
         foreach (var app in stack.Apps)
         {
             LogMessage.AsSuccess($"- {app.Name}");
@@ -154,7 +170,13 @@ public class GetCommand : StackManagerCommand
     
     private void GetImages(Stack stack)
     {
-        LogMessage.AsInfo($"Listing images for stack '{stack.Name}' ...");
+        if (stack.Images.Count == 0)
+        {
+            LogMessage.AsWarning("No images in this stack.");
+            return;
+        }
+        
+        LogMessage.AsInfo($"Images in '{stack.Name}' ...");
         foreach (var image in stack.Images)
         {
             LogMessage.AsSuccess($"- {image.Name}: {image.Image}");
@@ -163,7 +185,13 @@ public class GetCommand : StackManagerCommand
     
     private void GetVolumes(Stack stack)
     {
-        LogMessage.AsInfo($"Listing volumes for stack '{stack.Name}' ...");
+        if (stack.Volumes.Count == 0)
+        {
+            LogMessage.AsWarning("No volumes in this stack.");
+            return;
+        }
+        
+        LogMessage.AsInfo($"Volumes in '{stack.Name}' ...");
         foreach (var volume in stack.Volumes)
         {
             LogMessage.AsSuccess($"- {volume.Name}: {volume.StorageSize} ({volume.AccessMode})");
@@ -172,7 +200,13 @@ public class GetCommand : StackManagerCommand
     
     private void GetIngresses(Stack stack)
     {
-        LogMessage.AsInfo($"Ingresses in stack '{stack.Name}': ");
+        if (stack.Ingresses.Count == 0)
+        {
+            LogMessage.AsWarning("No ingresses in this stack.");
+            return;      
+        }
+        
+        LogMessage.AsInfo($"Ingresses in '{stack.Name}': ");
         foreach (var ingress in stack.Ingresses)
         {
             LogMessage.AsSuccess($"- {ingress.Hostname} [{ingress.Application ?? ingress.Redirect}]");
