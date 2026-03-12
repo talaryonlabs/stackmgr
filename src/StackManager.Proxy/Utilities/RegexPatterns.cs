@@ -40,14 +40,8 @@ public static partial class RegexPatterns
     /// </summary>
     /// <param name="size">The size string to validate</param>
     /// <returns>True if the size is valid, false otherwise</returns>
-    public static bool IsValidStorageSize(string size)
-    {
-        if (string.IsNullOrWhiteSpace(size))
-            return false;
-            
-        return StorageSizeRegex().IsMatch(size);
-    }
-    
+    public static bool IsValidStorageSize(string size) => !string.IsNullOrWhiteSpace(size) && StorageSizeRegex().IsMatch(size);
+
     /// <summary>
     /// URL regex pattern
     /// Validates absolute URLs
@@ -60,11 +54,5 @@ public static partial class RegexPatterns
     /// </summary>
     /// <param name="url">The URL to validate</param>
     /// <returns>True if the URL is valid, false otherwise</returns>
-    public static bool IsValidUrl(string url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-            return false;
-            
-        return UrlRegex().IsMatch(url);
-    }
+    public static bool IsValidUrl(string url) => !string.IsNullOrWhiteSpace(url) && UrlRegex().IsMatch(url);
 }
