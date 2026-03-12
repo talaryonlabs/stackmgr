@@ -31,6 +31,8 @@ public partial class LonghornService : ILonghornService
         var url = options.Value.Url ?? throw new ArgumentNullException(nameof(options.Value.Url));
         var token = options.Value.AccessToken ?? throw new ArgumentNullException(nameof(options.Value.AccessToken));
         
+        Console.WriteLine($"Service added with base url '{url}' and access token '{token}'");
+        
         _client = clientFactory.CreateClient();
         _client.BaseAddress = new Uri(url);
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
