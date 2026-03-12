@@ -60,7 +60,7 @@ public class StackEnvironment
     [YamlMember(Alias = "outpost")] public required string Outpost { get; set; }
     [YamlMember(Alias = "certIssuer")] public required string CertIssuer { get; set; }
     [YamlMember(Alias = "registryCredentials")] public required string RegistryCredentials { get; set; }
-    [YamlMember(Alias = "repository")] public required string Repository { get; set; }
+    [YamlMember(Alias = "repository")] public string? Repository { get; set; }
     [YamlMember(Alias = "remote")] public required string Remote { get; set; }
     
 }

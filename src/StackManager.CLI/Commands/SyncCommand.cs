@@ -116,7 +116,7 @@ public class SyncCommand : StackManagerCommand
             .NoNewLineAfter()
             .WaitFor(async () =>
             {
-                if ((ns = await proxy.GetNamespaceAsync(stack.Namespace)) is not null)
+                if ((ns = await proxy.GetNamespaceAsync(stack.Namespace)) is null)
                     return LogBuilder.Message("Already exists.").AsWarning();
 
                 return (ns = await proxy.CreateNamespaceAsync(stack.Namespace)) is not null
@@ -134,6 +134,11 @@ public class SyncCommand : StackManagerCommand
             .NoNewLineAfter()
             .WaitFor(async () =>
             {
+                if (stack.Environment.Repository is null)
+                {
+                    return LogBuilder.Message("No repository set in environment.").AsError();
+                }
+
                 if ((application = await proxy.GetApplicationAsync(stack.Namespace)) is not null)
                 {
                     if (application.Path != $"{stack.Environment.Name}/{stack.Name}" ||

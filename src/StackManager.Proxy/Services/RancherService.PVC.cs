@@ -17,7 +17,7 @@ public partial class RancherService
             throw new Exception($"Failed to request volume claims. Response code: {response.StatusCode}");
 
         var list = await response.Content.ReadFromJsonAsync<RancherPersistentVolumeClaimList>(cancellationToken);
-        return list?.Data.Select(v => new PersistentVolumeClaim
+        return (list?.Data ?? []).Select(v => new PersistentVolumeClaim
         {
             Name = v.Metadata.Name,
             Namespace = v.Metadata.Namespace,
@@ -25,7 +25,7 @@ public partial class RancherService
             StorageSize = v.Spec.Resources.Requests.GetValueOrDefault("storage", "0"),
             AccessMode = v.Spec.AccessModes.FirstOrDefault() ?? "ReadWriteOnce",
             Status = v.Status.Phase
-        }) ?? [];
+        });
     }
 
     public async ValueTask<PersistentVolumeClaim> GetVolumeClaimAsync(string ns, string name,

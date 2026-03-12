@@ -58,7 +58,7 @@ public partial class RancherService : IRancherService
         if (!response.IsSuccessStatusCode) throw new Exception($"Failed to request namespaces. Response code: {response.StatusCode}");
         var list = await response.Content.ReadFromJsonAsync<RancherNamespaceList>(cancellationToken);
 
-        return list?.Data.Select(v => new Namespace { Name = v.Name, Project = _project }) ?? [];
+        return (list?.Data ?? []).Select(v => new Namespace { Name = v.Name, Project = _project });
     }
     
     public async ValueTask<Namespace> GetNamespaceAsync(string name, CancellationToken cancellationToken)

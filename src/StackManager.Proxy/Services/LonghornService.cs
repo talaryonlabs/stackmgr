@@ -47,7 +47,7 @@ public partial class LonghornService : ILonghornService
         }
 
         var list = await response.Content.ReadFromJsonAsync<LonghornServiceVolumeList>(cancellationToken);
-        return list?.Data.Select(v => new Volume
+        return (list?.Data ?? []).Select(v => new Volume
         {
             Name = v.Name,
             Size = TalaryonHelper.FormatNamedSize((ulong)v.Size),
@@ -56,7 +56,7 @@ public partial class LonghornService : ILonghornService
             AccessMode = v.AccessMode,
             Frontend = v.Frontend,
             Labels = v.Labels ?? []
-        }) ?? [];
+        });
     }
 
     public async ValueTask<Volume> GetVolumeAsync(string name, CancellationToken cancellationToken)

@@ -15,13 +15,13 @@ public partial class RancherService
             throw new Exception($"Failed to request persistent volumes. Response code: {response.StatusCode}");
 
         var list = await response.Content.ReadFromJsonAsync<RancherPersistentVolumeList>(cancellationToken);
-        return list?.Data.Select(v => new PersistentVolume
+        return (list?.Data ?? []).Select(v => new PersistentVolume
         {
             Name = v.Metadata.Name,
             StorageSize = v.Spec.Capacity.GetValueOrDefault("storage", "0"),
             AccessMode = v.Spec.AccessModes.FirstOrDefault() ?? "ReadWriteOnce",
             VolumeHandle = v.Spec.CSI.VolumeHandle,
-        }) ?? [];
+        });
     }
 
     public async ValueTask<PersistentVolume> GetPersistentVolumeAsync(string name, CancellationToken cancellationToken)

@@ -59,13 +59,9 @@ public partial class ArgoService : IArgoService
         {
             throw new InternalServerError("Failed to request applications. Please try again later.");
         }
-        
         var applications = await response.Content.ReadFromJsonAsync<V1alpha1ApplicationList>(cancellationToken);
-        if (applications is null) throw new InternalServerError("Failed to request applications. (unknown error)");
-        
         var repositories = await GetRepositoriesAsync(cancellationToken);
-        
-        return applications.Items.Select(v => new Application
+        return (applications?.Items ?? []).Select(v => new Application
         {
             Name = v.Metadata.Name!,
             Project = v.Spec.Project,
@@ -293,9 +289,7 @@ public partial class ArgoService : IArgoService
         }
         
         var repositories = await response.Content.ReadFromJsonAsync<V1alpha1RepositoryList>(cancellationToken);
-        if (repositories is null) throw new InternalServerError("Failed to request repositories. (unknown error)");
-        
-        return repositories.Items.Select(v => new Repository
+        return (repositories?.Items ?? []).Select(v => new Repository
         {
             Name = v.Name,
             Url = v.Repo,
