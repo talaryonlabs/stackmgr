@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Reflection;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using StackManager.Shared.Models;
@@ -31,16 +32,18 @@ public partial class LonghornService : ILonghornService
         var url = options.Value.Url ?? throw new ArgumentNullException(nameof(options.Value.Url));
         var token = options.Value.AccessToken ?? throw new ArgumentNullException(nameof(options.Value.AccessToken));
         
-        Console.WriteLine($"Service added with base url '{url}' and access token '{token}'");
-        
         _client = clientFactory.CreateClient();
         _client.BaseAddress = new Uri(url);
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
         _client.DefaultRequestHeaders.Add("Accept", "application/json");
+        _client.DefaultRequestHeaders.Add("User-Agent", $"StackManager/{Assembly.GetExecutingAssembly().GetName().Version}");
+        
     }
 
     public async ValueTask<IEnumerable<Volume>> GetVolumesAsync(CancellationToken cancellationToken)
     {
+        Console.WriteLine($"CALL: {_client.BaseAddress}/v1/volumes");
+        
         var response = await _client.GetAsync("/v1/volumes", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {

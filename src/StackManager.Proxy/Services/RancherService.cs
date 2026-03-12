@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Reflection;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using StackManager.Shared.Models;
@@ -50,6 +51,7 @@ public partial class RancherService : IRancherService
         _client.BaseAddress = new Uri(url);
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
         _client.DefaultRequestHeaders.Add("Accept", "application/json");
+        _client.DefaultRequestHeaders.Add("User-Agent", $"StackManager/{Assembly.GetExecutingAssembly().GetName().Version}");
     }
 
     public async ValueTask<IEnumerable<Namespace>> GetNamespacesAsync(CancellationToken cancellationToken)

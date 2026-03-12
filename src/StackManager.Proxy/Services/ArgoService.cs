@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Reflection;
+using System.Text.Json;
 using Microsoft.Extensions.Options;
 using StackManager.Shared.Models;
 using Talaryon.StackManager.Proxy.Utilities;
@@ -50,6 +51,7 @@ public partial class ArgoService : IArgoService
             "application/json",
             "application/x-www-form-urlencoded"
         ]);
+        _client.DefaultRequestHeaders.Add("User-Agent", $"StackManager/{Assembly.GetExecutingAssembly().GetName().Version}");
     }
 
     public async ValueTask<IEnumerable<Application>> GetApplicationsAsync(CancellationToken cancellationToken = default)
