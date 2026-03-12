@@ -20,7 +20,7 @@ public interface ILonghornService
 public class LonghornOptions : TalaryonOptions<LonghornOptions>
 {
     public string? Url { get; set; }
-    public string? AccessToken { get; set; }   
+    // public string? AccessToken { get; set; }   
 }
 
 public partial class LonghornService : ILonghornService
@@ -30,20 +30,17 @@ public partial class LonghornService : ILonghornService
     public LonghornService(IHttpClientFactory clientFactory, IOptions<LonghornOptions> options)
     {
         var url = options.Value.Url ?? throw new ArgumentNullException(nameof(options.Value.Url));
-        var token = options.Value.AccessToken ?? throw new ArgumentNullException(nameof(options.Value.AccessToken));
+        // var token = options.Value.AccessToken ?? throw new ArgumentNullException(nameof(options.Value.AccessToken));
         
         _client = clientFactory.CreateClient();
         _client.BaseAddress = new Uri(url);
-        _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+        // _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
         _client.DefaultRequestHeaders.Add("Accept", "application/json");
         _client.DefaultRequestHeaders.Add("User-Agent", $"StackManager/{Assembly.GetExecutingAssembly().GetName().Version}");
-        
     }
 
     public async ValueTask<IEnumerable<Volume>> GetVolumesAsync(CancellationToken cancellationToken)
     {
-        Console.WriteLine($"CALL: {_client.BaseAddress}/v1/volumes");
-        
         var response = await _client.GetAsync("/v1/volumes", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {

@@ -9,7 +9,7 @@ var requiredConfig = new[]
     "STACKMGR_ACCESS_TOKEN",
     "STACKMGR_RKE2_URL", "STACKMGR_RKE2_ACCESS_TOKEN", "STACKMGR_RKE2_PROJECT",
     "STACKMGR_ARGOCD_URL", "STACKMGR_ARGOCD_ACCESS_TOKEN", "STACKMGR_ARGOCD_PROJECT", 
-    "STACKMGR_LONGHORN_URL", "STACKMGR_LONGHORN_ACCESS_TOKEN"
+    "STACKMGR_LONGHORN_URL" // "STACKMGR_LONGHORN_ACCESS_TOKEN"
 };
 var missingConfig = requiredConfig
     .Where(x => builder.Configuration.GetValue<string>(x) == null)
@@ -54,7 +54,7 @@ builder.Services
     .AddSingleton<ILonghornService, LonghornService, LonghornOptions>(opt =>
     {
         opt.Url = builder.Configuration["STACKMGR_LONGHORN_URL"];
-        opt.AccessToken = builder.Configuration["STACKMGR_LONGHORN_ACCESS_TOKEN"]!.FromBase64String();
+        // opt.AccessToken = builder.Configuration["STACKMGR_LONGHORN_ACCESS_TOKEN"]!.FromBase64String();
     })
     .AddHttpClient();
 
