@@ -8,6 +8,13 @@ public interface ILogBuilder<out T>
     T AsError();
     T AsWarning();
     T AsSuccess();
+    T AsColored(ConsoleColor color);
+    T ResetFormatting();
+    T WithPrefix(string prefix);
+    T WithSuffix(string suffix);
+    T WithTimestamp();
+    T Indented(int level);
+    T InBox();
     T NoNewLineAfter();
     T NewLineBefore();
 }
@@ -30,7 +37,10 @@ public class LogBuilder(string content) : ILogBuilderMessage, ILogBuilderQuestio
     public static ILogBuilderMessage Message(string message) => new LogBuilder(message);
     public static ILogBuilderQuestion Question(string question) => new LogBuilder(question);
 
-    private bool _noNewLineAfter, _newLineBefore, _asError, _asWarning, _asSuccess, _asYesNo, _answer;
+    private bool _noNewLineAfter, _newLineBefore, _asError, _asWarning, _asSuccess, _asYesNo, _answer, _useCustomColor, _useTimestamp, _inBox;
+    private ConsoleColor _customColor;
+    private int _indentLevel;
+    private string? _prefix, _suffix;
     private Func<ILogBuilderMessage>? _messageFunction;
     private Func<Task<ILogBuilderMessage>>? _messageAsyncFunction;
     private Func<bool, ILogBuilderMessage>? _questionFunction;
@@ -40,18 +50,52 @@ public class LogBuilder(string content) : ILogBuilderMessage, ILogBuilderQuestio
 
     void ITalaryonRunner.Run()
     {
-        if (_asError) Console.ForegroundColor = ConsoleColor.Red;
-        if (_asWarning) Console.ForegroundColor = ConsoleColor.Yellow;
-        if (_asSuccess) Console.ForegroundColor = ConsoleColor.Green;
+        string finalContent = _content;
+        
+        // Apply timestamp
+        if (_useTimestamp)
+        {
+            finalContent = $"[{DateTime.Now:HH:mm:ss}] {finalContent}";
+        }
+        
+        // Apply indentation
+        if (_indentLevel > 0)
+        {
+            finalContent = new string(' ', _indentLevel * 2) + finalContent;
+        }
+        
+        // Apply prefix/suffix
+        if (_prefix != null) finalContent = _prefix + finalContent;
+        if (_suffix != null) finalContent = finalContent + _suffix;
+        
+        // Apply box if requested
+        if (_inBox)
+        {
+            int boxWidth = finalContent.Length + 4;
+            string border = new string('─', boxWidth);
+            finalContent = $"┌{border}┐\n│ {finalContent.PadRight(boxWidth - 3)} │\n└{border}┘";
+        }
+
+        // Set color
+        if (_useCustomColor)
+        {
+            Console.ForegroundColor = _customColor;
+        }
+        else
+        {
+            if (_asError) Console.ForegroundColor = ConsoleColor.Red;
+            if (_asWarning) Console.ForegroundColor = ConsoleColor.Yellow;
+            if (_asSuccess) Console.ForegroundColor = ConsoleColor.Green;
+        }
 
         if (_newLineBefore) Console.WriteLine();
         if (_noNewLineAfter)
         {
-            Console.Write(_content);
+            Console.Write(finalContent);
         }
         else
         {
-            Console.WriteLine(_content);
+            Console.WriteLine(finalContent);
         }
         Console.ResetColor();
 
@@ -67,23 +111,57 @@ public class LogBuilder(string content) : ILogBuilderMessage, ILogBuilderQuestio
     
     bool ITalaryonRunner<bool>.Run()
     {
-        if (_asError) Console.ForegroundColor = ConsoleColor.Red;
-        if (_asWarning) Console.ForegroundColor = ConsoleColor.Yellow;
-        if (_asSuccess) Console.ForegroundColor = ConsoleColor.Green;
+        string finalContent = _content;
+        
+        // Apply timestamp
+        if (_useTimestamp)
+        {
+            finalContent = $"[{DateTime.Now:HH:mm:ss}] {finalContent}";
+        }
+        
+        // Apply indentation
+        if (_indentLevel > 0)
+        {
+            finalContent = new string(' ', _indentLevel * 2) + finalContent;
+        }
+        
+        // Apply prefix/suffix
+        if (_prefix != null) finalContent = _prefix + finalContent;
+        if (_suffix != null) finalContent = finalContent + _suffix;
+        
+        // Apply box if requested
+        if (_inBox)
+        {
+            int boxWidth = finalContent.Length + 4;
+            string border = new string('─', boxWidth);
+            finalContent = $"┌{border}┐\n│ {finalContent.PadRight(boxWidth - 3)} │\n└{border}┘";
+        }
+
+        // Set color
+        if (_useCustomColor)
+        {
+            Console.ForegroundColor = _customColor;
+        }
+        else
+        {
+            if (_asError) Console.ForegroundColor = ConsoleColor.Red;
+            if (_asWarning) Console.ForegroundColor = ConsoleColor.Yellow;
+            if (_asSuccess) Console.ForegroundColor = ConsoleColor.Green;
+        }
 
         if (_asYesNo)
         {
-            _content += " [y/N]: ";
+            finalContent += " [y/N]: ";
         }
         
         if (_newLineBefore) Console.WriteLine();
         if (_noNewLineAfter)
         {
-            Console.Write(_content);
+            Console.Write(finalContent);
         }
         else
         {
-            Console.WriteLine(_content);
+            Console.WriteLine(finalContent);
         }
         Console.ResetColor();
 
@@ -128,6 +206,13 @@ public class LogBuilder(string content) : ILogBuilderMessage, ILogBuilderQuestio
         return this;
     }
 
+    ILogBuilderMessage ILogBuilder<ILogBuilderMessage>.AsColored(ConsoleColor color)
+    {
+        _customColor = color;
+        _useCustomColor = true;
+        return this;
+    }
+
     ILogBuilderMessage ILogBuilder<ILogBuilderMessage>.NoNewLineAfter()
     {
         _noNewLineAfter = true;
@@ -137,6 +222,46 @@ public class LogBuilder(string content) : ILogBuilderMessage, ILogBuilderQuestio
     ILogBuilderMessage ILogBuilder<ILogBuilderMessage>.NewLineBefore()
     {
         _newLineBefore = true;
+        return this;
+    }
+
+    ILogBuilderMessage ILogBuilder<ILogBuilderMessage>.ResetFormatting()
+    {
+        _asError = _asWarning = _asSuccess = _useCustomColor = false;
+        _useTimestamp = _inBox = false;
+        _indentLevel = 0;
+        _prefix = _suffix = null;
+        _customColor = ConsoleColor.Gray;
+        return this;
+    }
+
+    ILogBuilderMessage ILogBuilder<ILogBuilderMessage>.WithPrefix(string prefix)
+    {
+        _prefix = prefix;
+        return this;
+    }
+
+    ILogBuilderMessage ILogBuilder<ILogBuilderMessage>.WithSuffix(string suffix)
+    {
+        _suffix = suffix;
+        return this;
+    }
+
+    ILogBuilderMessage ILogBuilder<ILogBuilderMessage>.WithTimestamp()
+    {
+        _useTimestamp = true;
+        return this;
+    }
+
+    ILogBuilderMessage ILogBuilder<ILogBuilderMessage>.Indented(int level)
+    {
+        _indentLevel = Math.Max(0, level);
+        return this;
+    }
+
+    ILogBuilderMessage ILogBuilder<ILogBuilderMessage>.InBox()
+    {
+        _inBox = true;
         return this;
     }
 
@@ -173,6 +298,13 @@ public class LogBuilder(string content) : ILogBuilderMessage, ILogBuilderQuestio
     ILogBuilderQuestion ILogBuilder<ILogBuilderQuestion>.AsError() => (ILogBuilderQuestion)(this as ILogBuilderMessage).AsError();
     ILogBuilderQuestion ILogBuilder<ILogBuilderQuestion>.AsWarning() => (ILogBuilderQuestion)(this as ILogBuilderMessage).AsWarning();
     ILogBuilderQuestion ILogBuilder<ILogBuilderQuestion>.AsSuccess() => (ILogBuilderQuestion)(this as ILogBuilderMessage).AsSuccess();
+    ILogBuilderQuestion ILogBuilder<ILogBuilderQuestion>.AsColored(ConsoleColor color) => (ILogBuilderQuestion)(this as ILogBuilderMessage).AsColored(color);
+    ILogBuilderQuestion ILogBuilder<ILogBuilderQuestion>.ResetFormatting() => (ILogBuilderQuestion)(this as ILogBuilderMessage).ResetFormatting();
+    ILogBuilderQuestion ILogBuilder<ILogBuilderQuestion>.WithPrefix(string prefix) => (ILogBuilderQuestion)(this as ILogBuilderMessage).WithPrefix(prefix);
+    ILogBuilderQuestion ILogBuilder<ILogBuilderQuestion>.WithSuffix(string suffix) => (ILogBuilderQuestion)(this as ILogBuilderMessage).WithSuffix(suffix);
+    ILogBuilderQuestion ILogBuilder<ILogBuilderQuestion>.WithTimestamp() => (ILogBuilderQuestion)(this as ILogBuilderMessage).WithTimestamp();
+    ILogBuilderQuestion ILogBuilder<ILogBuilderQuestion>.Indented(int level) => (ILogBuilderQuestion)(this as ILogBuilderMessage).Indented(level);
+    ILogBuilderQuestion ILogBuilder<ILogBuilderQuestion>.InBox() => (ILogBuilderQuestion)(this as ILogBuilderMessage).InBox();
     ILogBuilderQuestion ILogBuilder<ILogBuilderQuestion>.NoNewLineAfter() => (ILogBuilderQuestion)(this as ILogBuilderMessage).NoNewLineAfter();
     ILogBuilderQuestion ILogBuilder<ILogBuilderQuestion>.NewLineBefore() => (ILogBuilderQuestion)(this as ILogBuilderMessage).NewLineBefore();
 }

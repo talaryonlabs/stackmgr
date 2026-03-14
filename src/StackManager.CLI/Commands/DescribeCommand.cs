@@ -20,11 +20,20 @@ public class DescribeCommand : StackManagerCommand
 
         var stack = new StackManagerCommand("stack", "Describe a stack")
         {
+            new EnvironmentOption(),
             new StackArgument()
         };
         stack.SetAction(DescribeStack);
         
-        var template = new StackManagerCommand("template", "")
+        var app = new StackManagerCommand("app", "Describe an application")
+        {
+            new EnvironmentOption(),
+            new StackOption(),
+            new AppArgument()
+        };
+        app.SetAction(DescribeApp);
+
+        var template = new StackManagerCommand("template", "Describe an application template")
         {
             new NameArgument(),
             new DevOption()
@@ -33,17 +42,152 @@ public class DescribeCommand : StackManagerCommand
         
         Add(env);
         Add(stack);
+        Add(app);
         Add(template);
     }
 
     private void DescribeEnvironment(ParseResult parseResult)
     {
-        LogMessage.AsWarning("Not implemented yet.");
+        var env = GetEnvironment<EnvironmentArgument>(parseResult);
+
+        LogMessage.Separator();
+
+        // Use dynamic coloring for environment name
+        LogBuilder.Message("Environment: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{env.Name}").AsColored(ConsoleColor.Cyan))
+            .Run();
+
+        // Use standard colors for other properties
+        LogBuilder.Message(" Vault: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{env.Vault}").AsWarning())
+            .Run();
+
+        LogBuilder.Message(" Outpost: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{env.Outpost}").AsWarning())
+            .Run();
+
+        LogBuilder.Message(" Cert Issuer: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{env.CertIssuer}").AsWarning())
+            .Run();
+
+        LogBuilder.Message(" Registry Credentials: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{env.RegistryCredentials}").AsWarning())
+            .Run();
+
+        LogBuilder.Message(" Repository: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{env.Repository ?? "None"}").AsSuccess())
+            .Run();
+
+        LogBuilder.Message(" Remote: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{env.Remote}").AsColored(ConsoleColor.Blue))
+            .Run();
+
+        LogMessage.Separator();
+    }
+
+    private void DescribeApp(ParseResult parseResult)
+    {
+        var env = GetEnvironment<EnvironmentOption>(parseResult);
+        var stack = GetStack<StackOption>(parseResult, env);
+        var app = GetApp<AppArgument>(parseResult, stack);
+
+        LogMessage.Separator();
+
+        LogBuilder.Message("App: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{app.Name}").AsSuccess())
+            .Run();
+
+        if (app.Template != null)
+        {
+            LogBuilder.Message(" Template: ")
+                .NoNewLineAfter()
+                .WaitFor(() => LogBuilder.Message($"{app.Template.Name} ({app.Template.Branch})").AsWarning())
+                .Run();
+        }
+
+        if (app.Volumes.Count > 0)
+        {
+            LogBuilder.Message(" Volumes: ")
+                .NoNewLineAfter()
+                .WaitFor(() => LogBuilder.Message($"[{string.Join(", ", app.Volumes.Select(v => $"{v.Key}:{v.Value}"))}]").AsSuccess())
+                .Run();
+        }
+
+        if (app.Requirements.Count > 0)
+        {
+            LogBuilder.Message(" Requirements: ")
+                .NoNewLineAfter()
+                .WaitFor(() => LogBuilder.Message($"[{string.Join(", ", app.Requirements.Select(r => $"{r.Key}:{r.Value}"))}]").AsWarning())
+                .Run();
+        }
+
+        if (app.Params.Count > 0)
+        {
+            LogBuilder.Message(" Params: ")
+                .NoNewLineAfter()
+                .WaitFor(() => LogBuilder.Message($"[{string.Join(", ", app.Params.Select(p => $"{p.Key}:{p.Value}"))}]").AsSuccess())
+                .Run();
+        }
+
+        LogMessage.Separator();
     }
 
     private void DescribeStack(ParseResult parseResult)
     {
-        LogMessage.AsWarning("Not implemented yet.");
+        var env = GetEnvironment<EnvironmentOption>(parseResult);
+        var stack = GetStack<StackArgument>(parseResult, env);
+
+        LogMessage.Separator();
+
+        LogBuilder.Message("Stack: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{stack.Name}").AsSuccess())
+            .Run();
+
+        LogBuilder.Message(" Namespace: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{stack.Namespace}").AsWarning())
+            .Run();
+
+        LogBuilder.Message(" Auto Sync: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{stack.EnableAutoSync}").AsSuccess())
+            .Run();
+
+        LogBuilder.Message(" Apps: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"[{string.Join(", ", stack.Apps.Select(a => a.Name))}]").AsSuccess())
+            .Run();
+
+        LogBuilder.Message(" Images: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"[{string.Join(", ", stack.Images.Select(i => i.Name))}]").AsSuccess())
+            .Run();
+
+        LogBuilder.Message(" Volumes: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"[{string.Join(", ", stack.Volumes.Select(v => v.Name))}]").AsSuccess())
+            .Run();
+
+        LogBuilder.Message(" Ingresses: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"[{string.Join(", ", stack.Ingresses.Select(i => i.Hostname))}]").AsSuccess())
+            .Run();
+
+        LogBuilder.Message(" Redirects: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"[{string.Join(", ", stack.Redirects.Select(r => r.Hostname))}]").AsSuccess())
+            .Run();
+
+        LogMessage.Separator();
     }
 
     private async Task DescribeTemplate(ParseResult parseResult)
@@ -61,7 +205,7 @@ public class DescribeCommand : StackManagerCommand
 
         var template = StackTemplate.Load(name);
 
-        LogMessage.AsInfo("--------");
+        LogMessage.Separator();
         
         await LogBuilder.Message("Template: ")
             .NoNewLineAfter()
@@ -96,6 +240,6 @@ public class DescribeCommand : StackManagerCommand
                 .AsWarning())
             .RunAsync();
         
-        LogMessage.AsInfo("--------");
+        LogMessage.Separator();
     }
 }
