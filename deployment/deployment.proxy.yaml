@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: stackmgr-proxy
+  name: stackmgr-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stackmgr-proxy
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: stackmgr-proxy
+    spec:
+      containers:
+      - name: stackmgr-proxy
+        image: ghcr.io/talaryonlabs/stackmgr-proxy:latest
+        resources: {}
+        envFrom:
+        - configMapRef:
+            name: stackmgr-proxy-config
+            optional: false
+        - secretRef:
+            name: stackmgr-proxy-secret
+            optional: false

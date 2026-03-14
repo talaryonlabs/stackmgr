@@ -1,0 +1,17 @@
+metadata:
+  name: stackmgr-proxy-config
+apiVersion: v1
+data:
+  #
+  # RKE2 and ArgoCD projects
+  #
+  STACKMGR_RKE2_PROJECT: "" 
+  STACKMGR_ARGOCD_PROJECT: "default"
+  #
+  # Service endpoints
+  #
+  STACKMGR_RKE2_URL: "https://rancher.cattle-system.svc"
+  STACKMGR_ARGOCD_URL: "http://argo-cd-argocd-server.argocd.svc"
+  STACKMGR_LONGHORN_URL: "http://longhorn-frontend.longhorn-system.svc"
+kind: ConfigMap
+

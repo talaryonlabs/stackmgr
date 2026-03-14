@@ -3,20 +3,23 @@ kind: Ingress
 metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-  name: ingress-proxy-{{name}}
+  name: ingress-stackmgr-proxy
 spec:
   rules:
-  - host: {{hostname}}
+  #
+  # Replace hostname in host and tls.hosts ->
+  #
+  - host: mgr.stack.example.com
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: proxy-{{name}}
+            name: stackmgr-proxy
             port:
               number: 5380
   tls:
   - hosts:
-    - {{hostname}}
-    secretName: letsencrypt-{{name}}
+    - mgr.stack.example.com
+    secretName: letsencrypt-stackmgr-proxy
