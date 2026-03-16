@@ -12,6 +12,7 @@ public class SyncCommand : StackManagerCommand
     {
         Add(new EnvironmentOption());
         Add(new StackOption());
+        Add(new ApplyOption());
         SetAction(SyncStack);
     }
     
@@ -28,7 +29,7 @@ public class SyncCommand : StackManagerCommand
         var git = new GitService();
         await git.ApplyAsync(stack);
         
-        using var proxy = new ProxyService(remote);
+        var proxy = new ProxyService(remote);
 
         if (stack.IsDeleted)
         {
@@ -43,6 +44,15 @@ public class SyncCommand : StackManagerCommand
         }
         
         var application = await SyncApplicationWithRemote(stack, proxy);
+        if (application is not null && parseResult.GetValue<bool, ApplyOption>())
+        {
+            await LogBuilder.Message($"- [Application] Applying changes ... ")
+                .NoNewLineAfter()
+                .WaitFor(async () => await proxy.ApplyApplicationAsync(stack.Namespace) is null
+                    ? LogBuilder.Message("Failed.").AsError()
+                    : LogBuilder.Message("Done.").AsSuccess())
+                .RunAsync();
+        }
     }
 
     private async Task DeleteStackFromRemote(Stack stack, IProxyService proxy)

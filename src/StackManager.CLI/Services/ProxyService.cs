@@ -17,6 +17,7 @@ public interface IProxyService
     Task<Application?> CreateApplicationAsync(Application application);
     Task<Application?> UpdateApplicationAsync(string name, Application application);
     Task<Application?> DeleteApplicationAsync(string name);
+    Task<Application?> ApplyApplicationAsync(string name);
     
     Task<IReadOnlyList<Repository>> GetRepositoriesAsync();   
     Task<Repository?> GetRepositoryAsync(string name);
@@ -150,6 +151,23 @@ public class ProxyService : IProxyService, IDisposable
             .RunAsync();
 
         return response.Data;
+    }
+
+    public async Task<Application?> ApplyApplicationAsync(string name)
+    {
+        var refresh = await _client.GetAsync($"applications/{name}/refresh");
+        if (!refresh.IsSuccessStatusCode)
+        {
+            return null;
+        }
+        
+        var sync = await _client.GetAsync($"applications/{name}/sync");
+        if (!sync.IsSuccessStatusCode)
+        {
+            return null;
+        }
+        
+        return await GetApplicationAsync(name);
     }
 
     public async Task<IReadOnlyList<Repository>> GetRepositoriesAsync()
