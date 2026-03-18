@@ -240,6 +240,13 @@ public class DescribeCommand : StackManagerCommand
                 .AsWarning())
             .RunAsync();
         
+        await LogBuilder.Message(" Required secrets: (in vault)")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder
+                .Message($"[{string.Join(", ", template.Secrets)}]")
+                .AsWarning())
+            .RunAsync();
+        
         LogMessage.Separator();
     }
 }

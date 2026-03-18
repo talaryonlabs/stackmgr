@@ -26,4 +26,5 @@ public class StackTemplate
     [YamlMember(Alias = "volumes")] public List<string> Volumes { get; init; } = [];
     [YamlMember(Alias = "images")] public List<string> Images { get; init; } = [];
     [YamlMember(Alias = "params")] public List<string> Params { get; init; } = [];
+    [YamlMember(Alias = "secrets")] public List<string> Secrets { get; init; } = [];
 }

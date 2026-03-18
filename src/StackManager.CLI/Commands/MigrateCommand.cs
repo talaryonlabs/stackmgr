@@ -109,6 +109,12 @@ public class MigrateCommand : StackManagerCommand
             app.Params.Add(parameter, param);
         }
 
+        errors.AddRange(template.Images
+            .Where(image => !stack.Images.Exists(v => v.Name == image))
+            .Select(image =>
+                $"Missing image '{image}' in stack '{stack.Name}' (environment '{env.Name}').")
+        );
+
         if (errors.Count > 0)
         {
             foreach (var error in errors)
