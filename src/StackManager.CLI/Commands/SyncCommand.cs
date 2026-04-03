@@ -186,7 +186,24 @@ public class SyncCommand : StackManagerCommand
     private async Task SyncStackVolumes(Stack stack, IProxyService proxy)
     {
         var remote = await proxy.GetVolumesAsync(stack.Namespace);
-        var local = stack.Volumes;
+        var local = stack.Volumes
+            .SelectMany(v =>
+            {
+                if (v.Replicas > 0)
+                {
+                    return Enumerable.Range(0, v.Replicas).Select(i => new StackVolume
+                    {
+                        AccessMode = v.AccessMode,
+                        Name = $"{v.Name}-{i}",
+                        StorageSize = v.StorageSize,
+                        Replicas = 0,
+                        Stack = v.Stack
+                    });
+                }
+
+                return [v];
+            })
+            .ToList();
         
         foreach(var volume in local.IntersectBy(remote.Select(v => v.Name), v => v.Name))
         {

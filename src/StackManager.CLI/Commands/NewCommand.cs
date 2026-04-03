@@ -63,7 +63,8 @@ public class NewCommand : StackManagerCommand
             new StackOption(),
             new VolumeArgument(),
             new SizeOption(),
-            new AccessModeOption()
+            new AccessModeOption(),
+            new ReplicasOption()
         };
         volume.SetAction(New);       
         
@@ -170,11 +171,13 @@ public class NewCommand : StackManagerCommand
             size = $"{parsedSize}Gi";       
         }
         
+        var replicas = parseResult.GetValue<int, ReplicasOption>();
         var volume = StackVolume.Create(
             stack, 
             GetName<VolumeArgument>(parseResult),
             size,
-            accessMode
+            accessMode,
+            replicas
         );
         LogMessage.AsSuccess($"Volume '{volume.Name}' created.");       
     }
