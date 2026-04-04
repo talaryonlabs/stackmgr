@@ -1,11 +1,9 @@
 ﻿using System.CommandLine;
 using Talaryon.StackManager;
 using Talaryon.StackManager.Commands;
-using Talaryon.StackManager.Services;
 using Talaryon.Toolbox.Api;
 
-var debugMode =
-    string.Equals(Environment.GetEnvironmentVariable("STACKMGR_DEBUG_MODE"), "on", StringComparison.CurrentCultureIgnoreCase);
+var localConfig = LocalConfig.Get();
 var rootCommand = new RootCommand
 {
     new NewCommand(),
@@ -55,5 +53,5 @@ catch (ApiError error)
 }
 catch (Exception ex)
 {
-    LogMessage.AsError(debugMode ? ex.ToString() : ex.Message);
+    LogMessage.AsError(localConfig.DebugMode ? ex.ToString() : ex.Message);
 }

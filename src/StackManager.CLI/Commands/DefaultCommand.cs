@@ -5,8 +5,11 @@ namespace Talaryon.StackManager.Commands;
 
 public class DefaultCommand : StackManagerCommand
 {
+    private readonly LocalConfig _conf;
+
     public DefaultCommand() : base("default", "Defaults for this session")
     {
+        _conf = LocalConfig.Get();
         var env = new StackManagerCommand("environment", "Set the current environment")
         {
             new EnvironmentArgument()
@@ -22,8 +25,8 @@ public class DefaultCommand : StackManagerCommand
         
         SetAction(v =>
         {
-            LogMessage.AsInfo($"Default environment: {Environment.GetEnvironmentVariable("STACKMGR_ENV", EnvironmentVariableTarget.User)}");
-            LogMessage.AsInfo($"Default stack: {Environment.GetEnvironmentVariable("STACKMGR_STACK", EnvironmentVariableTarget.User)}");
+            LogMessage.AsInfo($"Default environment: {_conf.Default.Environment}");
+            LogMessage.AsInfo($"Default stack: {_conf.Default.Stack}");
         });
         Add(env);
         Add(stack);
@@ -32,7 +35,8 @@ public class DefaultCommand : StackManagerCommand
     private void SetEnvironment(ParseResult parseResult)
     {
         var env = parseResult.GetRequiredValue<string, EnvironmentArgument>();
-        Environment.SetEnvironmentVariable("STACKMGR_ENV", env, EnvironmentVariableTarget.User);
+        _conf.Default.Environment = env;
+        _conf.Save();
         LogMessage.AsSuccess($"Environment set to '{env}'.");
         LogMessage.AsInfo("Use --environment,--env to override this value per command.");
     }
@@ -40,7 +44,8 @@ public class DefaultCommand : StackManagerCommand
     private void SetStack(ParseResult parseResult)
     {
         var stack = parseResult.GetRequiredValue<string, StackArgument>();
-        Environment.SetEnvironmentVariable("STACKMGR_STACK", stack, EnvironmentVariableTarget.User);
+        _conf.Default.Stack = stack;
+        _conf.Save();
         LogMessage.AsSuccess($"Default stack set to '{stack}'.");
         LogMessage.AsInfo("Use --stack to override this value per command.");
     }

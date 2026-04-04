@@ -97,6 +97,14 @@ public class LocalConfig
     
     [JsonPropertyName("app_repository")] public string AppRepository { get; set; } = "";
     [JsonPropertyName("remotes")] public List<LocalConfigRemote> Remotes { get; init; } = [];
+    [JsonPropertyName("default")] public LocalConfigDefault Default { get; init; } = new();
+    [JsonPropertyName("debugMode")] public bool DebugMode { get; set; }
+}
+
+public class LocalConfigDefault
+{
+    [JsonPropertyName("environment")] public string? Environment { get; set; }
+    [JsonPropertyName("stack")] public string? Stack { get; set; }
 }
 
 public class LocalConfigRemote
@@ -105,12 +113,12 @@ public class LocalConfigRemote
     [JsonPropertyName("url")] public required string Url { get; init; }
     
     [JsonPropertyName("access_token")]
-    public string _encryptedAccessToken { get; set; } = "";
+    public string EncryptedAccessToken { get; set; } = "";
     
     [JsonIgnore]
     public string AccessToken
     {
-        get => LocalConfig.Decrypt(_encryptedAccessToken);
-        set => _encryptedAccessToken = LocalConfig.Encrypt(value);
+        get => LocalConfig.Decrypt(EncryptedAccessToken);
+        set => EncryptedAccessToken = LocalConfig.Encrypt(value);
     }
 }

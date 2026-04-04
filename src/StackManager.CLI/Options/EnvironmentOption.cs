@@ -6,7 +6,11 @@ public class EnvironmentOption : Option<string>
 {
     public EnvironmentOption() : base("--environment", "--env")
     {
-        DefaultValueFactory = _ => Environment.GetEnvironmentVariable("STACKMGR_ENV", EnvironmentVariableTarget.User) ?? "default";
+        DefaultValueFactory = _ =>
+        {
+            var conf = LocalConfig.Get();
+            return conf.Default.Environment ?? "default";
+        };
         Description = "environment name (e.g. dev, prod)";
     }
 }
