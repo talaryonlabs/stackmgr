@@ -60,7 +60,9 @@ public class LocalConfig
         var configForSerialization = new 
         {
             app_repository = AppRepository,
-            remotes = remotesForSerialization
+            remotes = remotesForSerialization,
+            debug_mode = DebugMode,
+            defaults = Defaults
         };
         
         File.WriteAllText(FilePath, JsonSerializer.Serialize(configForSerialization, new JsonSerializerOptions
@@ -97,8 +99,8 @@ public class LocalConfig
     
     [JsonPropertyName("app_repository")] public string AppRepository { get; set; } = "";
     [JsonPropertyName("remotes")] public List<LocalConfigRemote> Remotes { get; init; } = [];
-    [JsonPropertyName("default")] public LocalConfigDefault Default { get; init; } = new();
-    [JsonPropertyName("debugMode")] public bool DebugMode { get; set; }
+    [JsonPropertyName("defaults")] public LocalConfigDefault Defaults { get; init; } = new();
+    [JsonPropertyName("debug_mode")] public bool DebugMode { get; set; }
 }
 
 public class LocalConfigDefault

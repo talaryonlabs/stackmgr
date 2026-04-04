@@ -25,8 +25,8 @@ public class DefaultCommand : StackManagerCommand
         
         SetAction(v =>
         {
-            LogMessage.AsInfo($"Default environment: {_conf.Default.Environment}");
-            LogMessage.AsInfo($"Default stack: {_conf.Default.Stack}");
+            LogMessage.AsInfo($"Default environment: {_conf.Defaults.Environment}");
+            LogMessage.AsInfo($"Default stack: {_conf.Defaults.Stack}");
         });
         Add(env);
         Add(stack);
@@ -35,7 +35,7 @@ public class DefaultCommand : StackManagerCommand
     private void SetEnvironment(ParseResult parseResult)
     {
         var env = parseResult.GetRequiredValue<string, EnvironmentArgument>();
-        _conf.Default.Environment = env;
+        _conf.Defaults.Environment = env;
         _conf.Save();
         LogMessage.AsSuccess($"Environment set to '{env}'.");
         LogMessage.AsInfo("Use --environment,--env to override this value per command.");
@@ -44,7 +44,7 @@ public class DefaultCommand : StackManagerCommand
     private void SetStack(ParseResult parseResult)
     {
         var stack = parseResult.GetRequiredValue<string, StackArgument>();
-        _conf.Default.Stack = stack;
+        _conf.Defaults.Stack = stack;
         _conf.Save();
         LogMessage.AsSuccess($"Default stack set to '{stack}'.");
         LogMessage.AsInfo("Use --stack to override this value per command.");

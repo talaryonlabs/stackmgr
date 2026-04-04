@@ -9,7 +9,7 @@ public class EnvironmentOption : Option<string>
         DefaultValueFactory = _ =>
         {
             var conf = LocalConfig.Get();
-            return conf.Default.Environment ?? "default";
+            return conf.Defaults.Environment ?? "default";
         };
         Description = "environment name (e.g. dev, prod)";
     }

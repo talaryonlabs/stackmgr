@@ -9,7 +9,7 @@ public class StackOption : Option<string>
         DefaultValueFactory = _ =>
         {
             var conf = LocalConfig.Get();
-            return conf.Default.Stack ?? "default";
+            return conf.Defaults.Stack ?? "default";
         };
         Description = "stack name (e.g. costumer1, project1)";
     }
