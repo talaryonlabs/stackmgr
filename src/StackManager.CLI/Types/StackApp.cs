@@ -119,6 +119,7 @@ public class StackApp : IStackObject
             content = content
                 .Replace("{{app-name}}", Name)
                 .Replace("{{stack-name}}", Stack.Name)
+                .Replace("{{env-name}}", Stack.Environment.Name)
                 .Replace("{{vault-path}}", $"{vault}/{Stack.Name}/{Name}");
 
             content = Volumes.Aggregate(content, (current, volume) => current.Replace("{{app-volume." + volume.Key + "}}", volume.Value));
