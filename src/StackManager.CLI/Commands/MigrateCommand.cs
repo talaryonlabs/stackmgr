@@ -14,10 +14,7 @@ public class MigrateCommand : StackManagerCommand
         {
             new EnvironmentOption(),
             new StackOption(),
-            new AppArgument(),
-            new VolumeOption(),
-            new RequirementOption(),
-            new ParamOption()
+            new AppArgument()
         };
         app.SetAction(MigrateApp);
         
@@ -74,39 +71,21 @@ public class MigrateCommand : StackManagerCommand
         await git.GetAppsAsync(app.Template.Branch);
         
         var template = StackTemplate.Load(app.Template.Name);
-        var volumes = VolumeOption.GetVolumes(parseResult);
-        var requirements = RequirementOption.GetRequirements(parseResult);
-        var parameters = ParamOption.GetParams(parseResult);
 
         var errors = new List<string>();
         foreach (var volume in template.Volumes.Where(volume => !app.Volumes.ContainsKey(volume)))
         {
-            if (!volumes.TryGetValue(volume, out var vol))
-            {
-                errors.Add($"Missing volume --volume {volume}:<name>");
-                continue;
-            }
-            app.Volumes.Add(volume, vol);
+            errors.Add($"Missing volume '{volume}'. Run: stackmgr configure app {app.Name} --volume {volume}:<name>");
         }
 
         foreach (var requirement in template.Requirements.Where(requirement => !app.Requirements.ContainsKey(requirement)))
         {
-            if (!requirements.TryGetValue(requirement, out var req))
-            {
-                errors.Add($"Missing requirement --requirement {requirement}:<name>");
-                continue;
-            }
-            app.Requirements.Add(requirement, req);
+            errors.Add($"Missing requirement '{requirement}'. Run: stackmgr configure app {app.Name} --requirement {requirement}:<name>");
         }
         
         foreach (var parameter in template.Params.Where(parameter => !app.Params.ContainsKey(parameter)))
         {
-            if (!parameters.TryGetValue(parameter, out var param))
-            {
-                errors.Add($"Missing parameter --param {parameter}:<value>");
-                continue;
-            }
-            app.Params.Add(parameter, param);
+            errors.Add($"Missing parameter '{parameter}'. Run: stackmgr configure app {app.Name} --param {parameter}:<value>");
         }
 
         errors.AddRange(template.Images
@@ -123,7 +102,6 @@ public class MigrateCommand : StackManagerCommand
             }
             return;
         }
-        app.Stack.SaveConfig();
 
         if (!await app.CheckRequirements(template))
         {

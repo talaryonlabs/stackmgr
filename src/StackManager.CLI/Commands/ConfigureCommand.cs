@@ -39,10 +39,22 @@ public class ConfigureCommand : StackManagerCommand
         };
         global.Aliases.Add("g");
         global.SetAction(ConfigureGlobal);
+
+        var app = new StackManagerCommand("app", "Configure an app")
+        {
+            new EnvironmentOption(),
+            new StackOption(),
+            new AppArgument(),
+            new VolumeOption(),
+            new RequirementOption(),
+            new ParamOption()
+        };
+        app.SetAction(ConfigureApp);
         
         Add(env);
         Add(stack);
         Add(global);
+        Add(app);
     }
 
     private void ConfigureGlobal(ParseResult parseResult)
@@ -116,6 +128,34 @@ public class ConfigureCommand : StackManagerCommand
         if (parseResult.Tokens.Any(v => v.Value == "--enable-auto-sync"))
         {
             stack.EnableAutoSync = parseResult.GetValue<bool, EnableAutoSyncOption>();
+        }
+        
+        stack.SaveConfig();
+    }
+
+    private void ConfigureApp(ParseResult parseResult)
+    {
+        var env = GetEnvironment<EnvironmentOption>(parseResult);
+        var stack = GetStack<StackOption>(parseResult, env);
+        var app = GetApp<AppArgument>(parseResult, stack);
+
+        var volumes = VolumeOption.GetVolumes(parseResult);
+        var requirements = RequirementOption.GetRequirements(parseResult);
+        var parameters = ParamOption.GetParams(parseResult);
+
+        foreach (var volume in volumes)
+        {
+            app.Volumes[volume.Key] = volume.Value;
+        }
+        
+        foreach (var requirement in requirements)
+        {
+            app.Requirements[requirement.Key] = requirement.Value;
+        }
+        
+        foreach (var parameter in parameters)
+        {
+            app.Params[parameter.Key] = parameter.Value;
         }
         
         stack.SaveConfig();

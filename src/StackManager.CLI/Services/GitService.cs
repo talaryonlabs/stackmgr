@@ -53,6 +53,23 @@ public class GitService
         File.WriteAllLines(file.FullName, lines);
     }
 
+    public async Task<string> DiffAsync(FileInfo file1, FileInfo file2)
+    {
+        var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = "git",
+            Arguments = $"diff --no-index \"{file1.FullName}\" \"{file2.FullName}\"",
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
+
+        if (process is null) return string.Empty;
+        
+        await process.WaitForExitAsync();
+        return await process.StandardOutput.ReadToEndAsync();
+    }
+
     public async Task<DirectoryInfo[]> GetAppsAsync(string branch)
     {
         ApplyIgnoreFile();
