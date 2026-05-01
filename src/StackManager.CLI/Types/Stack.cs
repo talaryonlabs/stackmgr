@@ -110,6 +110,7 @@ public class Stack
     
     [YamlMember(Alias = "isDeleted")] public bool IsDeleted { get; set; }
     [YamlMember(Alias = "name")] public required string Name { get; set; }
+    [YamlMember(Alias = "version")] public string? Version { get; set; }
     [YamlMember(Alias = "namespace")] public required string Namespace { get; set; }
     [YamlMember(Alias = "enableAutoSync")] public bool EnableAutoSync { get; set; }
     [YamlMember(Alias = "images")] public List<StackImage> Images { get; init; } = [];
