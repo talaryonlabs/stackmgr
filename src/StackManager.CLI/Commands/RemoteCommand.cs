@@ -49,7 +49,7 @@ public class RemoteCommand : StackManagerCommand
         Add(remove);
         Add(test);
         Add(set);
-        Add(generate);
+        // Add(generate);
         SetAction(_ =>
         {
             if (LocalConfig.Get().Remotes.Count == 0)
@@ -74,7 +74,7 @@ public class RemoteCommand : StackManagerCommand
         
         throw new NotImplementedException();
     }
-
+    
     private async Task TestRemote(ParseResult obj)
     {
         var config = LocalConfig.Get();

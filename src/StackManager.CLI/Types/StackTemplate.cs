@@ -21,6 +21,7 @@ public class StackTemplate
     }
 
     [YamlMember(Alias = "name")] public required string Name { get; init; }
+    [YamlMember(Alias = "version")] public string? Version { get; init; }
     [YamlMember(Alias = "port")] public short Port { get; init; }
     [YamlMember(Alias = "requirements")] public List<string> Requirements { get; init; } = [];
     [YamlMember(Alias = "volumes")] public List<string> Volumes { get; init; } = [];
