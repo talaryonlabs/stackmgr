@@ -1,13 +1,12 @@
 ﻿using System.CommandLine;
 using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Options;
-using Talaryon.Toolbox.Extensions;
 
 namespace Talaryon.StackManager.Commands;
 
 public class ConfigureCommand : StackManagerCommand
 {
-    public ConfigureCommand() : base("configure", "Configure a resource (environment, stack)")
+    public ConfigureCommand() : base("configure", "Configure a resource (environment, stack, app)")
     {
         var env = new StackManagerCommand("environment", "Configure a stack environment")
         {
@@ -33,6 +32,19 @@ public class ConfigureCommand : StackManagerCommand
         stack.Aliases.Add("s");
         stack.SetAction(ConfigureStack);
 
+        var app = new StackManagerCommand("app", "Configure an app")
+        {
+            new EnvironmentOption { Required = true },
+            new StackOption { Required = true },
+            new AppOption { Required = true },
+            new ParamOption(),
+            new RequirementOption(),
+            new VolumeOption(),
+            new ImageOption()
+        };
+        app.Aliases.Add("a");
+        app.SetAction(ConfigureApp);
+
         var global = new StackManagerCommand("global", "Configure the app repository")
         {
             new AppRepositoryOption()
@@ -40,21 +52,10 @@ public class ConfigureCommand : StackManagerCommand
         global.Aliases.Add("g");
         global.SetAction(ConfigureGlobal);
 
-        var app = new StackManagerCommand("app", "Configure an app")
-        {
-            new EnvironmentOption(),
-            new StackOption(),
-            new AppArgument(),
-            new VolumeOption(),
-            new RequirementOption(),
-            new ParamOption()
-        };
-        app.SetAction(ConfigureApp);
-        
         Add(env);
         Add(stack);
-        Add(global);
         Add(app);
+        Add(global);
     }
 
     private void ConfigureGlobal(ParseResult parseResult)
@@ -137,25 +138,34 @@ public class ConfigureCommand : StackManagerCommand
     {
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
-        var app = GetApp<AppArgument>(parseResult, stack);
+        var app = GetApp<AppOption>(parseResult, stack);
 
         var volumes = VolumeOption.GetVolumes(parseResult);
-        var requirements = RequirementOption.GetRequirements(parseResult);
-        var parameters = ParamOption.GetParams(parseResult);
-
         foreach (var volume in volumes)
         {
             app.Volumes[volume.Key] = volume.Value;
+            LogMessage.AsSuccess($"Volume '{volume.Key}' set to '{volume.Value}' for app '{app.Name}'.");
         }
         
+        var requirements = RequirementOption.GetRequirements(parseResult);
         foreach (var requirement in requirements)
         {
             app.Requirements[requirement.Key] = requirement.Value;
+            LogMessage.AsSuccess($"Requirement '{requirement.Key}' set to '{requirement.Value}' for app '{app.Name}'.");
         }
         
+        var parameters = ParamOption.GetParams(parseResult);
         foreach (var parameter in parameters)
         {
             app.Params[parameter.Key] = parameter.Value;
+            LogMessage.AsSuccess($"Parameter '{parameter.Key}' set to '{parameter.Value}' for app '{app.Name}'.");
+        }
+
+        var images = ImageOption.GetImages(parseResult);
+        foreach (var image in images)
+        {
+            app.Images[image.Key] = image.Value;
+            LogMessage.AsSuccess($"Image '{image.Key}' set to '{image.Value}' for app '{app.Name}'.");
         }
         
         stack.SaveConfig();

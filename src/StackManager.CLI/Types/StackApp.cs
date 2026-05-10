@@ -13,7 +13,7 @@ public class StackApp : IStackObject
         {
             throw new AppAlreadyExistsException(stack, existing);
         }
-        
+
         var app = new StackApp
         {
             Stack = stack,
@@ -25,6 +25,7 @@ public class StackApp : IStackObject
         {
             stack.Apps.Add(app);
         }
+
         stack.SaveConfig();
 
         return app;
@@ -36,10 +37,12 @@ public class StackApp : IStackObject
         {
             LocalDirectory.Delete(true);
         }
+
         lock (Stack.Apps)
         {
             Stack.Apps.Remove(this);
         }
+
         Stack.SaveConfig();
     }
 
@@ -49,26 +52,28 @@ public class StackApp : IStackObject
         var files = template.LocalDirectory
             .GetFileSystemInfos("*", SearchOption.AllDirectories);
 
-        foreach (var requirement in Requirements.Where(requirement => !Stack.Apps.Exists(v => v.Name == requirement.Value)))
+        foreach (var requirement in Requirements.Where(requirement =>
+                     !Stack.Apps.Exists(v => v.Name == requirement.Value)))
         {
             errors.TryAdd(requirement.Key, $"Required app '{requirement.Value}' not found in stack.");
         }
-        
+
         foreach (var volume in Volumes.Where(volume => !Stack.Volumes.Exists(v => v.Name == volume.Value)))
         {
             errors.TryAdd(volume.Key, $"Required volume '{volume.Value}' not found in stack.");
         }
-        
+
         foreach (var file in files)
         {
             var content = await File.ReadAllTextAsync(file.FullName);
             if (content.Contains("{{vault-path}}") && string.IsNullOrEmpty(Stack.Environment.Vault))
             {
-                errors.TryAdd("vault-path", "Vault-Path is not configured. Please run 'stackmgr configure env <environment-name> --vault <vault-path>' first.");
+                errors.TryAdd("vault-path",
+                    "Vault-Path is not configured. Please run 'stackmgr configure env <environment-name> --vault <vault-path>' first.");
             }
         }
-        
-        if(errors.Count == 0) return true;
+
+        if (errors.Count == 0) return true;
         foreach (var error in errors)
         {
             LogMessage.AsError($"- {error.Value}");
@@ -76,12 +81,12 @@ public class StackApp : IStackObject
 
         return false;
     }
-    
+
     public async Task Migrate(StackTemplate template)
     {
         var files = template.LocalDirectory
             .GetFileSystemInfos("*", SearchOption.AllDirectories);
-        
+
         var vault = Stack.Environment.Vault.EndsWith("/")
             ? Stack.Environment.Vault[..^1]
             : Stack.Environment.Vault;
@@ -93,51 +98,58 @@ public class StackApp : IStackObject
         else
         {
             LogMessage.AsInfo("The following files will be migrated:");
-            foreach (var existing in files.Where(v => File.Exists(Path.Combine(LocalDirectory.FullName, v.Name))).ToList())
+            foreach (var existing in files.Where(v => File.Exists(Path.Combine(LocalDirectory.FullName, v.Name)))
+                         .ToList())
             {
                 LogMessage.AsWarning($"- {existing.Name} (replace)");
             }
-        
+
             foreach (var add in files.Where(v => !File.Exists(Path.Combine(LocalDirectory.FullName, v.Name))).ToList())
             {
                 LogMessage.AsSuccess($"- {add.Name} (add)");
             }
-            
+
             if (!LogMessage.AsConfirmWarning("Do you want to migrate all files?"))
             {
                 LogMessage.AsInfo("Aborted.");
                 return;
             }
         }
-        
+
         foreach (var file in files)
         {
-            if(file.Name.Equals(StackTemplate.FileName, StringComparison.InvariantCultureIgnoreCase)) continue;
-            
+            if (file.Name.Equals(StackTemplate.FileName, StringComparison.InvariantCultureIgnoreCase)) continue;
+
             var content = await File.ReadAllTextAsync(file.FullName);
-            
+
             content = content
                 .Replace("{{app-name}}", Name)
                 .Replace("{{stack-name}}", Stack.Name)
                 .Replace("{{env-name}}", Stack.Environment.Name)
                 .Replace("{{vault-path}}", $"{vault}/{Stack.Name}/{Name}");
 
-            content = Volumes.Aggregate(content, (current, volume) => current.Replace("{{app-volume." + volume.Key + "}}", volume.Value));
-            content = Params.Aggregate(content, (current, param) => current.Replace("{{app-param." + param.Key + "}}", param.Value));
-            content = Requirements.Aggregate(content, (current, requirement) => current.Replace("{{app-requirement." + requirement.Key + "}}", requirement.Value));
+            content = Volumes.Aggregate(content,
+                (current, volume) => current.Replace("{{app-volume." + volume.Key + "}}", volume.Value));
+            content = Params.Aggregate(content,
+                (current, param) => current.Replace("{{app-param." + param.Key + "}}", param.Value));
+            content = Requirements.Aggregate(content,
+                (current, requirement) =>
+                    current.Replace("{{app-requirement." + requirement.Key + "}}", requirement.Value));
 
             await File.WriteAllTextAsync(Path.Combine(LocalDirectory.FullName, file.Name), content);
             LogMessage.AsInfo($"Applied '{file.Name}'.");
         }
     }
-    
+
     [YamlIgnore] public required Stack Stack { get; set; }
+
     [YamlIgnore]
     public DirectoryInfo LocalDirectory => new(
         Path.Combine(Stack.LocalDirectory.FullName, Name)
     );
-    
+
     [YamlMember(Alias = "name")] public required string Name { get; init; }
+    [YamlMember(Alias = "images")] public Dictionary<string, string> Images { get; init; } = [];
     [YamlMember(Alias = "volumes")] public Dictionary<string, string>  Volumes { get; init; } = [];
     [YamlMember(Alias = "requirements")] public Dictionary<string, string> Requirements { get; init; } = [];
     [YamlMember(Alias = "params")] public Dictionary<string, string> Params { get; init; } = [];
