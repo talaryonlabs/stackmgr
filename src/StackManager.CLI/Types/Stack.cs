@@ -32,7 +32,7 @@ public class Stack
         {
             Name = name,
             Environment = env,
-            Namespace = $"{env.Name.ToLower()}-{name.ToLower()}",
+            Namespace = $"{env.Name.ToLower()}-{name.ToLower().Replace(".", "-")}",
             Images = [],
             Apps = [],
             Ingresses = [],
