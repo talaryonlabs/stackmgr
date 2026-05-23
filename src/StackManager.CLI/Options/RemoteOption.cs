@@ -4,7 +4,7 @@ namespace Talaryon.StackManager.Options;
 
 public class RemoteOption : Option<string>
 {
-    public RemoteOption() : base("--remote")
+    public RemoteOption() : base("--remote", "-r")
     {
         Description = "remote name (e.g. dev)";
     }

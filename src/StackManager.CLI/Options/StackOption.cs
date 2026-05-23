@@ -4,7 +4,7 @@ namespace Talaryon.StackManager.Options;
 
 public class StackOption : Option<string>
 {
-    public StackOption() : base("--stack")
+    public StackOption() : base("--stack", "-s")
     {
         DefaultValueFactory = _ =>
         {

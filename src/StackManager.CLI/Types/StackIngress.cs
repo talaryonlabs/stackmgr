@@ -7,7 +7,7 @@ public class StackIngress : IStackObject
 {
     public const string DirectoryName = ".ingresses";
     
-    public static StackIngress Create(Stack stack, string hostname, string app, short port, bool secured = false)
+    public static StackIngress Create(Stack stack, string hostname, string app, int port, bool secured = false)
     {
         if(stack.Ingresses.Any(v => v.Hostname.Equals(hostname, StringComparison.InvariantCultureIgnoreCase)))
             throw new Exception($"Ingress {hostname} already exists.");
@@ -195,6 +195,6 @@ public class StackIngress : IStackObject
     [YamlMember(Alias = "isSecured")] public bool IsSecured { get; init; }
     [YamlMember(Alias = "hostname")] public required string Hostname { get; init; }
     [YamlMember(Alias = "app")] public string? Application { get; init; }
-    [YamlMember(Alias = "port")] public short Port { get; init; }
+    [YamlMember(Alias = "port")] public int Port { get; init; }
     [YamlMember(Alias = "annotations")] public Dictionary<string, string>? Annotations { get; init; } = [];
 }

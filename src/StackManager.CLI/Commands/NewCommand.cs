@@ -214,7 +214,7 @@ public class NewCommand : StackManagerCommand
             }
         }
 
-        var port = parseResult.GetRequiredValue<short, PortOption>();
+        var port = parseResult.GetRequiredValue<int, PortOption>();
         StackIngress.Create(stack, hostname, app, port, parseResult.GetValue<bool, SecuredOption>());
 
         LogMessage.AsSuccess($"Ingress '{hostname}' created.");

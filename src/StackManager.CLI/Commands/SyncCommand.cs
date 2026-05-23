@@ -18,7 +18,7 @@ public class SyncCommand : StackManagerCommand
     
     private async Task SyncStack(ParseResult parseResult)
     {
-        var config = LocalConfig.Get();
+        var config = GetRequiredService<LocalConfig>();
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
         var remote = config
@@ -27,10 +27,11 @@ public class SyncCommand : StackManagerCommand
                      ?? throw new Exception($"Remote '{env.Remote}' not found in configuration.");
 
         await stack.Build();
-        var git = new GitService();
+        var git = GetRequiredService<GitService>();
         await git.ApplyAsync(stack);
         
-        var proxy = new ProxyService(remote);
+        var httpClientFactory = GetRequiredService<IHttpClientFactory>();
+        var proxy = new ProxyService(remote, httpClientFactory);
 
         if (stack.IsDeleted)
         {

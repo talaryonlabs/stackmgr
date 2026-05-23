@@ -1,9 +1,32 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 using Talaryon.StackManager;
+using Talaryon.StackManager.DependencyInjection;
+using Talaryon.StackManager.Exceptions;
 using Talaryon.Toolbox.Api;
 
-var localConfig = LocalConfig.Get();
+// Check for --version or -v before DI setup
+if (args.Length > 0 && (args[0] == "--version" || args[0] == "-v"))
+{
+    var assembly = typeof(Program).Assembly;
+    var version = assembly.GetName().Version?.ToString() ?? "unknown";
+    var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? version;
+    Console.WriteLine($"stackmgr version {informationalVersion}");
+    Environment.Exit(0);
+}
+
+// Setup DI container
+var services = new ServiceCollection();
+services.AddSingleton<LocalConfig>(_ => LocalConfig.Get());
+services.AddHttpClient();
+services.AddStackManagerServices();
+
+// Build service provider
+var serviceProvider = services.BuildServiceProvider();
+
+// Get local config
+var localConfig = serviceProvider.GetRequiredService<LocalConfig>();
 
 var rootCommand = new RootCommand();
 
@@ -16,28 +39,36 @@ var commandTypes = Assembly.GetExecutingAssembly()
 
 foreach (var command in commandTypes)
 {
+    // Inject service provider into each command
+    command.SetServiceProvider(serviceProvider);
     rootCommand.Add(command);
 }
 
+int exitCode = 0;
+
 try
 {
-    var parseResult = rootCommand.Parse("--help");
-    if (args.Length > 0)
-    {
-        parseResult = rootCommand.Parse(args);
-    }
-
-    await parseResult.InvokeAsync(new InvocationConfiguration()
-    {
-        EnableDefaultExceptionHandler = false
-
-    });
+    var parseResult = rootCommand.Parse(args);
+    parseResult.Invoke();
 }
-catch (ApiError error)
+catch (CliException cliEx)
 {
-    LogMessage.AsError(error.Message ?? "Unknown error");   
+    LogMessage.AsError(cliEx.Message);
+    if (localConfig.DebugMode && cliEx.ShowStackTrace)
+    {
+        Console.Error.WriteLine(cliEx.StackTrace);
+    }
+    exitCode = cliEx.ExitCode;
+}
+catch (ApiError apiError)
+{
+    LogMessage.AsError(apiError.Message ?? "Unknown API error");
+    exitCode = 2;
 }
 catch (Exception ex)
 {
     LogMessage.AsError(localConfig.DebugMode ? ex.ToString() : ex.Message);
+    exitCode = 2;
 }
+
+Environment.Exit(exitCode);
