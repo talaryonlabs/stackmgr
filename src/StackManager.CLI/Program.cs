@@ -3,6 +3,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Talaryon.StackManager;
 using Talaryon.StackManager.Commands;
+using Talaryon.StackManager.Commands.Resources;
 using Talaryon.StackManager.Exceptions;
 using Talaryon.Toolbox.Api;
 
@@ -30,10 +31,24 @@ var localConfig = serviceProvider.GetRequiredService<LocalConfig>();
 
 var rootCommand = new RootCommand();
 
-// Auto-discover and register all commands that inherit from StackManagerCommand
+// Auto-discover and register all commands that inherit from BaseCommand
+// Exclude resource subcommands (ResourceCreateCommand, ResourceDeleteCommand, etc.) 
+// as they are added under their parent commands (NewCommand, DeleteCommand, etc.)
 var commandTypes = Assembly.GetExecutingAssembly()
     .GetTypes()
     .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsSubclassOf(typeof(BaseCommand)))
+    .Where(t => 
+    {
+        var baseType = t.BaseType;
+        if (baseType == null || !baseType.IsGenericType)
+            return true;
+        var genericDef = baseType.GetGenericTypeDefinition();
+        return genericDef != typeof(ResourceCreateCommand<,>)
+            && genericDef != typeof(ResourceDeleteCommand<,>)
+            && genericDef != typeof(ResourceDescribeCommand<,>)
+            && genericDef != typeof(ResourceGetCommand<>)
+            && genericDef != typeof(ResourceConfigureCommand<>);
+    })
     .Select(type => (BaseCommand)Activator.CreateInstance(type)!)
     .ToList();
 

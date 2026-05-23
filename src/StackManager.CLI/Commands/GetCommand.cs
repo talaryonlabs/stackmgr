@@ -11,7 +11,9 @@ public class GetCommand : BaseCommand
         // Auto-discover and add all ResourceGetCommand<T> implementations
         var getCommandTypes = Assembly.GetExecutingAssembly()
             .GetTypes()
-            .Where(t => t.IsSubclassOf(typeof(ResourceGetCommand<>)) && !t.IsAbstract && t != typeof(ResourceGetCommand<>))
+            .Where(t => t.BaseType?.IsGenericType == true 
+                        && t.BaseType.GetGenericTypeDefinition() == typeof(ResourceGetCommand<>)
+                        && !t.IsAbstract)
             .ToList();
 
         foreach (var instance in getCommandTypes
