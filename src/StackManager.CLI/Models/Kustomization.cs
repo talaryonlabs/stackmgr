@@ -1,4 +1,5 @@
-﻿using Talaryon.StackManager.Types;
+using Talaryon.StackManager.Serialization;
+using Talaryon.StackManager.Types;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 
@@ -16,7 +17,7 @@ public class Kustomization
     public void Save(Stack stack)
     {
         var file = Path.Combine(stack.LocalDirectory.FullName, FileName);
-        File.WriteAllText(file, new Serializer().Serialize(this));
+        File.WriteAllText(file, YamlSerializer.Serialize(this));
     }
 }
 

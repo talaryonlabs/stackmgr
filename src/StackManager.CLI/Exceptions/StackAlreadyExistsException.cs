@@ -1,4 +1,4 @@
-﻿using Talaryon.StackManager.Types;
+using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Exceptions;
 

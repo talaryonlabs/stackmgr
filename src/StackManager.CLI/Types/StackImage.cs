@@ -1,4 +1,4 @@
-﻿using YamlDotNet.Serialization;
+using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Types;
 
@@ -12,7 +12,7 @@ public class StackImage : IStackObject
             name = parts[^1].Contains(':') ? parts[^1].Split(":")[0] : parts[^1];
         }
 
-        if (stack.Images.Any(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)))
+        if (stack.Images.Any(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
         {
             throw new Exception($"Image with name '{name}' already exists in stack '{stack.Name}' (use 'stackmgr migrate image' instead)");
         }
@@ -29,7 +29,7 @@ public class StackImage : IStackObject
             stack.Images.Add(img);
         }
         stack.SaveConfig();
-        stack.Build();
+        stack.BuildAsync().GetAwaiter().GetResult();
 
         return img;
     }

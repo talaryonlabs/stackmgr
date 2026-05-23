@@ -1,4 +1,4 @@
-﻿namespace Talaryon.StackManager.Exceptions;
+namespace Talaryon.StackManager.Exceptions;
 
 public abstract class StackManagerException(
     string message,

@@ -1,4 +1,4 @@
-﻿using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Exceptions;
 using Talaryon.Toolbox.Services.ArgoCD.Models;
 using YamlDotNet.Serialization;
 
@@ -28,7 +28,7 @@ public class Stack
         return stack;
     }
 
-    public static Stack Create(StackEnvironment env, string name)
+    public static async Task<Stack> CreateAsync(StackEnvironment env, string name)
     {
         var stack = new Stack
         {
@@ -48,14 +48,25 @@ public class Stack
             stack.LocalDirectory.Create();
         
         stack.SaveConfig();
-        stack.Build();
+        await stack.BuildAsync();
         
         return stack;
     }
 
+    public static Stack Create(StackEnvironment env, string name)
+    {
+        return CreateAsync(env, name).GetAwaiter().GetResult();
+    }
+
+    public async Task BuildAsync()
+    {
+        await new StackBuilder(this).BuildAsync();
+    }
+
+    [Obsolete("Use BuildAsync instead")]
     public Task Build()
     {
-        return new StackBuilder(this).Build();
+        return BuildAsync();
     }
 
     public void Delete(bool complete = false)

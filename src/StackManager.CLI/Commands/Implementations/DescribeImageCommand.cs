@@ -24,7 +24,7 @@ public class DescribeImageCommand : ResourceDescribeCommand<StackImage, ImageArg
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
         var name = GetName<ImageArgument>(parseResult);
-        return stack.Images.FirstOrDefault(v => v.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)) 
+        return stack.Images.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) 
             ?? throw new ImageNotFoundException(name);
     }
 

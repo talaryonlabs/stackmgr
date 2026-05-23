@@ -1,4 +1,4 @@
-﻿namespace Talaryon.StackManager;
+namespace Talaryon.StackManager;
 
 public static class LogMessage
 {

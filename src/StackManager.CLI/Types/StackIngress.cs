@@ -1,4 +1,4 @@
-﻿using Talaryon.StackManager.Models;
+using Talaryon.StackManager.Models;
 using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Types;
@@ -9,7 +9,7 @@ public class StackIngress : IStackObject
     
     public static StackIngress Create(Stack stack, string hostname, string app, int port, bool secured = false)
     {
-        if(stack.Ingresses.Any(v => v.Hostname.Equals(hostname, StringComparison.InvariantCultureIgnoreCase)))
+        if(stack.Ingresses.Any(v => v.Hostname.Equals(hostname, StringComparison.OrdinalIgnoreCase)))
             throw new Exception($"Ingress {hostname} already exists.");
         
         var ingress = new StackIngress

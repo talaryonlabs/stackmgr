@@ -1,4 +1,4 @@
-﻿using Talaryon.StackManager.Proxy.Services;
+using Talaryon.StackManager.Proxy.Services;
 using Talaryon.Toolbox.Extensions;
 using Talaryon.Toolbox.Hosting;
 using Talaryon.Toolbox.Hosting.Api;

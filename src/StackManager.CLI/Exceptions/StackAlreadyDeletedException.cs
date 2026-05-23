@@ -1,4 +1,4 @@
-﻿namespace Talaryon.StackManager.Exceptions;
+namespace Talaryon.StackManager.Exceptions;
 
 public class StackAlreadyDeletedException(string name)
     : StackManagerException(

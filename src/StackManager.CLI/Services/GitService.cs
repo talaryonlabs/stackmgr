@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Talaryon.StackManager.Exceptions;
 using Talaryon.StackManager.Types;
 

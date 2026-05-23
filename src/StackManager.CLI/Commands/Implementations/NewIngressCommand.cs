@@ -45,7 +45,7 @@ public class NewIngressCommand : ResourceCreateCommand<StackIngress, HostnameArg
             {
                 var generated = $"{HelperMethods.GenerateRandomHostname()}-{stack.Name.ToLower()}.{hostname}";
                 if (stack.Ingresses.Count(v =>
-                        v.Hostname.Equals(generated, StringComparison.InvariantCultureIgnoreCase)) == 0)
+                        v.Hostname.Equals(generated, StringComparison.OrdinalIgnoreCase)) == 0)
                 {
                     hostname = generated;
                     break;

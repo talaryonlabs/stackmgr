@@ -12,7 +12,7 @@ public class AppMigrator(StackApp app)
 
     public AppMigratorPreflight? PreflightResult { get; private set; }
 
-    public async Task Fetch()
+    public async Task FetchAsync()
     {
         if (_app.Template is null) throw new InvalidOperationException($"App '{_app.Name}' has no template.");
         
@@ -36,7 +36,7 @@ public class AppMigrator(StackApp app)
         }
 
         var templateFiles = templateDir.GetFiles("*", SearchOption.AllDirectories)
-            .Where(f => !f.Name.Equals(StackTemplate.FileName, StringComparison.InvariantCultureIgnoreCase))
+            .Where(f => !f.Name.Equals(StackTemplate.FileName, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         foreach (var templateFile in templateFiles)
@@ -80,7 +80,7 @@ public class AppMigrator(StackApp app)
         return hashAlgorithm.ComputeHash(stream);
     }
 
-    public async Task Migrate()
+    public async Task MigrateAsync()
     {
         if (_app.Template is null) throw new InvalidOperationException($"App '{_app.Name}' has no template.");
         if (!_preflight) throw new InvalidOperationException("Preflight must be called before Migrate.");

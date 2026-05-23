@@ -48,6 +48,12 @@ public abstract class ResourceCreateCommand<TResource, TArg> : StackManagerComma
         catch (StackManagerException ex)
         {
             LogMessage.AsError(ex.Message);
+            throw; // Re-throw to be caught by Program.cs
+        }
+        catch (Exception ex)
+        {
+            LogMessage.AsError(ex.Message);
+            throw new SystemErrorException(ex.Message, ex);
         }
     }
 }

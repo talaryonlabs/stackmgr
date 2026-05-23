@@ -1,4 +1,4 @@
-﻿using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Exceptions;
 using Talaryon.StackManager.Services;
 using YamlDotNet.Serialization;
 
@@ -8,7 +8,7 @@ public class StackApp : IStackObject
 {
     public static StackApp Create(Stack stack, string name, StackAppTemplate? template)
     {
-        var existing = stack.Apps.FirstOrDefault(v => v.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+        var existing = stack.Apps.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         if (existing is not null)
         {
             throw new AppAlreadyExistsException(stack, existing);
@@ -82,7 +82,7 @@ public class StackApp : IStackObject
         return false;
     }
 
-    public async Task Migrate(StackTemplate template)
+    public async Task MigrateAsync(StackTemplate template)
     {
         var files = template.LocalDirectory
             .GetFileSystemInfos("*", SearchOption.AllDirectories);
@@ -118,7 +118,7 @@ public class StackApp : IStackObject
 
         foreach (var file in files)
         {
-            if (file.Name.Equals(StackTemplate.FileName, StringComparison.InvariantCultureIgnoreCase)) continue;
+            if (file.Name.Equals(StackTemplate.FileName, StringComparison.OrdinalIgnoreCase)) continue;
 
             var content = await File.ReadAllTextAsync(file.FullName);
 

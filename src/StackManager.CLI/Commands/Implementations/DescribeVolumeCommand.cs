@@ -24,7 +24,7 @@ public class DescribeVolumeCommand : ResourceDescribeCommand<StackVolume, Volume
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
         var name = GetName<VolumeArgument>(parseResult);
-        return stack.Volumes.FirstOrDefault(v => v.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)) 
+        return stack.Volumes.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) 
             ?? throw new VolumeNotFoundException(name);
     }
 

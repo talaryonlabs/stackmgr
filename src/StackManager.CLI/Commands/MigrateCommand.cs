@@ -1,4 +1,4 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Options;
 using Talaryon.StackManager.Services;
@@ -44,7 +44,7 @@ public class MigrateCommand : StackManagerCommand
             name = parts[^1].Contains(':') ? parts[^1].Split(":")[0] : parts[^1];
         }
         
-        var image = stack.Images.FirstOrDefault(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+        var image = stack.Images.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         if (image is null)
         {
             LogMessage.AsWarning($"Image '{name}' not found in stack '{stack.Name}' (environment '{env.Name}').");
@@ -113,7 +113,7 @@ public class MigrateCommand : StackManagerCommand
             .NoNewLineAfter()
             .WaitFor(async () =>
             {
-                await app.Migrate(template);
+                await app.MigrateAsync(template);
                 return LogBuilder.Message("Migration done.").AsSuccess();
             })
             .RunAsync();

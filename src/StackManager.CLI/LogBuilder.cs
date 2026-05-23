@@ -1,4 +1,4 @@
-﻿using Talaryon.Toolbox;
+using Talaryon.Toolbox;
 using Talaryon.Toolbox.Extensions;
 
 namespace Talaryon.StackManager;

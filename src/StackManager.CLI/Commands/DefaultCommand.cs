@@ -1,4 +1,4 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using Talaryon.StackManager.Options;
 
 namespace Talaryon.StackManager.Commands;

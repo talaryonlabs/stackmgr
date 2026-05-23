@@ -1,4 +1,5 @@
-﻿using YamlDotNet.Serialization;
+using Talaryon.StackManager.Serialization;
+using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Models;
 
@@ -11,7 +12,7 @@ public class Ingress
 
     public void SaveTo(string path)
     {
-        File.WriteAllText(path, new Serializer().Serialize(this));
+        File.WriteAllText(path, YamlSerializer.Serialize(this));
     }
 }
 

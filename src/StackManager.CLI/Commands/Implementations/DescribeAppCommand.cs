@@ -24,7 +24,7 @@ public class DescribeAppCommand : ResourceDescribeCommand<StackApp, AppArgument>
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
         var name = GetName<AppArgument>(parseResult);
-        return stack.Apps.FirstOrDefault(v => v.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)) 
+        return stack.Apps.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) 
             ?? throw new AppNotFoundException(name);
     }
 

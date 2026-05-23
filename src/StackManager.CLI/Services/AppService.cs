@@ -1,3 +1,4 @@
+using System.Security;
 using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Services;
@@ -62,16 +63,17 @@ public class AppService
     
     private static string GetRelativePath(FileInfo file, DirectoryInfo root)
     {
-        var fullPath = file.FullName;
-        var rootPath = root.FullName;
+        var fullPath = Path.GetFullPath(file.FullName);
+        var rootPath = Path.GetFullPath(root.FullName + Path.DirectorySeparatorChar);
         
-        if (fullPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
+        if (!fullPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
         {
-            var relative = fullPath.Substring(rootPath.Length);
-            return relative.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            throw new SecurityException(
+                $"File '{file.FullName}' is outside root directory '{root.FullName}'");
         }
         
-        return file.Name;
+        var relative = fullPath.Substring(rootPath.Length);
+        return relative.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
     }
     
     public async Task CopyTemplateToBaseAsync(StackTemplate template)
@@ -86,7 +88,7 @@ public class AppService
         
         foreach (var file in template.LocalDirectory.GetFiles("*", SearchOption.AllDirectories))
         {
-            if (file.Name.Equals(StackTemplate.FileName, StringComparison.InvariantCultureIgnoreCase))
+            if (file.Name.Equals(StackTemplate.FileName, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }

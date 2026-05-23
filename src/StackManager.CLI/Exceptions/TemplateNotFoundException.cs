@@ -1,4 +1,4 @@
-﻿namespace Talaryon.StackManager.Exceptions;
+namespace Talaryon.StackManager.Exceptions;
 
 public class TemplateNotFoundException(string? name = null)
     : StackManagerException(

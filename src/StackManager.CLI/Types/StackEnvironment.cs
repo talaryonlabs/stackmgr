@@ -1,4 +1,4 @@
-﻿using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Exceptions;
 using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Types;

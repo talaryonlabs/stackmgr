@@ -1,4 +1,5 @@
-﻿using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Serialization;
 using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Types;
@@ -16,10 +17,7 @@ public class StackTemplate
         
         if (!File.Exists(file)) throw new TemplateNotFoundException(name);
         
-        var deserializer = new DeserializerBuilder()
-            .IgnoreUnmatchedProperties()
-            .Build();
-        var template = deserializer.Deserialize<StackTemplate>(File.ReadAllText(file));
+        var template = YamlSerializer.Deserialize<StackTemplate>(File.ReadAllText(file));
         
         return template;
     }

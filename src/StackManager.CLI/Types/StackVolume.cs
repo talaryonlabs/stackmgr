@@ -1,4 +1,4 @@
-﻿using YamlDotNet.Serialization;
+using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Types;
 
@@ -6,7 +6,7 @@ public class StackVolume
 {
     public static StackVolume Create(Stack stack, string name, string storageSize, string accessMode = "ReadWriteOnce", int replicas = 0)
     {
-        if (stack.Volumes.Any(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)))
+        if (stack.Volumes.Any(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
         {
             throw new Exception($"Volume with name '{name}' already exists in stack '{stack.Name}'.");
         }

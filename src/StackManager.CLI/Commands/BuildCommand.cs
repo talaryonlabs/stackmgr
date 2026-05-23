@@ -1,4 +1,4 @@
-﻿using Talaryon.StackManager.Options;
+using Talaryon.StackManager.Options;
 
 namespace Talaryon.StackManager.Commands;
 
@@ -13,7 +13,7 @@ public class BuildCommand : StackManagerCommand
             var env = GetEnvironment<EnvironmentOption>(parseResult);
             var stack = GetStack<StackOption>(parseResult, env);
             
-            await stack.Build();
+            await stack.BuildAsync();
             LogMessage.AsSuccess($"Stack '{stack.Name}' built.");
         });
     }

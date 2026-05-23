@@ -1,4 +1,4 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using Talaryon.StackManager.Exceptions;
 using Talaryon.StackManager.Types;
@@ -45,27 +45,27 @@ public class StackManagerCommand(string name, string description) : Command(name
         where T : Symbol
     {
         var name = GetName<T>(parseResult);
-        return stack.Apps.FirstOrDefault(v => v.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)) ?? throw new AppNotFoundException(name);
+        return stack.Apps.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) ?? throw new AppNotFoundException(name);
     }
     
     protected StackIngress GetIngress<T>(ParseResult parseResult, Stack stack) 
         where T : Symbol
     {
         var hostname = GetName<T>(parseResult);
-        return stack.Ingresses.FirstOrDefault(v => v.Hostname.Equals(hostname, StringComparison.CurrentCultureIgnoreCase)) ?? throw new IngressNotFoundException(hostname);
+        return stack.Ingresses.FirstOrDefault(v => v.Hostname.Equals(hostname, StringComparison.OrdinalIgnoreCase)) ?? throw new IngressNotFoundException(hostname);
     }
     
     protected StackVolume GetVolume<T>(ParseResult parseResult, Stack stack) 
         where T : Symbol
     {
         var name = GetName<T>(parseResult);
-        return stack.Volumes.FirstOrDefault(v => v.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)) ?? throw new VolumeNotFoundException(name);
+        return stack.Volumes.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) ?? throw new VolumeNotFoundException(name);
     }
     
     protected StackImage GetImage<T>(ParseResult parseResult, Stack stack) 
         where T : Symbol
     {
         var name = GetName<T>(parseResult);
-        return stack.Images.FirstOrDefault(v => v.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)) ?? throw new ImageNotFoundException(name);
+        return stack.Images.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) ?? throw new ImageNotFoundException(name);
     }
 }

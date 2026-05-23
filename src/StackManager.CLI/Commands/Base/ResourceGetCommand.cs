@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Talaryon.StackManager.Exceptions;
 using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Commands.Base;
@@ -56,8 +57,21 @@ public abstract class ResourceGetCommand<TResource> : StackManagerCommand
 
     private void ExecuteGetResources(ParseResult parseResult)
     {
-        var resources = GetResources(parseResult);
-        DisplayResources(resources);
+        try
+        {
+            var resources = GetResources(parseResult);
+            DisplayResources(resources);
+        }
+        catch (StackManagerException ex)
+        {
+            LogMessage.AsError(ex.Message);
+            throw; // Re-throw to be caught by Program.cs
+        }
+        catch (Exception ex)
+        {
+            LogMessage.AsError(ex.Message);
+            throw new SystemErrorException(ex.Message, ex);
+        }
     }
 
     /// <summary>

@@ -1,14 +1,15 @@
-﻿using Talaryon.StackManager.Exceptions;
+using System.Security;
+using Talaryon.StackManager.Exceptions;
 using Talaryon.StackManager.Models;
+using Talaryon.StackManager.Serialization;
 using Talaryon.StackManager.Services;
 using Talaryon.StackManager.Types;
-using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager;
 
 public class StackBuilder(Stack stack)
 {
-    public async Task Build()
+    public async Task BuildAsync()
     {
         BuildRegistryCredentials();
         BuildOutpostService();
@@ -21,7 +22,7 @@ public class StackBuilder(Stack stack)
             Resources = stack.LocalDirectory
                 .GetFiles("*.yaml", SearchOption.AllDirectories)
                 .Where(f => !new List<string> { Kustomization.FileName, Stack.FileName }.Contains(f.Name))
-                .Select(f => f.FullName.Replace(stack.LocalDirectory.FullName, "").Replace("\\", "/")[1..])
+                .Select(f => GetRelativePath(f, stack.LocalDirectory))
                 .ToList()
         };
             
@@ -38,7 +39,7 @@ public class StackBuilder(Stack stack)
             var credentials = new RegistryCredentials();
             credentials.Metadata.Annotations.Path = stack.Environment.RegistryCredentials;
             LogMessage.AsInfo($"Using registry credentials '{stack.Environment.RegistryCredentials}' for stack '{stack.Name}'.");
-            File.WriteAllText(file.FullName, new Serializer().Serialize(credentials));
+            File.WriteAllText(file.FullName, YamlSerializer.Serialize(credentials));
         }
         else if (file.Exists)
         {
@@ -64,7 +65,7 @@ public class StackBuilder(Stack stack)
                     ExternalName = stack.Environment.Outpost
                 }
             };
-            File.WriteAllText(path, new Serializer().Serialize(service));
+            File.WriteAllText(path, YamlSerializer.Serialize(service));
             LogMessage.AsInfo($"Apply outpost service '{path}'.");
         }
         else if (File.Exists(path))
@@ -89,7 +90,7 @@ public class StackBuilder(Stack stack)
             ingress.ToIngress().SaveTo(ingress.LocalFile.FullName);
             LogMessage.AsInfo($"Apply ingress file '{ingress.LocalFile.FullName}' for host '{ingress.Hostname}'.");
 
-            var authFile = ingress.LocalFile.FullName.Replace(".yaml", "-auth.yaml");
+            var authFile = Path.ChangeExtension(ingress.LocalFile.FullName, "-auth.yaml");
             if (!ingress.IsSecured)
             {
                 if(File.Exists(authFile)) File.Delete(authFile);
@@ -99,5 +100,20 @@ public class StackBuilder(Stack stack)
             ingress.GetAuthIngress().SaveTo(authFile);
             LogMessage.AsInfo($"Apply ingress file '{authFile}' for host '{ingress.Hostname}'.");
         }
+    }
+
+    private static string GetRelativePath(FileInfo file, DirectoryInfo root)
+    {
+        var fullPath = Path.GetFullPath(file.FullName);
+        var rootPath = Path.GetFullPath(root.FullName + Path.DirectorySeparatorChar);
+        
+        if (!fullPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new SecurityException(
+                $"File '{file.FullName}' is outside root directory '{root.FullName}'");
+        }
+        
+        var relative = fullPath.Substring(rootPath.Length).Replace("\\", "/");
+        return relative;
     }
 }

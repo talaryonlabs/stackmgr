@@ -24,7 +24,7 @@ public class DeleteIngressCommand : ResourceDeleteCommand<StackIngress, Hostname
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
         var hostname = GetName<HostnameArgument>(parseResult);
-        return stack.Ingresses.FirstOrDefault(v => v.Hostname.Equals(hostname, StringComparison.CurrentCultureIgnoreCase)) 
+        return stack.Ingresses.FirstOrDefault(v => v.Hostname.Equals(hostname, StringComparison.OrdinalIgnoreCase)) 
             ?? throw new IngressNotFoundException(hostname);
     }
 

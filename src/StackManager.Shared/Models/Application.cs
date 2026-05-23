@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using Talaryon.Toolbox.Api;
 
 namespace StackManager.Shared.Models;
