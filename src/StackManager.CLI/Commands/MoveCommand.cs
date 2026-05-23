@@ -5,11 +5,11 @@ using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Commands;
 
-public class MoveCommand : StackManagerCommand
+public class MoveCommand : BaseCommand
 {
     public MoveCommand() : base("move", "Move a resource")
     {
-        var stack = new StackManagerCommand("stack", "Move a stack to another environment")
+        var stack = new BaseCommand("stack", "Move a stack to another environment")
         {
             new StackArgument(),
             new EnvironmentArgument(),

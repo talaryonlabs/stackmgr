@@ -3,7 +3,7 @@ using System.CommandLine;
 using System.Linq;
 using System.Reflection;
 using Talaryon.StackManager.Arguments;
-using Talaryon.StackManager.Commands.Base;
+using Talaryon.StackManager.Commands.Resources;
 using Talaryon.StackManager.Options;
 using Talaryon.StackManager.Services;
 using Talaryon.StackManager.Types;
@@ -11,7 +11,7 @@ using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Commands;
 
-public class DeleteCommand : StackManagerCommand
+public class DeleteCommand : BaseCommand
 {
     public DeleteCommand() : base("delete", "Delete a resource (environment, stack, app)")
     {
@@ -23,13 +23,11 @@ public class DeleteCommand : StackManagerCommand
                 && !t.IsAbstract)
             .ToList();
 
-        foreach (var type in deleteCommandTypes)
+        foreach (var instance in deleteCommandTypes
+                     .Select(type => (BaseCommand?)Activator.CreateInstance(type))
+                     .OfType<BaseCommand>())
         {
-            var instance = (StackManagerCommand?)Activator.CreateInstance(type);
-            if (instance != null)
-            {
-                Add(instance);
-            }
+            Add(instance);
         }
     }
 }

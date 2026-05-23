@@ -1,4 +1,4 @@
-using System.CommandLine;
+﻿using System.CommandLine;
 using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Options;
 using Talaryon.StackManager.Services;
@@ -6,11 +6,11 @@ using Talaryon.Toolbox.Extensions;
 
 namespace Talaryon.StackManager.Commands;
 
-public class RemoteCommand : StackManagerCommand
+public class RemoteCommand : BaseCommand
 {
     public RemoteCommand() : base("remote", "Manage remote proxy")
     {
-        var add = new StackManagerCommand("add", "Add a remote proxy")
+        var add = new BaseCommand("add", "Add a remote proxy")
         {
             new NameArgument(),
             new RemoteArgument(),
@@ -18,26 +18,26 @@ public class RemoteCommand : StackManagerCommand
         };
         add.SetAction(AddRemote);
 
-        var remove = new StackManagerCommand("remove", "Remove a remote proxy")
+        var remove = new BaseCommand("remove", "Remove a remote proxy")
         {
             new NameArgument()
         };
         remove.SetAction(RemoveRemote);
 
-        var set = new StackManagerCommand("set", "Set the access token")
+        var set = new BaseCommand("set", "Set the access token")
         {
             new NameArgument(),
             new AccessTokenOption()
         };
         set.SetAction(SetRemote);
         
-        var test = new StackManagerCommand("test", "Test a remote proxy")
+        var test = new BaseCommand("test", "Test a remote proxy")
         {
             new NameArgument()
         };
         test.SetAction(TestRemote);
 
-        var generate = new StackManagerCommand("generate", "Generate deployment file for kubectl apply.")
+        var generate = new BaseCommand("generate", "Generate deployment file for kubectl apply.")
         {
             new NameArgument(),
             new HostnameArgument(),

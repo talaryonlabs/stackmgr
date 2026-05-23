@@ -2,7 +2,7 @@ using Talaryon.StackManager.Options;
 
 namespace Talaryon.StackManager.Commands;
 
-public class BuildCommand : StackManagerCommand
+public class BuildCommand : BaseCommand
 {
     public BuildCommand() : base("build", "Build a stack")
     {

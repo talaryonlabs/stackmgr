@@ -1,4 +1,4 @@
-using System.CommandLine;
+﻿using System.CommandLine;
 using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Options;
 using Talaryon.StackManager.Services;
@@ -6,11 +6,11 @@ using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Commands;
 
-public class MigrateCommand : StackManagerCommand
+public class MigrateCommand : BaseCommand
 {
     public MigrateCommand() : base("migrate", "Migrate an resource (app)")
     {
-        var app = new StackManagerCommand("app", "Migrate an app from a template")
+        var app = new BaseCommand("app", "Migrate an app from a template")
         {
             new EnvironmentOption(),
             new StackOption(),
@@ -18,7 +18,7 @@ public class MigrateCommand : StackManagerCommand
         };
         app.SetAction(MigrateApp);
         
-        var image = new StackManagerCommand("image", "Migrate an image to a new version")
+        var image = new BaseCommand("image", "Migrate an image to a new version")
         {
             new EnvironmentOption(),
             new StackOption(),

@@ -1,15 +1,9 @@
-using System;
-using System.CommandLine;
-using System.Linq;
 using System.Reflection;
-using Talaryon.StackManager.Arguments;
-using Talaryon.StackManager.Commands.Base;
-using Talaryon.StackManager.Options;
-using Talaryon.StackManager.Validation;
+using Talaryon.StackManager.Commands.Resources;
 
 namespace Talaryon.StackManager.Commands;
 
-public class ConfigureCommand : StackManagerCommand
+public class ConfigureCommand : BaseCommand
 {
     public ConfigureCommand() : base("configure", "Configure a resource (environment, stack, app, global)")
     {
@@ -21,13 +15,11 @@ public class ConfigureCommand : StackManagerCommand
                 && !t.IsAbstract)
             .ToList();
 
-        foreach (var type in configureCommandTypes)
+        foreach (var instance in configureCommandTypes
+                     .Select(type => (BaseCommand?)Activator.CreateInstance(type))
+                     .OfType<BaseCommand>())
         {
-            var instance = (StackManagerCommand?)Activator.CreateInstance(type);
-            if (instance != null)
-            {
-                Add(instance);
-            }
+            Add(instance);
         }
     }
 }

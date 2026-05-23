@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Talaryon.StackManager;
+using Talaryon.StackManager.Commands;
 using Talaryon.StackManager.Exceptions;
 using Talaryon.Toolbox.Api;
 
@@ -32,8 +33,8 @@ var rootCommand = new RootCommand();
 // Auto-discover and register all commands that inherit from StackManagerCommand
 var commandTypes = Assembly.GetExecutingAssembly()
     .GetTypes()
-    .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsSubclassOf(typeof(StackManagerCommand)))
-    .Select(type => (StackManagerCommand)Activator.CreateInstance(type)!)
+    .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsSubclassOf(typeof(BaseCommand)))
+    .Select(type => (BaseCommand)Activator.CreateInstance(type)!)
     .ToList();
 
 foreach (var command in commandTypes)

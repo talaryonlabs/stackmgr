@@ -1,10 +1,7 @@
-using System;
 using System.CommandLine;
-using System.Linq;
 using System.Reflection;
 using Talaryon.StackManager.Arguments;
-using Talaryon.StackManager.Commands.Base;
-
+using Talaryon.StackManager.Commands.Resources;
 using Talaryon.StackManager.Exceptions;
 using Talaryon.StackManager.Options;
 using Talaryon.StackManager.Services;
@@ -12,7 +9,7 @@ using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Commands;
 
-public class DescribeCommand : StackManagerCommand
+public class DescribeCommand : BaseCommand
 {
     public DescribeCommand() : base("describe", "Describe a resource (environment, stack, template)")
     {
@@ -24,17 +21,15 @@ public class DescribeCommand : StackManagerCommand
                 && !t.IsAbstract)
             .ToList();
 
-        foreach (var type in describeCommandTypes)
+        foreach (var instance in describeCommandTypes
+                     .Select(type => (BaseCommand?)Activator.CreateInstance(type))
+                     .OfType<BaseCommand>())
         {
-            var instance = (StackManagerCommand?)Activator.CreateInstance(type);
-            if (instance != null)
-            {
-                Add(instance);
-            }
+            Add(instance);
         }
 
         // Add template describe separately (doesn't use base class)
-        var template = new StackManagerCommand("template", "Describe an application template")
+        var template = new BaseCommand("template", "Describe an application template")
         {
             new NameArgument(),
             new DevOption()

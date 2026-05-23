@@ -1,16 +1,10 @@
-using System;
-using System.CommandLine;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using Talaryon.StackManager.Commands.Base;
-using Talaryon.StackManager.Options;
-using Talaryon.StackManager.Types;
+using Talaryon.StackManager.Commands.Resources;
 
 
 namespace Talaryon.StackManager.Commands;
 
-public class GetCommand : StackManagerCommand
+public class GetCommand : BaseCommand
 {
     public GetCommand() : base("get", "Get a resource")
     {
@@ -20,13 +14,11 @@ public class GetCommand : StackManagerCommand
             .Where(t => t.IsSubclassOf(typeof(ResourceGetCommand<>)) && !t.IsAbstract && t != typeof(ResourceGetCommand<>))
             .ToList();
 
-        foreach (var type in getCommandTypes)
+        foreach (var instance in getCommandTypes
+                     .Select(type => (BaseCommand?)Activator.CreateInstance(type))
+                     .OfType<BaseCommand>())
         {
-            var instance = (StackManagerCommand?)Activator.CreateInstance(type);
-            if (instance != null)
-            {
-                Add(instance);
-            }
+            Add(instance);
         }
     }
 }

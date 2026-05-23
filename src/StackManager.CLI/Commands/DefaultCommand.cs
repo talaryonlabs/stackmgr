@@ -3,7 +3,7 @@ using Talaryon.StackManager.Options;
 
 namespace Talaryon.StackManager.Commands;
 
-public class DefaultCommand : StackManagerCommand
+public class DefaultCommand : BaseCommand
 {
     public DefaultCommand() : base("default", "Set default stack and environment for this session")
     {

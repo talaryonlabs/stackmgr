@@ -1,17 +1,10 @@
-using System;
-using System.CommandLine;
-using System.Linq;
 using System.Reflection;
-using Talaryon.StackManager.Arguments;
-using Talaryon.StackManager.Commands.Base;
-using Talaryon.StackManager.Options;
-using Talaryon.StackManager.Types;
-using Talaryon.StackManager.Validation;
+using Talaryon.StackManager.Commands.Resources;
 
 
 namespace Talaryon.StackManager.Commands;
 
-public class NewCommand : StackManagerCommand
+public class NewCommand : BaseCommand
 {
     public NewCommand() : base("new", "Create a new resource (environment, stack, app)")
     {
@@ -23,13 +16,11 @@ public class NewCommand : StackManagerCommand
                 && !t.IsAbstract)
             .ToList();
 
-        foreach (var type in createCommandTypes)
+        foreach (var instance in createCommandTypes
+                     .Select(type => (BaseCommand?)Activator.CreateInstance(type))
+                     .OfType<BaseCommand>())
         {
-            var instance = (StackManagerCommand?)Activator.CreateInstance(type);
-            if (instance != null)
-            {
-                Add(instance);
-            }
+            Add(instance);
         }
     }
 }

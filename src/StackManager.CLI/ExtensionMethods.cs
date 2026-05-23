@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
+using Talaryon.StackManager.Commands;
 using Talaryon.StackManager.Services;
 
 namespace Talaryon.StackManager;
@@ -49,7 +50,7 @@ public static class ExtensionMethods
             var commandTypes = typeof(ExtensionMethods).Assembly
                 .GetTypes()
                 .Where(t => t is { IsClass: true, IsAbstract: false } && 
-                            typeof(StackManagerCommand).IsAssignableFrom(t))
+                            typeof(BaseCommand).IsAssignableFrom(t))
                 .ToList();
         
             foreach (var commandType in commandTypes)

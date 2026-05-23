@@ -7,7 +7,7 @@ using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Commands;
 
-public class SyncCommand : StackManagerCommand
+public class SyncCommand : BaseCommand
 {
     public SyncCommand() : base("sync", "Sync a stack")
     {
