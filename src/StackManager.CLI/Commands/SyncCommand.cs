@@ -185,7 +185,7 @@ public class SyncCommand : StackManagerCommand
         return application;
     }
 
-    private async Task SyncStackVolumes(Stack stack, IProxyService proxy)
+    private async Task SyncStackVolumes(Talaryon.StackManager.Types.Stack stack, IProxyService proxy)
     {
         var remote = await proxy.GetVolumesAsync(stack.Namespace);
         var local = stack.Volumes

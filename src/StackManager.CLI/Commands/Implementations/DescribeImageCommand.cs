@@ -1,0 +1,47 @@
+using System.CommandLine;
+using Talaryon.StackManager.Arguments;
+using Talaryon.StackManager.Commands.Base;
+using Talaryon.StackManager.Options;
+using Talaryon.StackManager.Types;
+using Talaryon.StackManager.Exceptions;
+
+namespace Talaryon.StackManager.Commands.Implementations;
+
+/// <summary>
+/// Command for describing a single image.
+/// </summary>
+public class DescribeImageCommand : ResourceDescribeCommand<StackImage, ImageArgument>
+{
+    public DescribeImageCommand()
+        : base("image", "Describe an image")
+    {
+        Add(new EnvironmentOption());
+        Add(new StackOption());
+    }
+
+    protected override StackImage LoadResource(ParseResult parseResult)
+    {
+        var env = GetEnvironment<EnvironmentOption>(parseResult);
+        var stack = GetStack<StackOption>(parseResult, env);
+        var name = GetName<ImageArgument>(parseResult);
+        return stack.Images.FirstOrDefault(v => v.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)) 
+            ?? throw new ImageNotFoundException(name);
+    }
+
+    protected override void DisplayResource(StackImage resource)
+    {
+        LogMessage.Separator();
+
+        LogBuilder.Message("Image: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{resource.Name}").AsSuccess())
+            .Run();
+
+        LogBuilder.Message(" Repository: ")
+            .NoNewLineAfter()
+            .WaitFor(() => LogBuilder.Message($"{resource.Image}").AsWarning())
+            .Run();
+
+        LogMessage.Separator();
+    }
+}

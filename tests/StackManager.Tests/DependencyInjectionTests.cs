@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Talaryon.StackManager.DependencyInjection;
 using Talaryon.StackManager.Services;
 using Xunit;
 

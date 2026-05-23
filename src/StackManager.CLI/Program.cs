@@ -2,7 +2,6 @@ using System.CommandLine;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Talaryon.StackManager;
-using Talaryon.StackManager.DependencyInjection;
 using Talaryon.StackManager.Exceptions;
 using Talaryon.Toolbox.Api;
 
