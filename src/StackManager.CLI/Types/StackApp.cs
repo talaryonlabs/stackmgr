@@ -1,5 +1,4 @@
 using Talaryon.StackManager.Exceptions;
-using Talaryon.StackManager.Services;
 using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Types;
@@ -80,65 +79,6 @@ public class StackApp : IStackObject
         }
 
         return false;
-    }
-
-    public async Task MigrateAsync(StackTemplate template)
-    {
-        var files = template.LocalDirectory
-            .GetFileSystemInfos("*", SearchOption.AllDirectories);
-
-        var vault = Stack.Environment.Vault.EndsWith("/")
-            ? Stack.Environment.Vault[..^1]
-            : Stack.Environment.Vault;
-
-        if (!LocalDirectory.Exists)
-        {
-            LocalDirectory.Create();
-        }
-        else
-        {
-            LogMessage.AsInfo("The following files will be migrated:");
-            foreach (var existing in files.Where(v => File.Exists(Path.Combine(LocalDirectory.FullName, v.Name)))
-                         .ToList())
-            {
-                LogMessage.AsWarning($"- {existing.Name} (replace)");
-            }
-
-            foreach (var add in files.Where(v => !File.Exists(Path.Combine(LocalDirectory.FullName, v.Name))).ToList())
-            {
-                LogMessage.AsSuccess($"- {add.Name} (add)");
-            }
-
-            if (!LogMessage.AsConfirmWarning("Do you want to migrate all files?"))
-            {
-                LogMessage.AsInfo("Aborted.");
-                return;
-            }
-        }
-
-        foreach (var file in files)
-        {
-            if (file.Name.Equals(StackTemplate.FileName, StringComparison.OrdinalIgnoreCase)) continue;
-
-            var content = await File.ReadAllTextAsync(file.FullName);
-
-            content = content
-                .Replace("{{app-name}}", Name)
-                .Replace("{{stack-name}}", Stack.Name)
-                .Replace("{{env-name}}", Stack.Environment.Name)
-                .Replace("{{vault-path}}", $"{vault}/{Stack.Name}/{Name}");
-
-            content = Volumes.Aggregate(content,
-                (current, volume) => current.Replace("{{app-volume." + volume.Key + "}}", volume.Value));
-            content = Params.Aggregate(content,
-                (current, param) => current.Replace("{{app-param." + param.Key + "}}", param.Value));
-            content = Requirements.Aggregate(content,
-                (current, requirement) =>
-                    current.Replace("{{app-requirement." + requirement.Key + "}}", requirement.Value));
-
-            await File.WriteAllTextAsync(Path.Combine(LocalDirectory.FullName, file.Name), content);
-            LogMessage.AsInfo($"Applied '{file.Name}'.");
-        }
     }
 
     [YamlIgnore] public required Stack Stack { get; set; }

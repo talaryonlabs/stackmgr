@@ -15,13 +15,61 @@ public class StackBuilder(Stack stack)
         BuildOutpostService();
         BuildIngressFiles();
         
+        var allFiles = stack.LocalDirectory
+            .GetFiles("*.yaml", SearchOption.AllDirectories)
+            .Where(f => !new List<string> { Kustomization.FileName, Stack.FileName }.Contains(f.Name))
+            .ToList();
+        
+        var baseDirectories = stack.Apps
+            .Select(app => new DirectoryInfo(Path.Combine(app.LocalDirectory.FullName, ".base")))
+            .Where(d => d.Exists)
+            .ToList();
+        
+        var overrideFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var excludedBaseFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        
+        // Find all override files and mark corresponding .base files for exclusion
+        foreach (var app in stack.Apps)
+        {
+            if (!app.LocalDirectory.Exists) continue;
+            
+            foreach (var overrideFile in app.LocalDirectory.GetFiles("override.*.yaml", SearchOption.TopDirectoryOnly))
+            {
+                // Get the base filename without the "override." prefix
+                var overrideFileName = overrideFile.Name;
+                if (overrideFileName.StartsWith("override.", StringComparison.OrdinalIgnoreCase))
+                {
+                    var baseFileName = overrideFileName["override.".Length..];
+                    var relativeOverridePath = GetRelativePath(overrideFile, stack.LocalDirectory);
+                    var relativeBasePath = GetRelativePath(
+                        new FileInfo(Path.Combine(app.LocalDirectory.FullName, ".base", baseFileName)),
+                        stack.LocalDirectory
+                    );
+                    
+                    overrideFiles.Add(relativeOverridePath);
+                    excludedBaseFiles.Add(relativeBasePath);
+                }
+            }
+        }
+        
         var kustomization = new Kustomization
         {
             Namespace = stack.Namespace,
             Images = stack.Images.Select(i => (KustomizationImage)i).ToList(),
-            Resources = stack.LocalDirectory
-                .GetFiles("*.yaml", SearchOption.AllDirectories)
-                .Where(f => !new List<string> { Kustomization.FileName, Stack.FileName }.Contains(f.Name))
+            Resources = allFiles
+                .Where(f => {
+                    var relativePath = GetRelativePath(f, stack.LocalDirectory);
+                    
+                    // Always include override files
+                    if (overrideFiles.Contains(relativePath))
+                        return true;
+                    
+                    // Exclude .base files that have override counterparts
+                    if (excludedBaseFiles.Contains(relativePath))
+                        return false;
+                    
+                    return true;
+                })
                 .Select(f => GetRelativePath(f, stack.LocalDirectory))
                 .ToList()
         };

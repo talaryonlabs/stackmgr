@@ -40,19 +40,6 @@ public class DependencyInjectionTests
     }
 
     [Fact]
-    public void AddStackManagerCommands_ShouldRegisterCommands()
-    {
-        var services = new ServiceCollection();
-        services.AddStackManagerCommands();
-        
-        var serviceProvider = services.BuildServiceProvider();
-        
-        // Commands are transient, so we should be able to create them
-        // Note: Commands require ServiceProvider to be set, so we can't fully test this here
-        // but we can verify they're registered
-    }
-
-    [Fact]
     public void ServiceCollectionExtensions_ShouldRegisterHttpClient()
     {
         var services = new ServiceCollection();

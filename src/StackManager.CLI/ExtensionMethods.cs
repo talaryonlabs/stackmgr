@@ -43,22 +43,5 @@ public static class ExtensionMethods
         
             return services;
         }
-    
-        public IServiceCollection AddStackManagerCommands()
-        {
-            // Register all command types for DI
-            var commandTypes = typeof(ExtensionMethods).Assembly
-                .GetTypes()
-                .Where(t => t is { IsClass: true, IsAbstract: false } && 
-                            typeof(BaseCommand).IsAssignableFrom(t))
-                .ToList();
-        
-            foreach (var commandType in commandTypes)
-            {
-                services.AddTransient(commandType);
-            }
-        
-            return services;
-        }
     }
 }

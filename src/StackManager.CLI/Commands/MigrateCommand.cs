@@ -113,7 +113,8 @@ public class MigrateCommand : BaseCommand
             .NoNewLineAfter()
             .WaitFor(async () =>
             {
-                await app.MigrateAsync(template);
+                var appService = new AppService(app);
+                await appService.MigrateAsync(template);
                 return LogBuilder.Message("Migration done.").AsSuccess();
             })
             .RunAsync();

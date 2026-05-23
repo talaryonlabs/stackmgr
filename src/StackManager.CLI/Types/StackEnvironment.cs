@@ -50,7 +50,7 @@ public class StackEnvironment
 
     [YamlMember(Alias = "isDeleted")] public bool IsDeleted { get; set; }
     [YamlMember(Alias = "name")] public required string Name { get; init; }
-    [YamlMember(Alias = "version")] public string? Version { get; set; }
+    [YamlMember(Alias = "version")] public string? Version { get; set; } = "environment.talaryon.io/v1beta";
     [YamlMember(Alias = "vault")] public required string Vault { get; set; }
     [YamlMember(Alias = "outpost")] public required string Outpost { get; set; }
     [YamlMember(Alias = "certIssuer")] public required string CertIssuer { get; set; }
