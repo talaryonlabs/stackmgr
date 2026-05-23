@@ -23,6 +23,10 @@ public class LocalConfig
         if(!Directory.Exists(KeyDirectoryPath))
             Directory.CreateDirectory(KeyDirectoryPath);
         
+        // Restrict file permissions on config directory (Unix-like systems only)
+        TryRestrictDirectoryPermissions(DirectoryPath);
+        TryRestrictDirectoryPermissions(KeyDirectoryPath);
+        
         // Initialize data protection provider
         var serviceCollection = new ServiceCollection();
         serviceCollection.AddDataProtection()
@@ -33,6 +37,26 @@ public class LocalConfig
         var services = serviceCollection.BuildServiceProvider();
         var dataProtectionProvider = services.GetDataProtectionProvider();
         _protector = dataProtectionProvider.CreateProtector("Talaryon.StackManager.LocalConfig.v1");
+    }
+
+    /// <summary>
+    /// Attempts to restrict directory permissions to owner-only on Unix-like systems.
+    /// </summary>
+    /// <param name="path">The directory path</param>
+    private static void TryRestrictDirectoryPermissions(string path)
+    {
+        try
+        {
+            // On Unix-like systems, restrict to owner read/write/execute only
+            if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS() || OperatingSystem.IsFreeBSD())
+            {
+                File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+            }
+        }
+        catch
+        {
+            // Ignore errors - permissions are best-effort
+        }
     }
     
     public static LocalConfig Get()
@@ -69,6 +93,29 @@ public class LocalConfig
         {
             WriteIndented = true
         }));
+        
+        // Restrict file permissions on the config file
+        TryRestrictFilePermissions(FilePath);
+    }
+
+    /// <summary>
+    /// Attempts to restrict file permissions to owner-only on Unix-like systems.
+    /// </summary>
+    /// <param name="path">The file path</param>
+    private static void TryRestrictFilePermissions(string path)
+    {
+        try
+        {
+            // On Unix-like systems, restrict to owner read/write only (no execute)
+            if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS() || OperatingSystem.IsFreeBSD())
+            {
+                File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+            }
+        }
+        catch
+        {
+            // Ignore errors - permissions are best-effort
+        }
     }
     
     public static string Encrypt(string data)

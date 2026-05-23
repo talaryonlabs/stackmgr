@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using StackManager.Shared.Models;
+using Talaryon.StackManager.Exceptions;
 using Talaryon.StackManager.Options;
 using Talaryon.StackManager.Services;
 using Talaryon.StackManager.Types;
@@ -32,46 +33,35 @@ public class SyncCommand : StackManagerCommand
         
         var httpClientFactory = GetRequiredService<IHttpClientFactory>();
         var proxy = new ProxyService(remote, httpClientFactory);
+        var syncService = new SyncService(proxy);
 
         if (stack.IsDeleted)
         {
-            await DeleteStackFromRemote(stack, proxy);
+            await DeleteStackFromRemote(stack, syncService);
             return;
         }
         
-        var ns = await SyncNamespaceWithRemote(stack, proxy);
-        if (ns is not null)
-        {
-            await SyncStackVolumes(stack, proxy);
-        }
-        
-        var application = await SyncApplicationWithRemote(stack, proxy);
-        if (application is not null && parseResult.GetValue<bool, ApplyOption>())
-        {
-            await LogBuilder.Message($"- [Application] Applying changes ... ")
-                .NoNewLineAfter()
-                .WaitFor(async () => await proxy.ApplyApplicationAsync(stack.Namespace) is null
-                    ? LogBuilder.Message("Failed.").AsError()
-                    : LogBuilder.Message("Done.").AsSuccess())
-                .RunAsync();
-        }
+        await SyncNamespaceWithRemote(stack, syncService);
+        await SyncStackVolumes(stack, syncService);
+        await SyncApplicationWithRemote(stack, syncService, parseResult.GetValue<bool, ApplyOption>());
     }
 
-    private async Task DeleteStackFromRemote(Stack stack, IProxyService proxy)
+    private async Task DeleteStackFromRemote(Stack stack, SyncService syncService)
     {
-        var volumes = await proxy.GetVolumesAsync(stack.Namespace);
-        var application = await proxy.GetApplicationAsync(stack.Namespace);
-        var ns = await proxy.GetNamespaceAsync(stack.Namespace);
+        LogMessage.AsInfo($"Deleting stack '{stack.Name}' from remote.");
+        
+        var volumes = await syncService.Proxy.GetVolumesAsync(stack.Namespace);
+        var application = await syncService.Proxy.GetApplicationAsync(stack.Namespace);
+        var ns = await syncService.Proxy.GetNamespaceAsync(stack.Namespace);
         var error = false;
 
-        LogMessage.AsInfo($"Deleting stack '{stack.Name}' from remote.");
         foreach (var volume in volumes)
         {
             await LogBuilder.Message($"- [Volume] {volume.Name} ... ")
                 .NoNewLineAfter()
                 .WaitFor(async () =>
                 {
-                    if (await proxy.DeleteVolumeAsync(stack.Namespace, volume.Name) is null)
+                    if (await syncService.Proxy.DeleteVolumeAsync(stack.Namespace, volume.Name) is null)
                     {
                         error = true;
                         return LogBuilder.Message("Failed.").AsError();
@@ -87,7 +77,7 @@ public class SyncCommand : StackManagerCommand
                 .NoNewLineAfter()
                 .WaitFor(async () =>
                 {
-                    if (await proxy.DeleteApplicationAsync(stack.Namespace) is null)
+                    if (await syncService.Proxy.DeleteApplicationAsync(stack.Namespace) is null)
                     {
                         error = true;
                         return LogBuilder.Message("Failed.").AsError();
@@ -103,7 +93,7 @@ public class SyncCommand : StackManagerCommand
                 .NoNewLineAfter()
                 .WaitFor(async () =>
                 {
-                    if (await proxy.DeleteNamespaceAsync(stack.Namespace) is null)
+                    if (await syncService.Proxy.DeleteNamespaceAsync(stack.Namespace) is null)
                     {
                         error = true;
                         return LogBuilder.Message("Failed.").AsError();
@@ -121,91 +111,57 @@ public class SyncCommand : StackManagerCommand
         LogMessage.AsSuccess($"Stack '{stack.Name}' deleted successfully.");
     }
 
-    private async Task<Namespace?> SyncNamespaceWithRemote(Stack stack, IProxyService proxy)
+    private async Task SyncNamespaceWithRemote(Stack stack, SyncService syncService)
     {
         var ns = default(Namespace);
         await LogBuilder.Message($"- [Namespace] {stack.Namespace} ... ")
             .NoNewLineAfter()
             .WaitFor(async () =>
             {
-                if ((ns = await proxy.GetNamespaceAsync(stack.Namespace)) is not null)
-                    return LogBuilder.Message("Already exists.").AsWarning();
-
-                return (ns = await proxy.CreateNamespaceAsync(stack.Namespace)) is not null
-                    ? LogBuilder.Message("Created.").AsSuccess()
+                ns = await syncService.SyncNamespaceAsync(stack);
+                return ns is not null
+                    ? LogBuilder.Message("Already exists.").AsWarning()
                     : LogBuilder.Message("Failed.").AsError();
             })
             .RunAsync();
-        return ns;
     }
 
-    private async Task<Application?> SyncApplicationWithRemote(Stack stack, IProxyService proxy)
+    private async Task SyncApplicationWithRemote(Stack stack, SyncService syncService, bool applyChanges)
     {
         var application = default(Application);
         await LogBuilder.Message($"- [Application] {stack.Namespace} ... ")
             .NoNewLineAfter()
             .WaitFor(async () =>
             {
-                if (stack.Environment.Repository is null)
+                try
                 {
-                    return LogBuilder.Message("No repository set in environment.").AsError();
+                    application = await syncService.SyncApplicationAsync(stack);
+                    return application is not null
+                        ? LogBuilder.Message("Up to date.").AsWarning()
+                        : LogBuilder.Message("Failed.").AsError();
                 }
-
-                if ((application = await proxy.GetApplicationAsync(stack.Namespace)) is not null)
+                catch (ConfigurationException ex)
                 {
-                    if (application.Path != $"{stack.Environment.Name}/{stack.Name}" ||
-                        application.Repository != stack.Environment.Repository ||
-                        application.IsAutoSyncEnabled != stack.EnableAutoSync)
-                    {
-                        application.IsAutoSyncEnabled = stack.EnableAutoSync;
-                        application.Path = $"{stack.Environment.Name}/{stack.Name}";
-                        application.Repository = stack.Environment.Repository;
-
-                        return await proxy.UpdateApplicationAsync(stack.Namespace, application) is not null
-                            ? LogBuilder.Message("Update succeeded.").AsSuccess()
-                            : LogBuilder.Message("Update failed.").AsError();
-                    }
-
-                    return LogBuilder.Message("Up to date.").AsWarning();
+                    return LogBuilder.Message(ex.Message).AsError();
                 }
-
-                var newApp = new Application
-                {
-                    Name = stack.Namespace,
-                    IsAutoSyncEnabled = false,
-                    Path = $"{stack.Environment.Name}/{stack.Name}",
-                    Repository = stack.Environment.Repository
-                };
-                
-                return (application = await proxy.CreateApplicationAsync(newApp)) is not null
-                    ? LogBuilder.Message("Created.").AsSuccess()
-                    : LogBuilder.Message("Failed.").AsError();
             })
             .RunAsync();
-        return application;
+        
+        if (application is not null && applyChanges)
+        {
+            await LogBuilder.Message($"- [Application] Applying changes ... ")
+                .NoNewLineAfter()
+                .WaitFor(async () => await syncService.Proxy.ApplyApplicationAsync(stack.Namespace) is null
+                    ? LogBuilder.Message("Failed.").AsError()
+                    : LogBuilder.Message("Done.").AsSuccess())
+                .RunAsync();
+        }
     }
 
-    private async Task SyncStackVolumes(Talaryon.StackManager.Types.Stack stack, IProxyService proxy)
+    private async Task SyncStackVolumes(Stack stack, SyncService syncService)
     {
-        var remote = await proxy.GetVolumesAsync(stack.Namespace);
-        var local = stack.Volumes
-            .SelectMany(v =>
-            {
-                if (v.Replicas > 0)
-                {
-                    return Enumerable.Range(0, v.Replicas).Select(i => new StackVolume
-                    {
-                        AccessMode = v.AccessMode,
-                        Name = $"{v.Name}-{i}",
-                        StorageSize = v.StorageSize,
-                        Replicas = 0,
-                        Stack = v.Stack
-                    });
-                }
-
-                return [v];
-            })
-            .ToList();
+        var remote = await syncService.Proxy.GetVolumesAsync(stack.Namespace);
+        var local = SyncService.GetExpandedVolumes(stack);
         
         foreach(var volume in local.IntersectBy(remote.Select(v => v.Name), v => v.Name))
         {
@@ -222,7 +178,7 @@ public class SyncCommand : StackManagerCommand
                 .NoNewLineAfter()
                 .WaitFor(async () =>
                 {
-                    var v = await proxy.CreateVolumeAsync(stack.Namespace, new Volume
+                    var v = await syncService.Proxy.CreateVolumeAsync(stack.Namespace, new Volume
                     {
                         Name = volume.Name,
                         AccessMode = volume.AccessMode,
@@ -240,7 +196,7 @@ public class SyncCommand : StackManagerCommand
             await LogBuilder
                 .Message($"- [Volume] Deleting {volume.Name} ... ")
                 .NoNewLineAfter()
-                .WaitFor(async () => await proxy.DeleteVolumeAsync(stack.Namespace, volume.Name) is null
+                .WaitFor(async () => await syncService.Proxy.DeleteVolumeAsync(stack.Namespace, volume.Name) is null
                     ? LogBuilder.Message("Failed.").AsError()
                     : LogBuilder.Message("Done.").AsSuccess())
                 .RunAsync();
