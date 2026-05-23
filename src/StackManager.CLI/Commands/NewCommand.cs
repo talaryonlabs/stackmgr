@@ -2,6 +2,7 @@
 using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Options;
 using Talaryon.StackManager.Types;
+using Talaryon.StackManager.Validation;
 
 namespace Talaryon.StackManager.Commands;
 
@@ -111,10 +112,12 @@ public class NewCommand : StackManagerCommand
     private void NewEnvironment(ParseResult parseResult)
     {
         var name = GetName<EnvironmentArgument>(parseResult);
+        ValidationHelper.ValidateEnvironmentName(name);
+        
         var env = StackEnvironment.Create(name);
         LogMessage.AsSuccess($"Environment '{env.Name}' initialized.");
 
-        var config = LocalConfig.Get();
+        var config = GetRequiredService<LocalConfig>();
         config.Defaults.Environment = name;
         config.Save();
         LogMessage.AsInfo($"Default environment set to '{name}'.");
@@ -123,10 +126,12 @@ public class NewCommand : StackManagerCommand
     private void NewStack(ParseResult parseResult, StackEnvironment env)
     {
         var name = GetName<StackArgument>(parseResult);
+        ValidationHelper.ValidateStackName(name);
+        
         var stack = Stack.Create(env, name);
         LogMessage.AsSuccess($"Stack '{stack.Name}' created.");
 
-        var config = LocalConfig.Get();
+        var config = GetRequiredService<LocalConfig>();
         config.Defaults.Stack = name;
         config.Defaults.Environment = env.Name;
         config.Save();
@@ -136,6 +141,8 @@ public class NewCommand : StackManagerCommand
     private void NewApp(ParseResult parseResult, Stack stack)
     {
         var name = GetName<AppArgument>(parseResult);
+        ValidationHelper.ValidateAppName(name);
+        
         var template = parseResult.GetValue<string, TemplateOption>();
         var appTemplate = template is null ? null : new StackAppTemplate
         {
@@ -154,16 +161,20 @@ public class NewCommand : StackManagerCommand
     
     private void NewImage(ParseResult parseResult, Stack stack)
     {
-        var image = StackImage.Create(
-            stack, 
-            GetName<ImageArgument>(parseResult),
-            parseResult.GetValue<string, NameOption>()
-        );
+        var imageName = GetName<ImageArgument>(parseResult);
+        var name = parseResult.GetValue<string, NameOption>();
+        
+        ValidationHelper.ValidateImageName(imageName);
+        
+        var image = StackImage.Create(stack, imageName, name);
         LogMessage.AsSuccess($"Image '{image.Image}' with name '{image.Name}' added.");
     }
     
     private void NewVolume(ParseResult parseResult, Stack stack)
     {
+        var name = GetName<VolumeArgument>(parseResult);
+        ValidationHelper.ValidateAppName(name);
+        
         var accessMode = (parseResult.GetValue<string, AccessModeOption>() ?? "ReadWriteOnce").Trim().ToLower() switch
         {
             "rwo" => "ReadWriteOnce",
@@ -176,19 +187,13 @@ public class NewCommand : StackManagerCommand
         };
         
         var size = parseResult.GetValue<string, SizeOption>() ?? "1Gi";
-        if (long.TryParse(size, out var parsedSize))
-        {
-            size = $"{parsedSize}Gi";       
-        }
+        size = ValidationHelper.ValidateAndNormalizeSize(size);
         
         var replicas = parseResult.GetValue<int, ReplicasOption>();
-        var volume = StackVolume.Create(
-            stack, 
-            GetName<VolumeArgument>(parseResult),
-            size,
-            accessMode,
-            replicas
-        );
+        if (replicas < 0)
+            throw new ArgumentException("Replicas must be >= 0");
+        
+        var volume = StackVolume.Create(stack, name, size, accessMode, replicas);
         LogMessage.AsSuccess($"Volume '{volume.Name}' created.");       
     }
     
@@ -196,6 +201,11 @@ public class NewCommand : StackManagerCommand
     {
         var hostname = GetName<HostnameArgument>(parseResult);
         var app = parseResult.GetRequiredValue<string, AppOption>();
+        var port = parseResult.GetRequiredValue<int, PortOption>();
+        
+        ValidationHelper.ValidateHostname(hostname);
+        ValidationHelper.ValidateAppName(app);
+        ValidationHelper.ValidatePort(port);
         
         if(parseResult.GetValue<bool, GenerateOption>())
         {
@@ -214,7 +224,6 @@ public class NewCommand : StackManagerCommand
             }
         }
 
-        var port = parseResult.GetRequiredValue<int, PortOption>();
         StackIngress.Create(stack, hostname, app, port, parseResult.GetValue<bool, SecuredOption>());
 
         LogMessage.AsSuccess($"Ingress '{hostname}' created.");

@@ -189,7 +189,7 @@ public class DescribeCommand : StackManagerCommand
     {
         var name = GetName<NameArgument>(parseResult);
         var dev = parseResult.GetValue<bool, DevOption>();
-        var git = new GitService();
+        var git = GetRequiredService<GitService>();
         var apps = await git.GetAppsAsync(dev ? "dev" : "prod");
         var app = apps.FirstOrDefault(x => x.Name == name);
 

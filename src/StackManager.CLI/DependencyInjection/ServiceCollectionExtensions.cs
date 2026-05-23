@@ -13,7 +13,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<LocalConfig>(_ => LocalConfig.Get());
         
         // Register transient services
-        services.AddTransient<GitService>();
+        services.AddTransient<GitService>(sp => new GitService(sp.GetRequiredService<LocalConfig>()));
         services.AddTransient<AppService>();
         
         // Register named HttpClient for ProxyService

@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Options;
+using Talaryon.StackManager.Validation;
 
 namespace Talaryon.StackManager.Commands;
 
@@ -60,11 +61,12 @@ public class ConfigureCommand : StackManagerCommand
 
     private void ConfigureGlobal(ParseResult parseResult)
     {
-        var localConfig = LocalConfig.Get();
+        var localConfig = GetRequiredService<LocalConfig>();
         
         var appRepository = parseResult.GetValue<string, AppRepositoryOption>();
         if (appRepository is not null)
         {
+            ValidationHelper.ValidateUrl(appRepository);
             localConfig.AppRepository = appRepository;
             LogMessage.AsSuccess("App repository updated.");
         }

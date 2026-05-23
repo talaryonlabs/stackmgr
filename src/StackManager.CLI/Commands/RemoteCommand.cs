@@ -52,13 +52,14 @@ public class RemoteCommand : StackManagerCommand
         // Add(generate);
         SetAction(_ =>
         {
-            if (LocalConfig.Get().Remotes.Count == 0)
+            var config = GetRequiredService<LocalConfig>();
+            if (config.Remotes.Count == 0)
             {
                 LogMessage.AsWarning("No remotes found.");
                 return;
             }
             LogMessage.AsInfo("Remotes:");
-            foreach (var remote in LocalConfig.Get().Remotes)
+            foreach (var remote in config.Remotes)
             {
                 LogMessage.AsSuccess($"- {remote.Name}: {remote.Url}");
             }
@@ -77,11 +78,12 @@ public class RemoteCommand : StackManagerCommand
     
     private async Task TestRemote(ParseResult obj)
     {
-        var config = LocalConfig.Get();
-        var remote = config.Remotes.FirstOrDefault(r => r.Name == obj.GetRequiredValue<string, NameArgument>());
+        var config = GetRequiredService<LocalConfig>();
+        var name = obj.GetRequiredValue<string, NameArgument>();
+        var remote = config.Remotes.FirstOrDefault(r => r.Name == name);
         if (remote == null)
         {
-            LogMessage.AsError($"Remote not found: {obj.GetRequiredValue<string, NameArgument>()}");
+            LogMessage.AsError($"Remote not found: {name}");
             return;
         }
 
@@ -110,7 +112,7 @@ public class RemoteCommand : StackManagerCommand
 
     private void AddRemote(ParseResult parseResult)
     {
-        var config = LocalConfig.Get();
+        var config = GetRequiredService<LocalConfig>();
         if (config.Remotes.Any(r => r.Name == parseResult.GetRequiredValue<string, NameArgument>()))
         {
             LogMessage.AsError($"Remote already exists: {parseResult.GetRequiredValue<string, NameArgument>()}");
@@ -131,7 +133,7 @@ public class RemoteCommand : StackManagerCommand
     
     private void SetRemote(ParseResult obj)
     {
-        var config = LocalConfig.Get();
+        var config = GetRequiredService<LocalConfig>();
         var remote = config.Remotes.FirstOrDefault(v => v.Name == obj.GetRequiredValue<string, NameArgument>());
         if (remote is null)
         {
@@ -146,7 +148,7 @@ public class RemoteCommand : StackManagerCommand
 
     private void RemoveRemote(ParseResult obj)
     {
-        var config = LocalConfig.Get();
+        var config = GetRequiredService<LocalConfig>();
         var remote = config.Remotes.FirstOrDefault(v => v.Name == obj.GetRequiredValue<string, NameArgument>());
         if (remote is null)
         {

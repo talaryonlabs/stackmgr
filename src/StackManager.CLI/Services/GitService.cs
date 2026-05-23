@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Talaryon.StackManager.Exceptions;
 using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Services;
@@ -29,12 +30,16 @@ public class GitService
 
     private readonly string _appRepository;
     
-    public GitService()
+    public GitService() : this(LocalConfig.Get())
     {
-        _appRepository = LocalConfig.Get().AppRepository;
+    }
+    
+    public GitService(LocalConfig config)
+    {
+        _appRepository = config.AppRepository;
 
-        if (_appRepository is not { Length: > 0 })
-            throw new Exception("App repository cannot be null. Please check your configuration.");
+        if (_appRepository is null || _appRepository.Length == 0)
+            throw new ConfigurationException("App repository cannot be null. Please check your configuration.");
 
     }
 

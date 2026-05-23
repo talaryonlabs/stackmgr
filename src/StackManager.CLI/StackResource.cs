@@ -22,7 +22,7 @@ public static class StackResource
             .Build();
         
         using var stream = file.OpenWrite();
-        var writer = new StreamWriter(stream);
+        using var writer = new StreamWriter(stream);
         serializer.Serialize(writer, resource);
     }
     
