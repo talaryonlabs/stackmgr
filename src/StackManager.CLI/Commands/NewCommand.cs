@@ -50,7 +50,6 @@ public class NewCommand : StackManagerCommand
             new HostnameArgument(),
             new PortOption(),
             new AppOption(),
-            new RedirectOption(),
             new AnnotationOption(),
             new SecuredOption(),
             new GenerateOption()
@@ -114,6 +113,11 @@ public class NewCommand : StackManagerCommand
         var name = GetName<EnvironmentArgument>(parseResult);
         var env = StackEnvironment.Create(name);
         LogMessage.AsSuccess($"Environment '{env.Name}' initialized.");
+
+        var config = LocalConfig.Get();
+        config.Defaults.Environment = name;
+        config.Save();
+        LogMessage.AsInfo($"Default environment set to '{name}'.");
     }
     
     private void NewStack(ParseResult parseResult, StackEnvironment env)
@@ -121,6 +125,12 @@ public class NewCommand : StackManagerCommand
         var name = GetName<StackArgument>(parseResult);
         var stack = Stack.Create(env, name);
         LogMessage.AsSuccess($"Stack '{stack.Name}' created.");
+
+        var config = LocalConfig.Get();
+        config.Defaults.Stack = name;
+        config.Defaults.Environment = env.Name;
+        config.Save();
+        LogMessage.AsInfo($"Default stack set to '{name}' and environment to '{env.Name}'.");
     }
 
     private void NewApp(ParseResult parseResult, Stack stack)
@@ -185,8 +195,7 @@ public class NewCommand : StackManagerCommand
     private void NewIngress(ParseResult parseResult, Stack stack)
     {
         var hostname = GetName<HostnameArgument>(parseResult);
-        var redirect = parseResult.GetValue<string, RedirectOption>();
-        var app = parseResult.GetValue<string, AppOption>();
+        var app = parseResult.GetRequiredValue<string, AppOption>();
         
         if(parseResult.GetValue<bool, GenerateOption>())
         {
@@ -205,27 +214,8 @@ public class NewCommand : StackManagerCommand
             }
         }
 
-        if (app is not null && redirect is not null)
-        {
-            LogMessage.AsWarning(
-                $"Both {HelperMethods.GetSymbolName<AppOption>()} and {HelperMethods.GetSymbolName<RedirectOption>()} specified. {HelperMethods.GetSymbolName<RedirectOption>()} will be ignored.");
-        }
-        
-        if (app is { Length: > 0 })
-        {
-            var port = parseResult.GetRequiredValue<short, PortOption>();
-
-            StackIngress.Create(stack, hostname, app, port, parseResult.GetValue<bool, SecuredOption>());
-        }
-        else if (redirect is { Length: > 0 })
-        {
-            StackIngress.Create(stack, hostname, redirect);
-            StackRedirect.Create(stack, redirect);
-        }
-        else
-        {
-            throw new Exception($"Either {HelperMethods.GetSymbolName<AppOption>()} or {HelperMethods.GetSymbolName<RedirectOption>()} must be specified.");
-        }
+        var port = parseResult.GetRequiredValue<short, PortOption>();
+        StackIngress.Create(stack, hostname, app, port, parseResult.GetValue<bool, SecuredOption>());
 
         LogMessage.AsSuccess($"Ingress '{hostname}' created.");
     }

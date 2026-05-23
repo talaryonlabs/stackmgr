@@ -1,3 +1,10 @@
 ﻿namespace Talaryon.StackManager.Exceptions;
 
-public class StackAlreadyDeletedException(string name) : Exception($"Stack '{name}' is already deleted.");
+public class StackAlreadyDeletedException(string name)
+    : StackManagerException(
+        $"Stack '{name}' is already deleted.",
+        "Stack",
+        name
+    )
+{
+}

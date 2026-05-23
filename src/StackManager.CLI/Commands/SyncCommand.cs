@@ -26,6 +26,7 @@ public class SyncCommand : StackManagerCommand
                          .FirstOrDefault(r => r.Name == env.Remote)
                      ?? throw new Exception($"Remote '{env.Remote}' not found in configuration.");
 
+        await stack.Build();
         var git = new GitService();
         await git.ApplyAsync(stack);
         

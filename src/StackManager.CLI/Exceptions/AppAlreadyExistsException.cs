@@ -3,4 +3,12 @@
 namespace Talaryon.StackManager.Exceptions;
 
 public class AppAlreadyExistsException(Stack stack, StackApp app)
-    : Exception($"App '{app.Name}' already exists in stack '{stack.Name}' ({stack.Environment.Name})");
+    : StackManagerException(
+        $"App '{app.Name}' already exists in stack '{stack.Name}' ({stack.Environment.Name})",
+        "App",
+        app.Name,
+        stack.Name,
+        stack.Environment.Name
+    )
+{
+}

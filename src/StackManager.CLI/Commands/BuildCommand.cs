@@ -15,7 +15,6 @@ public class BuildCommand : StackManagerCommand
             
             await stack.Build();
             LogMessage.AsSuccess($"Stack '{stack.Name}' built.");
-            LogMessage.AsInfo("Run git commit and git push before stack sync.");
         });
     }
 }

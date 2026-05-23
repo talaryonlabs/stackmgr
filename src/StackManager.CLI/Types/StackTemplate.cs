@@ -15,7 +15,11 @@ public class StackTemplate
         var file = Path.Combine(AppDirectory.FullName, name, FileName);
         
         if (!File.Exists(file)) throw new TemplateNotFoundException(name);
-        var template = new Deserializer().Deserialize<StackTemplate>(File.ReadAllText(file));
+        
+        var deserializer = new DeserializerBuilder()
+            .IgnoreUnmatchedProperties()
+            .Build();
+        var template = deserializer.Deserialize<StackTemplate>(File.ReadAllText(file));
         
         return template;
     }

@@ -13,7 +13,6 @@ public class StackBuilder(Stack stack)
         BuildRegistryCredentials();
         BuildOutpostService();
         BuildIngressFiles();
-        await BuildRedirect();
         
         var kustomization = new Kustomization
         {
@@ -29,29 +28,6 @@ public class StackBuilder(Stack stack)
         kustomization.Save(stack);
     }
     
-    private async Task BuildRedirect()
-    {
-        if(stack.Redirects.Count == 0) return;
-        
-        var git = new GitService();
-        var apps = await git.GetAppsAsync("prod");
-        var template = StackTemplate.Load("redirect");
-        if (template is null)
-        {
-            throw new TemplateNotFoundException("redirect");
-        }
-        
-        var folder = new DirectoryInfo(Path.Combine(stack.LocalDirectory.FullName, StackRedirect.DirectoryName));
-        if (!folder.Exists) folder.Create();
-
-        var files = template.LocalDirectory.GetFileSystemInfos("*", SearchOption.AllDirectories);
-        
-        foreach (var v in stack.Redirects)
-        {
-            await v.Migrate(files);
-        }
-    }
-
     private void BuildRegistryCredentials()
     {
         var path = Path.Combine(stack.LocalDirectory.FullName, "registry-credentials.yaml");

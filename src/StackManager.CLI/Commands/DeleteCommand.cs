@@ -198,12 +198,5 @@ public class DeleteCommand : StackManagerCommand
                 return LogBuilder.Message("Done.").AsSuccess();
             })
             .Run();
-        
-        stack
-            .Redirects
-            .Where(v => !stack.Ingresses.Any(x =>
-                (x.Redirect ?? "").Equals(v.Hostname, StringComparison.InvariantCultureIgnoreCase)))
-            .ToList()
-            .ForEach(v => v.Delete());
     }
 }

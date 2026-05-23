@@ -9,12 +9,10 @@ public class StackEnvironment
     
     public static StackEnvironment Load(string name)
     {
-        var file = Path.Combine(Environment.CurrentDirectory, name, FileName);
+        var path = Path.Combine(Environment.CurrentDirectory, name, FileName);
+        var file = new FileInfo(path);
         
-        if (!File.Exists(file)) throw new EnvironmentNotFoundException(name);
-        var env = new Deserializer().Deserialize<StackEnvironment>(File.ReadAllText(file));
-        
-        return env;
+        return !file.Exists ? throw new EnvironmentNotFoundException(name) : StackResource.Load<StackEnvironment>(file);
     }
 
     public static StackEnvironment Create(string name)
@@ -45,11 +43,7 @@ public class StackEnvironment
         return env;
     }
     
-    public void SaveConfig()
-    {
-        var file = Path.Combine(LocalDirectory.FullName, FileName);
-        File.WriteAllText(file, new Serializer().Serialize(this));
-    }
+    public void SaveConfig() => StackResource.Save(this, LocalFile);
     
     [YamlIgnore] public FileInfo LocalFile => new(Path.Combine(LocalDirectory.FullName, FileName));
     [YamlIgnore] public DirectoryInfo LocalDirectory => new(Path.Combine(Environment.CurrentDirectory, Name));

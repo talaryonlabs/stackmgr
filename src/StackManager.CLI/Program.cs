@@ -1,37 +1,23 @@
 ﻿using System.CommandLine;
+using System.Reflection;
 using Talaryon.StackManager;
-using Talaryon.StackManager.Commands;
 using Talaryon.Toolbox.Api;
 
 var localConfig = LocalConfig.Get();
-var rootCommand = new RootCommand
+
+var rootCommand = new RootCommand();
+
+// Auto-discover and register all commands that inherit from StackManagerCommand
+var commandTypes = Assembly.GetExecutingAssembly()
+    .GetTypes()
+    .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsSubclassOf(typeof(StackManagerCommand)))
+    .Select(type => (StackManagerCommand)Activator.CreateInstance(type)!)
+    .ToList();
+
+foreach (var command in commandTypes)
 {
-    new NewCommand(),
-    new GetCommand(),
-    new DeleteCommand(),
-    new ConfigureCommand(),
-    new SyncCommand(),
-    new DefaultCommand(),
-    new MigrateCommand(),
-    new BuildCommand(),
-    new RemoteCommand(),
-    new DescribeCommand(),
-};
-
-// if (!GitService.IsInstalled)
-// {
-//     HelperMethods.LogError("Git command not found. Please install Git and try again.");
-//     return;
-// }
-//
-// if (!GitService.IsRepository)
-// {
-//     HelperMethods.LogError("Not a git repository.");
-//     return;
-// }
-
-
-
+    rootCommand.Add(command);
+}
 
 try
 {

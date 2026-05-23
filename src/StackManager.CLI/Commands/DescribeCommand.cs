@@ -182,11 +182,6 @@ public class DescribeCommand : StackManagerCommand
             .WaitFor(() => LogBuilder.Message($"[{string.Join(", ", stack.Ingresses.Select(i => i.Hostname))}]").AsSuccess())
             .Run();
 
-        LogBuilder.Message(" Redirects: ")
-            .NoNewLineAfter()
-            .WaitFor(() => LogBuilder.Message($"[{string.Join(", ", stack.Redirects.Select(r => r.Hostname))}]").AsSuccess())
-            .Run();
-
         LogMessage.Separator();
     }
 

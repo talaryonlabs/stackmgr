@@ -30,26 +30,6 @@ public class StackIngress : IStackObject
         return ingress;
     }
 
-    public static StackIngress Create(Stack stack, string hostname, string redirectTo)
-    {
-        if(stack.Ingresses.Any(v => v.Hostname.Equals(hostname, StringComparison.InvariantCultureIgnoreCase)))
-            throw new Exception($"Ingress {hostname} already exists.");
-        
-        var ingress = new StackIngress
-        {
-            Hostname = hostname,
-            Redirect = redirectTo,
-            Stack = stack,
-            Application = $"redirect-{HelperMethods.HostToName(redirectTo)}",
-            Port = 80
-        };
-        
-        stack.Ingresses.Add(ingress);
-        stack.SaveConfig();
-
-        return ingress;
-    }
-
     public void Delete()
     {
         LocalDirectory
@@ -216,6 +196,5 @@ public class StackIngress : IStackObject
     [YamlMember(Alias = "hostname")] public required string Hostname { get; init; }
     [YamlMember(Alias = "app")] public string? Application { get; init; }
     [YamlMember(Alias = "port")] public short Port { get; init; }
-    [YamlMember(Alias = "redirect")] public string? Redirect { get; init; }
     [YamlMember(Alias = "annotations")] public Dictionary<string, string>? Annotations { get; init; } = [];
 }

@@ -15,10 +15,12 @@ public class Stack
     
     public static Stack Load(StackEnvironment env, string name)
     {
-        var file = Path.Combine(env.LocalDirectory.FullName, name, FileName);
+        var path = Path.Combine(env.LocalDirectory.FullName, name, FileName); 
+        var file = new FileInfo(path);
         
-        if (!File.Exists(file)) throw new StackNotFoundException(name);
-        var stack = new Deserializer().Deserialize<Stack>(File.ReadAllText(file));
+        if (!file.Exists) throw new StackNotFoundException(name);
+
+        var stack = StackResource.Load<Stack>(file);
 
         stack.Environment = env;
         stack.ApplyParent();
@@ -36,7 +38,6 @@ public class Stack
             Images = [],
             Apps = [],
             Ingresses = [],
-            Redirects = [],
             Volumes = [],
         };
 
@@ -69,11 +70,7 @@ public class Stack
         LocalDirectory.Delete(true);
     }
     
-    public void SaveConfig()
-    {
-        var file = Path.Combine(LocalDirectory.FullName, FileName);
-        File.WriteAllText(file, new Serializer().Serialize(this));
-    }
+    public void SaveConfig() => StackResource.Save(this, LocalFile);
 
     private void ApplyParent()
     {
@@ -90,11 +87,6 @@ public class Stack
         lock (Images)
         {
             Images.ForEach(v => v.Stack = this);
-        }
-
-        lock (Redirects)
-        {
-            Redirects.ForEach(v => v.Stack = this);
         }
         
         lock(Volumes)
@@ -116,6 +108,5 @@ public class Stack
     [YamlMember(Alias = "images")] public List<StackImage> Images { get; init; } = [];
     [YamlMember(Alias = "apps")] public List<StackApp> Apps { get; init; } = [];
     [YamlMember(Alias = "ingresses")] public List<StackIngress> Ingresses { get; init; } = [];
-    [YamlMember(Alias = "redirects")] public List<StackRedirect> Redirects { get; init; } = [];
     [YamlMember(Alias = "volumes")] public List<StackVolume> Volumes { get; init; } = [];
 }

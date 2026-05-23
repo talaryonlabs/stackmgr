@@ -210,7 +210,7 @@ public class GetCommand : StackManagerCommand
         LogMessage.AsInfo($"Ingresses in '{stack.Name}': ");
         foreach (var ingress in stack.Ingresses)
         {
-            LogMessage.AsSuccess($"- {ingress.Hostname} [{ingress.Application ?? ingress.Redirect}]");
+            LogMessage.AsSuccess($"- {ingress.Hostname} [{ingress.Application}]");
         }
     }
 }
