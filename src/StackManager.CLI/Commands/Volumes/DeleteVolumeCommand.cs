@@ -1,8 +1,5 @@
 using System.CommandLine;
-using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Commands.Resources;
-using Talaryon.StackManager.Options;
-using Talaryon.StackManager.Types;
 using Talaryon.StackManager.Exceptions;
 
 namespace Talaryon.StackManager.Commands.Volumes;

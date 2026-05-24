@@ -1,5 +1,4 @@
 using Talaryon.StackManager.Serialization;
-using Talaryon.StackManager.Types;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 

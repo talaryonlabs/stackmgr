@@ -1,6 +1,4 @@
-using Talaryon.StackManager.Types;
-
-namespace Talaryon.StackManager.Exceptions;
+﻿namespace Talaryon.StackManager.Exceptions;
 
 public class StackAlreadyExistsException(Stack stack)
     : StackManagerException(

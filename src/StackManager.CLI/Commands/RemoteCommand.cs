@@ -1,8 +1,5 @@
 ﻿using System.CommandLine;
-using Talaryon.StackManager.Arguments;
-using Talaryon.StackManager.Options;
 using Talaryon.StackManager.Services;
-using Talaryon.Toolbox.Extensions;
 
 namespace Talaryon.StackManager.Commands;
 

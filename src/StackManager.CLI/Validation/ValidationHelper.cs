@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using Talaryon.StackManager.Exceptions;
 
 namespace Talaryon.StackManager.Validation;
 
@@ -24,9 +23,12 @@ public static class ValidationHelper
             throw new StackNameValidationException($"{paramName} cannot be empty.");
         if (name.Length > 63)
             throw new StackNameValidationException($"{paramName} must be <= 63 chars.");
+
         if (!ValidStackNameRegex.IsMatch(name))
+        {
             throw new StackNameValidationException(
                 $"{paramName} must start/end with alphanumeric and contain [a-z0-9._-]. Examples: example.com, test.at");
+        }
     }
 
     public static void ValidateEnvironmentName(string name, string paramName = "environment name")
@@ -38,9 +40,12 @@ public static class ValidationHelper
             throw new AppNameValidationException($"{paramName} cannot be empty.");
         if (name.Length > 63)
             throw new AppNameValidationException($"{paramName} must be <= 63 chars.");
+        
         if (!ValidKubernetesNameRegex.IsMatch(name))
+        {
             throw new AppNameValidationException(
                 $"{paramName} must start/end with alphanumeric and contain [a-z0-9-].");
+        }
     }
 
     public static void ValidateHostname(string hostname, string paramName = "hostname")
@@ -51,6 +56,7 @@ public static class ValidationHelper
             throw new HostnameValidationException($"{paramName} must be <= 253 chars.");
         if (!ValidHostnameRegex.IsMatch(hostname))
             throw new HostnameValidationException($"{paramName} must be a valid hostname.");
+        
         var labels = hostname.Split('.');
         foreach (var label in labels)
         {
@@ -67,12 +73,14 @@ public static class ValidationHelper
     {
         if (string.IsNullOrWhiteSpace(size))
             throw new SizeValidationException($"{paramName} cannot be empty.");
+        
         size = size.Trim();
         if (long.TryParse(size, out var parsedSize))
             return $"{parsedSize}Gi";
-        if (!ValidSizeRegex.IsMatch(size))
-            throw new SizeValidationException($"{paramName} must be valid. Examples: 1Gi, 500Mi, 100.");
-        return size;
+        
+        return !ValidSizeRegex.IsMatch(size)
+            ? throw new SizeValidationException($"{paramName} must be valid. Examples: 1Gi, 500Mi, 100.")
+            : size;
     }
 
     public static void ValidateNamespace(string ns, string paramName = "namespace")
@@ -87,7 +95,7 @@ public static class ValidationHelper
 
     public static void ValidatePort(int port, string paramName = "port")
     {
-        if (port < 1 || port > 65535)
+        if (port is < 1 or > 65535)
             throw new PortValidationException($"{paramName} must be 1-65535.");
     }
 
@@ -95,7 +103,9 @@ public static class ValidationHelper
     {
         if (!int.TryParse(portStr, out var port))
             throw new PortValidationException($"{paramName} must be a valid number.");
+        
         ValidatePort(port, paramName);
+        
         return port;
     }
 

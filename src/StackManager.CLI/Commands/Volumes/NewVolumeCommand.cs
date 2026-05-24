@@ -1,8 +1,5 @@
 using System.CommandLine;
-using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Commands.Resources;
-using Talaryon.StackManager.Options;
-using Talaryon.StackManager.Types;
 using Talaryon.StackManager.Validation;
 
 namespace Talaryon.StackManager.Commands.Volumes;
@@ -45,10 +42,7 @@ public class NewVolumeCommand : ResourceCreateCommand<StackVolume, VolumeArgumen
         size = ValidationHelper.ValidateAndNormalizeSize(size);
         
         var replicas = parseResult.GetValue<int, ReplicasOption>();
-        if (replicas < 0)
-            throw new ArgumentException("Replicas must be >= 0");
-        
-        return StackVolume.Create(stack, name, size, accessMode, replicas);
+        return replicas < 0 ? throw new ArgumentException("Replicas must be >= 0") : StackVolume.Create(stack, name, size, accessMode, replicas);
     }
 
     protected override void OnResourceCreated(StackVolume resource)

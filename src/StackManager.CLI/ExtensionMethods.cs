@@ -1,6 +1,5 @@
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
-using Talaryon.StackManager.Commands;
 using Talaryon.StackManager.Services;
 
 namespace Talaryon.StackManager;

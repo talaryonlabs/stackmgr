@@ -1,15 +1,12 @@
 using System.CommandLine;
-using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Commands.Resources;
-using Talaryon.StackManager.Options;
-using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Commands.Stacks;
 
 /// <summary>
 /// Command for describing a single stack.
 /// </summary>
-public class DescribeStackCommand : ResourceDescribeCommand<Talaryon.StackManager.Types.Stack, StackArgument>
+public class DescribeStackCommand : ResourceDescribeCommand<Stack, StackArgument>
 {
     public DescribeStackCommand()
         : base("stack", "Describe a stack")
@@ -17,14 +14,14 @@ public class DescribeStackCommand : ResourceDescribeCommand<Talaryon.StackManage
         Add(new EnvironmentOption());
     }
 
-    protected override Talaryon.StackManager.Types.Stack LoadResource(ParseResult parseResult)
+    protected override Stack LoadResource(ParseResult parseResult)
     {
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var name = GetName<StackArgument>(parseResult);
-        return Talaryon.StackManager.Types.Stack.Load(env, name);
+        return Stack.Load(env, name);
     }
 
-    protected override void DisplayResource(Talaryon.StackManager.Types.Stack resource)
+    protected override void DisplayResource(Stack resource)
     {
         LogMessage.Separator();
 

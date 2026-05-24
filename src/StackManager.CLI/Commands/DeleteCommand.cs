@@ -1,12 +1,5 @@
-using System;
-using System.CommandLine;
-using System.Linq;
 using System.Reflection;
-using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Commands.Resources;
-using Talaryon.StackManager.Options;
-using Talaryon.StackManager.Services;
-using Talaryon.StackManager.Types;
 
 
 namespace Talaryon.StackManager.Commands;

@@ -1,7 +1,5 @@
 using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
-using Talaryon.StackManager.Options;
-using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Commands.Images;
 

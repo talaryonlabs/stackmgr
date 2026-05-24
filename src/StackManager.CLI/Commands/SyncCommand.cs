@@ -1,9 +1,7 @@
 ﻿using System.CommandLine;
 using StackManager.Shared.Models;
 using Talaryon.StackManager.Exceptions;
-using Talaryon.StackManager.Options;
 using Talaryon.StackManager.Services;
-using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Commands;
 

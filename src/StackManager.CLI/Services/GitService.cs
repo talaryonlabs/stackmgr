@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using Talaryon.StackManager.Exceptions;
-using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Services;
 

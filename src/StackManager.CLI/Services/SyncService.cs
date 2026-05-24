@@ -1,6 +1,5 @@
 using StackManager.Shared.Models;
 using Talaryon.StackManager.Exceptions;
-using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Services;
 

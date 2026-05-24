@@ -1,15 +1,12 @@
 using System.CommandLine;
-using Talaryon.StackManager.Arguments;
 using Talaryon.StackManager.Commands.Resources;
-using Talaryon.StackManager.Options;
-using Talaryon.StackManager.Types;
 
 namespace Talaryon.StackManager.Commands.Stacks;
 
 /// <summary>
 /// Command for deleting a stack.
 /// </summary>
-public class DeleteStackCommand : ResourceDeleteCommand<Talaryon.StackManager.Types.Stack, StackArgument>
+public class DeleteStackCommand : ResourceDeleteCommand<Stack, StackArgument>
 {
     public DeleteStackCommand()
         : base("stack", "Delete a stack")
@@ -17,14 +14,14 @@ public class DeleteStackCommand : ResourceDeleteCommand<Talaryon.StackManager.Ty
         Add(new EnvironmentOption());
     }
 
-    protected override Talaryon.StackManager.Types.Stack LoadResource(ParseResult parseResult)
+    protected override Stack LoadResource(ParseResult parseResult)
     {
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var name = GetName<StackArgument>(parseResult);
-        return Talaryon.StackManager.Types.Stack.Load(env, name);
+        return Stack.Load(env, name);
     }
 
-    protected override void DeleteResourceInstance(Talaryon.StackManager.Types.Stack resource)
+    protected override void DeleteResourceInstance(Stack resource)
     {
         LogMessage.AsWarning("ATTENTION: This only marks the stack 'deleted' in the config file.");
         LogMessage.AsWarning("It does not delete the stack from Rancher/ArgoCD nor the local directory.");
@@ -40,7 +37,7 @@ public class DeleteStackCommand : ResourceDeleteCommand<Talaryon.StackManager.Ty
         resource.Delete();
     }
 
-    protected override void OnResourceDeleted(Talaryon.StackManager.Types.Stack resource)
+    protected override void OnResourceDeleted(Stack resource)
     {
         LogMessage.AsSuccess("Success.");
     }

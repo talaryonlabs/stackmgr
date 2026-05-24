@@ -1,5 +1,3 @@
-using Talaryon.StackManager.Options;
-
 namespace Talaryon.StackManager.Commands;
 
 public class BuildCommand : BaseCommand
