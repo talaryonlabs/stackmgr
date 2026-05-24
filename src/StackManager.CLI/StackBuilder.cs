@@ -1,11 +1,21 @@
 using System.Security;
+using Talaryon.StackManager.Exceptions;
 using Talaryon.StackManager.Models;
 using Talaryon.StackManager.Serialization;
+using Talaryon.StackManager.Services;
 
 namespace Talaryon.StackManager;
 
 public class StackBuilder(Stack stack)
 {
+    private KustomizeService? _kustomizeService;
+
+    public StackBuilder WithKustomizeValidation(KustomizeService kustomizeService)
+    {
+        _kustomizeService = kustomizeService;
+        return this;
+    }
+
     public async Task BuildAsync()
     {
         BuildRegistryCredentials();
@@ -72,6 +82,19 @@ public class StackBuilder(Stack stack)
         };
             
         kustomization.Save(stack);
+
+        // Validate the generated kustomization.yaml
+        if (_kustomizeService != null)
+        {
+            var errors = await _kustomizeService.ValidateAsync(stack.LocalDirectory.FullName);
+            if (errors.Count > 0)
+            {
+                throw new CliException(
+                    $"Kustomization validation failed:\n" + string.Join("\n", errors.Select(e => $"  - {e}")));
+            }
+            
+            LogMessage.AsInfo("Kustomization validation passed.");
+        }
     }
     
     private void BuildRegistryCredentials()

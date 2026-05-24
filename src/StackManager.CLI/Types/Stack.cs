@@ -1,4 +1,5 @@
 using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Services;
 using Talaryon.Toolbox.Services.ArgoCD.Models;
 using YamlDotNet.Serialization;
 
@@ -58,9 +59,14 @@ public class Stack
         return CreateAsync(env, name).GetAwaiter().GetResult();
     }
 
-    public async Task BuildAsync()
+    public async Task BuildAsync(KustomizeService? kustomizeService = null)
     {
-        await new StackBuilder(this).BuildAsync();
+        var builder = new StackBuilder(this);
+        if (kustomizeService != null)
+        {
+            builder.WithKustomizeValidation(kustomizeService);
+        }
+        await builder.BuildAsync();
     }
 
     [Obsolete("Use BuildAsync instead")]

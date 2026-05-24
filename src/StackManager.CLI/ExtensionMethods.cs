@@ -31,6 +31,7 @@ public static class ExtensionMethods
             // Register transient services
             services.AddTransient<GitService>(sp => new GitService(sp.GetRequiredService<LocalConfig>()));
             services.AddTransient<AppService>();
+            services.AddTransient<KustomizeService>(sp => new KustomizeService(sp.GetRequiredService<LocalConfig>()));
         
             // Register named HttpClient for ProxyService
             services.AddHttpClient("ProxyService")
