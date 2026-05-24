@@ -2,6 +2,15 @@ using System.Security;
 
 namespace Talaryon.StackManager.Services;
 
+public interface IAppService
+{
+    Task InitializeFromTemplateAsync(StackTemplate template);
+    Task MigrateAsync(StackTemplate template);
+    Task BuildAsync(DirectoryInfo outputDirectory);
+    bool HasImplementation(string relativePath);
+    FileInfo? GetEffectiveFile(string relativePath);
+}
+
 /// <summary>
 /// Service for managing app templates, migration, and file structure.
 /// Template files are stored in the '.base' subfolder.
@@ -10,7 +19,7 @@ namespace Talaryon.StackManager.Services;
 /// Files matching 'init.*.yaml' in templates are copied to app root (without prefix) instead of .base,
 /// and only if they don't already exist.
 /// </summary>
-public class AppService
+public class AppService : IAppService
 {
     private readonly StackApp _app;
     

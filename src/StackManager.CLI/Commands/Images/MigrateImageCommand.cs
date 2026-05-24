@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.IO.Pipes;
 using Talaryon.StackManager.Commands.Resources;
 
 namespace Talaryon.StackManager.Commands.Images;
@@ -37,8 +38,10 @@ public class MigrateImageCommand : ResourceMigrateCommand<StackImage, ImageArgum
     {
         var newImage = parseResult.GetRequiredValue<string, ImageArgument>();
         var name = resource.Name;
+
+        resource.Image = newImage;
+        resource.Stack.SaveConfig();
         
-        resource.Migrate(newImage);
         LogMessage.AsSuccess($"Image '{name}' migrated to '{newImage}'.");
     }
 }

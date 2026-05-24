@@ -12,7 +12,7 @@ public class StackEnvironment
         var path = Path.Combine(Environment.CurrentDirectory, name, FileName);
         var file = new FileInfo(path);
         
-        return !file.Exists ? throw new EnvironmentNotFoundException(name) : StackResource.Load<StackEnvironment>(file);
+        return !file.Exists ? throw new EnvironmentNotFoundException(name) : StackConfig.Load<StackEnvironment>(file);
     }
 
     public static StackEnvironment Create(string name)
@@ -43,7 +43,7 @@ public class StackEnvironment
         return env;
     }
     
-    public void SaveConfig() => StackResource.Save(this, LocalFile);
+    public void SaveConfig() => StackConfig.Save(this, LocalFile);
     
     [YamlIgnore] public FileInfo LocalFile => new(Path.Combine(LocalDirectory.FullName, FileName));
     [YamlIgnore] public DirectoryInfo LocalDirectory => new(Path.Combine(Environment.CurrentDirectory, Name));

@@ -21,8 +21,9 @@ public class DeleteIngressCommand : ResourceDeleteCommand<StackIngress, Hostname
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
         var hostname = GetName<HostnameArgument>(parseResult);
-        return stack.Ingresses.FirstOrDefault(v => v.Hostname.Equals(hostname, StringComparison.OrdinalIgnoreCase)) 
-            ?? throw new IngressNotFoundException(hostname);
+        var name = HelperMethods.HostToName(hostname);
+        
+        return stack.Get<StackIngress>(name);
     }
 
     protected override void DeleteResourceInstance(StackIngress resource)
@@ -34,7 +35,7 @@ public class DeleteIngressCommand : ResourceDeleteCommand<StackIngress, Hostname
             .WaitFor(result =>
             {
                 if (!result) return LogBuilder.Message("Aborted.");
-                resource.Delete();
+                resource.Delete<StackIngress>();
                 return LogBuilder.Message("Done.").AsSuccess();
             })
             .Run();

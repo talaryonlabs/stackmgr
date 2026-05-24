@@ -1,6 +1,5 @@
 using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
-using Talaryon.StackManager.Exceptions;
 
 namespace Talaryon.StackManager.Commands.Images;
 
@@ -21,8 +20,8 @@ public class DeleteImageCommand : ResourceDeleteCommand<StackImage, ImageArgumen
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
         var name = GetName<ImageArgument>(parseResult);
-        return stack.Images.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) 
-            ?? throw new ImageNotFoundException(name);
+        
+        return stack.Get<StackImage>(name);
     }
 
     protected override void DeleteResourceInstance(StackImage resource)
@@ -35,7 +34,7 @@ public class DeleteImageCommand : ResourceDeleteCommand<StackImage, ImageArgumen
             .WaitFor(result =>
             {
                 if (!result) return LogBuilder.Message("Aborted.");
-                resource.Delete();
+                resource.Delete<StackImage>();
                 return LogBuilder.Message("Done.").AsSuccess();
             })
             .Run();

@@ -42,7 +42,18 @@ public class NewVolumeCommand : ResourceCreateCommand<StackVolume, VolumeArgumen
         size = ValidationHelper.ValidateAndNormalizeSize(size);
         
         var replicas = parseResult.GetValue<int, ReplicasOption>();
-        return replicas < 0 ? throw new ArgumentException("Replicas must be >= 0") : StackVolume.Create(stack, name, size, accessMode, replicas);
+        if (replicas < 0) throw new ArgumentException("Replicas must be >= 0");
+
+        return stack
+            .New<StackVolume>()
+            .WithName(name)
+            .Configure(v =>
+            {
+                v.StorageSize = size;
+                v.AccessMode = accessMode;
+                v.Replicas = replicas;
+            })
+            .Save();
     }
 
     protected override void OnResourceCreated(StackVolume resource)

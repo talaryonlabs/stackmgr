@@ -20,7 +20,7 @@ public class GetStacksCommand : ResourceGetCommand<Stack>
         var files = env.LocalDirectory.GetFiles(Stack.FileName, SearchOption.AllDirectories);
         
         return files
-            .Select(v => Stack.Load(env, v.Directory!.Name))
+            .Select(v => env.GetStack(v.Directory!.Name))
             .ToList();
     }
 

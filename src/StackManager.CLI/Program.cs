@@ -18,47 +18,44 @@ if (args.Length > 0 && (args[0] == "--version" || args[0] == "-v"))
 }
 
 // Setup DI container
-var services = new ServiceCollection();
-services.AddSingleton<LocalConfig>(_ => LocalConfig.Get());
-services.AddHttpClient();
-services.AddStackManagerServices();
+var services = new ServiceCollection()
+    .AddStackManagerServices()
+    .BuildServiceProvider();
 
-// Build service provider
-var serviceProvider = services.BuildServiceProvider();
 
 // Get local config
-var localConfig = serviceProvider.GetRequiredService<LocalConfig>();
+var localConfig = services.GetRequiredService<LocalConfig>();
 
 var rootCommand = new RootCommand();
 
 // Auto-discover and register all commands that inherit from BaseCommand
-// Exclude resource subcommands (ResourceCreateCommand, ResourceDeleteCommand, etc.) 
-// as they are added under their parent commands (NewCommand, DeleteCommand, etc.)
-var commandTypes = Assembly.GetExecutingAssembly()
+var commands = Assembly.GetExecutingAssembly()
     .GetTypes()
     .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsSubclassOf(typeof(BaseCommand)))
-    .Where(t => 
+    .ToList();
+
+// Exclude resource subcommands (ResourceCreateCommand, ResourceDeleteCommand, etc.) 
+// as they are added under their parent commands (NewCommand, DeleteCommand, etc.)
+commands.Where(t =>
     {
         var baseType = t.BaseType;
         if (baseType is not { IsGenericType: true })
             return true;
         var genericDef = baseType.GetGenericTypeDefinition();
         return genericDef != typeof(ResourceCreateCommand<,>)
-            && genericDef != typeof(ResourceDeleteCommand<,>)
-            && genericDef != typeof(ResourceDescribeCommand<,>)
-            && genericDef != typeof(ResourceGetCommand<>)
-            && genericDef != typeof(ResourceConfigureCommand<>)
-            && genericDef != typeof(ResourceMigrateCommand<,>);
+               && genericDef != typeof(ResourceDeleteCommand<,>)
+               && genericDef != typeof(ResourceDescribeCommand<,>)
+               && genericDef != typeof(ResourceGetCommand<>)
+               && genericDef != typeof(ResourceConfigureCommand<>)
+               && genericDef != typeof(ResourceMigrateCommand<,>);
     })
     .Select(type => (BaseCommand)Activator.CreateInstance(type)!)
-    .ToList();
-
-foreach (var command in commandTypes)
-{
-    // Inject service provider into each command
-    command.SetServiceProvider(serviceProvider);
-    rootCommand.Add(command);
-}
+    .ToList()
+    .ForEach(command => 
+    {
+        command.SetServiceProvider(services);
+        rootCommand.Add(command);
+    });
 
 int exitCode = 0;
 

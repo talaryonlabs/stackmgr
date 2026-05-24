@@ -26,6 +26,7 @@ public class NewIngressCommand : ResourceCreateCommand<StackIngress, HostnameArg
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
         var hostname = GetName<HostnameArgument>(parseResult);
+        var name = HelperMethods.HostToName(hostname);
         var app = parseResult.GetRequiredValue<string, AppOption>();
         var port = parseResult.GetRequiredValue<int, PortOption>();
         
@@ -50,7 +51,17 @@ public class NewIngressCommand : ResourceCreateCommand<StackIngress, HostnameArg
             }
         }
 
-        return StackIngress.Create(stack, hostname, app, port, parseResult.GetValue<bool, SecuredOption>());
+        return stack
+            .New<StackIngress>()
+            .WithName(name)
+            .Configure(ingress =>
+            {
+                ingress.Hostname = hostname;
+                ingress.Port = port;
+                ingress.Application = app;
+                ingress.IsSecured = parseResult.GetValue<bool, SecuredOption>();
+            })
+            .Save();
     }
 
     protected override void OnResourceCreated(StackIngress resource)

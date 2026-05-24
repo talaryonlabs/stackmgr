@@ -18,7 +18,7 @@ public class DeleteStackCommand : ResourceDeleteCommand<Stack, StackArgument>
     {
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var name = GetName<StackArgument>(parseResult);
-        return Stack.Load(env, name);
+        return env.GetStack(name);
     }
 
     protected override void DeleteResourceInstance(Stack resource)

@@ -145,6 +145,17 @@ public class StackBuilder(Stack stack)
 
     private void BuildIngressFiles()
     {
+        // TODO: delete ingress files that are no longer used
+        /*
+         *         LocalDirectory
+               .GetFiles(LocalFile.Name.Replace(".yaml", "*"))
+               .ToList()
+               .ForEach(v =>
+               {
+                   v.Delete();
+               });
+         */
+        
         if (stack.Ingresses.Count == 0) return;
         
         if (stack.Ingresses.Any(v => v.IsSecured) && stack.Environment.Outpost is not { Length: >0 })

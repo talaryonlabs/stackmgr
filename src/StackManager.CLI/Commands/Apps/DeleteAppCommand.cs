@@ -35,7 +35,7 @@ public class DeleteAppCommand : ResourceDeleteCommand<StackApp, AppArgument>
             .WaitFor(result =>
             {
                 if (!result) return LogBuilder.Message("Aborted.");
-                resource.Delete();
+                resource.Delete<StackApp>();
                 return LogBuilder.Message("Done.").AsSuccess();
             })
             .Run();

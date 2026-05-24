@@ -3,7 +3,15 @@ using Talaryon.StackManager.Exceptions;
 
 namespace Talaryon.StackManager.Services;
 
-public class GitService
+public interface IGitService
+{
+    Task<string> DiffAsync(FileInfo file1, FileInfo file2);
+    Task<DirectoryInfo[]> GetAppsAsync(string branch);
+    Task PullAsync();
+    Task ApplyAsync(Stack stack);
+}
+
+public class GitService : IGitService
 {
     public static bool IsRepository => Directory.Exists(Path.Combine(Environment.CurrentDirectory, ".git"));
     public static bool IsInstalled

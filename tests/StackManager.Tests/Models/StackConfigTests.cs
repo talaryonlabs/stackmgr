@@ -5,12 +5,12 @@ using Xunit;
 namespace Talaryon.StackManager.Tests.Models;
 
 [Collection("FileSystemTests")]
-public class StackResourceTests : IDisposable
+public class StackConfigTests : IDisposable
 {
     private readonly string _testDir;
     private readonly string _originalDirectory;
 
-    public StackResourceTests()
+    public StackConfigTests()
     {
         _originalDirectory = Environment.CurrentDirectory;
         _testDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -46,7 +46,7 @@ public class StackResourceTests : IDisposable
         };
 
         var file = new FileInfo(Path.Combine(_testDir, ".env.yaml"));
-        StackResource.Save(env, file);
+        StackConfig.Save(env, file);
 
         Assert.True(file.Exists);
         Assert.True(file.Length > 0);
@@ -67,9 +67,9 @@ public class StackResourceTests : IDisposable
         };
 
         var file = new FileInfo(Path.Combine(_testDir, ".env.yaml"));
-        StackResource.Save(env, file);
+        StackConfig.Save(env, file);
 
-        var loaded = StackResource.Load<StackEnvironment>(file);
+        var loaded = StackConfig.Load<StackEnvironment>(file);
 
         Assert.Equal(env.Name, loaded.Name);
         Assert.Equal(env.Vault, loaded.Vault);
@@ -85,7 +85,7 @@ public class StackResourceTests : IDisposable
     {
         var file = new FileInfo(Path.Combine(_testDir, "nonexistent.yaml"));
 
-        var ex = Assert.Throws<FileNotFoundException>(() => StackResource.Load<StackEnvironment>(file));
+        var ex = Assert.Throws<FileNotFoundException>(() => StackConfig.Load<StackEnvironment>(file));
         Assert.Contains("nonexistent.yaml", ex.Message);
     }
 
@@ -103,7 +103,7 @@ public class StackResourceTests : IDisposable
         };
 
         var file = new FileInfo(Path.Combine(_testDir, ".env.yaml"));
-        StackResource.Save(env1, file);
+        StackConfig.Save(env1, file);
 
         var env2 = new StackEnvironment
         {
@@ -115,9 +115,9 @@ public class StackResourceTests : IDisposable
             Remote = ""
         };
 
-        StackResource.Save(env2, file);
+        StackConfig.Save(env2, file);
 
-        var loaded = StackResource.Load<StackEnvironment>(file);
+        var loaded = StackConfig.Load<StackEnvironment>(file);
         Assert.Equal("test-env-2", loaded.Name);
         Assert.Equal("vault2", loaded.Vault);
     }
@@ -129,13 +129,13 @@ public class StackResourceTests : IDisposable
         var stack = Stack.Create(env, "test-stack");
 
         var file = new FileInfo(Path.Combine(_testDir, "test-stack.yaml"));
-        StackResource.Save(stack, file);
+        StackConfig.Save(stack, file);
 
         Assert.True(file.Exists);
         Assert.True(file.Length > 0);
 
         // Load it back
-        var loaded = StackResource.Load<Stack>(file);
+        var loaded = StackConfig.Load<Stack>(file);
         Assert.Equal(stack.Name, loaded.Name);
         Assert.Equal(stack.Namespace, loaded.Namespace);
     }

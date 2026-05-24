@@ -35,7 +35,7 @@ public class MigrateAppCommand : ResourceMigrateCommand<StackApp, AppArgument>
             return;
         }
 
-        var git = GetRequiredService<GitService>();
+        var git = GetRequiredService<IGitService>();
         await git.GetAppsAsync(app.Template.Branch);
         
         var template = StackTemplate.Load(app.Template.Name);

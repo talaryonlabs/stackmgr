@@ -23,7 +23,7 @@ public class MoveCommand : BaseCommand
         var targetEnvName = GetName<EnvironmentArgument>(parseResult);
 
         var sourceEnv = StackEnvironment.Load(sourceEnvName);
-        var stack = Stack.Load(sourceEnv, stackName);
+        var stack = sourceEnv.GetStack(stackName);
         var targetEnv = StackEnvironment.Load(targetEnvName);
 
         var targetStackPath = Path.Combine(targetEnv.LocalDirectory.FullName, stackName, Stack.FileName);

@@ -21,8 +21,8 @@ public class DeleteVolumeCommand : ResourceDeleteCommand<StackVolume, VolumeArgu
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
         var name = GetName<VolumeArgument>(parseResult);
-        return stack.Volumes.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) 
-            ?? throw new VolumeNotFoundException(name);
+        
+        return stack.Get<StackVolume>(name);
     }
 
     protected override void DeleteResourceInstance(StackVolume resource)
@@ -35,7 +35,7 @@ public class DeleteVolumeCommand : ResourceDeleteCommand<StackVolume, VolumeArgu
             .WaitFor(result =>
             {
                 if (!result) return LogBuilder.Message("Aborted.");
-                resource.Delete();
+                resource.Delete<StackVolume>();
                 return LogBuilder.Message("Done.").AsSuccess();
             })
             .Run();

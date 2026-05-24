@@ -8,27 +8,13 @@ namespace Talaryon.StackManager.Types;
 
 public interface IStackObject
 {
-    Stack Stack { get; }
+    Stack Stack { get; set; }
+    string Name { get; set; }
 }
 
 public class Stack
 {
     public const string FileName = ".stack.yaml";
-    
-    public static Stack Load(StackEnvironment env, string name)
-    {
-        var path = Path.Combine(env.LocalDirectory.FullName, name, FileName); 
-        var file = new FileInfo(path);
-        
-        if (!file.Exists) throw new StackNotFoundException(name);
-
-        var stack = StackResource.Load<Stack>(file);
-
-        stack.Environment = env;
-        stack.ApplyParent();
-
-        return stack;
-    }
 
     public static async Task<Stack> CreateAsync(StackEnvironment env, string name)
     {
@@ -88,30 +74,7 @@ public class Stack
         LocalDirectory.Delete(true);
     }
     
-    public void SaveConfig() => StackResource.Save(this, LocalFile);
-
-    private void ApplyParent()
-    {
-        lock (Ingresses)
-        {
-            Ingresses.ForEach(v => v.Stack = this);
-        }
-        
-        lock(Apps)
-        {
-            Apps.ForEach(v => v.Stack = this);
-        }
-
-        lock (Images)
-        {
-            Images.ForEach(v => v.Stack = this);
-        }
-        
-        lock(Volumes)
-        {
-            Volumes.ForEach(v => v.Stack = this);
-        }
-    }
+    public void SaveConfig() => StackConfig.Save(this, LocalFile);
     
     [YamlIgnore] public FileInfo LocalFile => new(Path.Combine(LocalDirectory.FullName, FileName));
     [YamlIgnore] public DirectoryInfo LocalDirectory => new (Path.Combine(Environment.LocalDirectory.FullName, Name));

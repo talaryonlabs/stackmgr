@@ -24,10 +24,10 @@ public class SyncCommand : BaseCommand
                          .Remotes
                          .FirstOrDefault(r => r.Name == env.Remote)
                      ?? throw new Exception($"Remote '{env.Remote}' not found in configuration.");
-
-        var kustomizeService = GetRequiredService<KustomizeService>();
+        
+        var kustomizeService = GetRequiredService<IKustomizeService>();
         await stack.BuildAsync(kustomizeService);
-        var git = GetRequiredService<GitService>();
+        var git = GetRequiredService<IGitService>();
         await git.ApplyAsync(stack);
         
         var httpClientFactory = GetRequiredService<IHttpClientFactory>();

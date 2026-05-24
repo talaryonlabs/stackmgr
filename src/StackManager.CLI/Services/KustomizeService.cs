@@ -3,29 +3,17 @@ using Talaryon.StackManager.Exceptions;
 
 namespace Talaryon.StackManager.Services;
 
+public interface IKustomizeService
+{
+    Task<List<string>> ValidateAsync(string kustomizationPath);
+    Task<bool> IsValidKustomizationDirectoryAsync(string directoryPath);
+}
+
 /// <summary>
 /// Service for validating kustomization.yaml files using the kustomize CLI.
 /// </summary>
-public class KustomizeService
+public class KustomizeService : IKustomizeService
 {
-    private readonly LocalConfig _config;
-
-    /// <summary>
-    /// Creates a new KustomizeService with default configuration.
-    /// </summary>
-    public KustomizeService() : this(LocalConfig.Get())
-    {
-    }
-
-    /// <summary>
-    /// Creates a new KustomizeService with the specified configuration.
-    /// </summary>
-    /// <param name="config">The local configuration</param>
-    public KustomizeService(LocalConfig config)
-    {
-        _config = config;
-    }
-
     /// <summary>
     /// Checks if kustomize is installed on the system.
     /// </summary>

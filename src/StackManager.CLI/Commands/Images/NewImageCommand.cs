@@ -24,9 +24,19 @@ public class NewImageCommand : ResourceCreateCommand<StackImage, ImageArgument>
         var imageName = GetName<ImageArgument>(parseResult);
         var name = parseResult.GetValue<string, NameOption>();
         
+        if (string.IsNullOrEmpty(name))
+        {
+            var parts = imageName.Split("/");
+            name = parts[^1].Contains(':') ? parts[^1].Split(":")[0] : parts[^1];
+        }
+
         ValidationHelper.ValidateImageName(imageName);
-        
-        return StackImage.Create(stack, imageName, name);
+
+        return stack
+            .New<StackImage>()
+            .WithName(name)
+            .Configure(i => i.Image = imageName)
+            .Save();
     }
 
     protected override void OnResourceCreated(StackImage resource)

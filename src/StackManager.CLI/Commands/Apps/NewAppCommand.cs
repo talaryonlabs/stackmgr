@@ -1,6 +1,5 @@
 using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
-using Talaryon.StackManager.Services;
 using Talaryon.StackManager.Validation;
 
 namespace Talaryon.StackManager.Commands.Apps;
@@ -29,38 +28,28 @@ public class NewAppCommand : ResourceCreateCommand<StackApp, AppArgument>
         
         var template = parseResult.GetValue<string, TemplateOption>();
         var branch = parseResult.GetValue<bool, DevOption>() ? "dev" : "prod";
-        
-        StackApp app;
-        
-        if (template is not null)
-        {
-            var stackTemplate = StackTemplate.Load(template);
-            var appTemplate = new StackAppTemplate
+
+        return stack
+            .New<StackApp>()
+            .WithName(name)
+            .Configure(app =>
             {
-                Name = stackTemplate.Name,
-                Branch = branch,
-            };
-            
-            app = StackApp.Create(stack, name, appTemplate);
-            
-            // Initialize the app with template contents in .base folder
-            var appService = new AppService(app);
-            appService.InitializeFromTemplateAsync(stackTemplate).GetAwaiter().GetResult();
-            
-            LogMessage.AsSuccess($"App '{app.Name}' created with template '{stackTemplate.Name}'.");
-            LogMessage.AsInfo($"Template files are in the '.base' folder.");
-        }
-        else
-        {
-            app = StackApp.Create(stack, name, null);
-            LogMessage.AsSuccess($"App '{app.Name}' created.");
-        }
-        
-        return app;
+                if (template is not null)
+                {
+                    var stackTemplate = StackTemplate.Load(template);
+                    app.Template = new StackAppTemplate
+                    {
+                        Name = stackTemplate.Name,
+                        Branch = branch,
+                    };
+                }
+            }).Save();
     }
 
     protected override void OnResourceCreated(StackApp resource)
     {
+        LogMessage.AsSuccess($"App '{resource.Name}' created.");
+        
         if (resource.Template is not null)
         {
             LogMessage.AsInfo($"To update the app from template, run: stackmgr migrate app {resource.Name}");
