@@ -4,7 +4,7 @@ using Talaryon.StackManager.Models;
 using Talaryon.StackManager.Serialization;
 using Talaryon.StackManager.Services;
 
-namespace Talaryon.StackManager;
+namespace Talaryon.StackManager.Builder;
 
 public class StackBuilder(Stack stack)
 {

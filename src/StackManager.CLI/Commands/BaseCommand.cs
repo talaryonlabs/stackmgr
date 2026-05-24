@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Talaryon.StackManager.Exceptions;
 
@@ -7,10 +8,28 @@ namespace Talaryon.StackManager.Commands;
 public class BaseCommand(string name, string description) : Command(name, description)
 {
     private IServiceProvider? _serviceProvider;
-    
+
     public void SetServiceProvider(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
+    }
+
+    protected void UseAutodiscoverCommands(Type type)
+    {
+        // Auto-discover and add all type implementations
+        var getCommandTypes = Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(v => v.BaseType?.IsGenericType == true 
+                        && v.BaseType.GetGenericTypeDefinition() == type
+                        && !v.IsAbstract)
+            .ToList();
+
+        foreach (var instance in getCommandTypes
+                     .Select(v => (BaseCommand?)Activator.CreateInstance(v))
+                     .OfType<BaseCommand>())
+        {
+            Add(instance);
+        }
     }
     
     protected T GetRequiredService<T>() where T : class

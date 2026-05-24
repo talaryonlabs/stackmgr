@@ -37,7 +37,7 @@ public class GitService
     {
         _appRepository = config.AppRepository;
 
-        if (_appRepository is null || _appRepository.Length == 0)
+        if (string.IsNullOrEmpty(_appRepository))
             throw new ConfigurationException("App repository cannot be null. Please check your configuration.");
 
     }

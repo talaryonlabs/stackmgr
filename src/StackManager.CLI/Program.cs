@@ -40,14 +40,15 @@ var commandTypes = Assembly.GetExecutingAssembly()
     .Where(t => 
     {
         var baseType = t.BaseType;
-        if (baseType == null || !baseType.IsGenericType)
+        if (baseType is not { IsGenericType: true })
             return true;
         var genericDef = baseType.GetGenericTypeDefinition();
         return genericDef != typeof(ResourceCreateCommand<,>)
             && genericDef != typeof(ResourceDeleteCommand<,>)
             && genericDef != typeof(ResourceDescribeCommand<,>)
             && genericDef != typeof(ResourceGetCommand<>)
-            && genericDef != typeof(ResourceConfigureCommand<>);
+            && genericDef != typeof(ResourceConfigureCommand<>)
+            && genericDef != typeof(ResourceMigrateCommand<,>);
     })
     .Select(type => (BaseCommand)Activator.CreateInstance(type)!)
     .ToList();
