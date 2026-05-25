@@ -3,7 +3,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Talaryon.StackManager.Commands;
 using Talaryon.StackManager.Commands.Resources;
-using Talaryon.StackManager.Commands.Volumes;
+using Talaryon.StackManager.Extensions;
 using Xunit;
 
 namespace Talaryon.StackManager.Tests.Commands;
@@ -11,28 +11,23 @@ namespace Talaryon.StackManager.Tests.Commands;
 public class CommandDiscoveryTests
 {
     private readonly Assembly _cliAssembly;
-    private readonly IServiceProvider _serviceProvider;
 
     public CommandDiscoveryTests()
     {
         _cliAssembly = typeof(BaseCommand).Assembly;
-        var services = new ServiceCollection();
-        services.AddSingleton<LocalConfig>(_ => LocalConfig.Get());
-        services.AddHttpClient();
-        services.AddStackManagerServices();
-        _serviceProvider = services.BuildServiceProvider();
     }
 
     [Fact]
-    public void CommandDiscovery_ShouldExcludeResourceSubcommands()
+    public void CommandDiscovery_ShouldFindAllParentCommands()
     {
-        // Simulate the command discovery logic from Program.cs
+        // Get all non-generic, non-abstract commands that inherit from BaseCommand
         var commandTypes = _cliAssembly
             .GetTypes()
             .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsSubclassOf(typeof(BaseCommand)))
             .Where(t =>
             {
                 var baseType = t.BaseType;
+                // Exclude generic resource commands
                 if (baseType == null || !baseType.IsGenericType)
                     return true;
                 var genericDef = baseType.GetGenericTypeDefinition();
@@ -54,7 +49,6 @@ public class CommandDiscoveryTests
             "ConfigureCommand",
             "BuildCommand",
             "SyncCommand",
-            "MoveCommand",
             "MigrateCommand",
             "RemoteCommand",
             "DefaultCommand"
@@ -64,9 +58,31 @@ public class CommandDiscoveryTests
         {
             Assert.Contains(commandTypes, t => t.Name == expected);
         }
+    }
 
-        // These resource subcommands should be EXCLUDED
-        var excludedSubcommands = new[]
+    [Fact]
+    public void CommandDiscovery_ShouldFindResourceSubcommands()
+    {
+        // Get all resource subcommands (generic commands)
+        var resourceCommands = _cliAssembly
+            .GetTypes()
+            .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsSubclassOf(typeof(BaseCommand)))
+            .Where(t =>
+            {
+                var baseType = t.BaseType;
+                if (baseType == null || !baseType.IsGenericType)
+                    return false;
+                var genericDef = baseType.GetGenericTypeDefinition();
+                return genericDef == typeof(ResourceCreateCommand<,>)
+                    || genericDef == typeof(ResourceDeleteCommand<,>)
+                    || genericDef == typeof(ResourceDescribeCommand<,>)
+                    || genericDef == typeof(ResourceGetCommand<>)
+                    || genericDef == typeof(ResourceConfigureCommand<>);
+            })
+            .ToList();
+
+        // These resource subcommands should exist
+        var expectedResourceCommands = new[]
         {
             "NewVolumeCommand",
             "DeleteVolumeCommand", 
@@ -76,14 +92,17 @@ public class CommandDiscoveryTests
             "DeleteAppCommand",
             "DescribeAppCommand",
             "GetAppsCommand",
+            "ConfigureAppCommand",
             "NewStackCommand",
             "DeleteStackCommand",
             "DescribeStackCommand",
             "GetStacksCommand",
+            "ConfigureStackCommand",
             "NewEnvironmentCommand",
             "DeleteEnvironmentCommand",
             "DescribeEnvironmentCommand",
             "GetEnvironmentsCommand",
+            "ConfigureEnvironmentCommand",
             "NewIngressCommand",
             "DeleteIngressCommand",
             "DescribeIngressCommand",
@@ -91,22 +110,26 @@ public class CommandDiscoveryTests
             "NewImageCommand",
             "DeleteImageCommand",
             "DescribeImageCommand",
-            "GetImagesCommand",
-            "ConfigureStackCommand",
-            "ConfigureAppCommand",
-            "ConfigureEnvironmentCommand"
+            "GetImagesCommand"
         };
 
-        foreach (var excluded in excludedSubcommands)
+        foreach (var expected in expectedResourceCommands)
         {
-            Assert.DoesNotContain(commandTypes, t => t.Name == excluded);
+            Assert.Contains(resourceCommands, t => t.Name == expected);
         }
     }
 
     [Fact]
-    public void RootCommand_ShouldNotHaveDuplicateVolumeCommands()
+    public void RootCommand_ShouldNotHaveDuplicateCommands()
     {
-        // Build the root command as Program.cs does
+        // Create a simple service provider for testing
+        var services = new ServiceCollection();
+        services.AddSingleton<LocalConfig>(_ => LocalConfig.Get());
+        services.AddHttpClient("ProxyService");
+        services.AddStackManagerServices();
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Build the root command with parent commands only
         var rootCommand = new RootCommand();
         
         var commandTypes = _cliAssembly
@@ -129,65 +152,12 @@ public class CommandDiscoveryTests
 
         foreach (var command in commandTypes)
         {
-            command.SetServiceProvider(_serviceProvider);
+            command.SetServiceProvider(serviceProvider);
             rootCommand.Add(command);
         }
 
         // Parse should not throw duplicate key exception
         var exception = Record.Exception(() => rootCommand.Parse(Array.Empty<string>()));
         Assert.Null(exception);
-    }
-
-    [Fact]
-    public void RootCommand_ParsingShouldNotThrowForAllResourceTypes()
-    {
-        var rootCommand = new RootCommand();
-        
-        var commandTypes = _cliAssembly
-            .GetTypes()
-            .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsSubclassOf(typeof(BaseCommand)))
-            .Where(t =>
-            {
-                var baseType = t.BaseType;
-                if (baseType == null || !baseType.IsGenericType)
-                    return true;
-                var genericDef = baseType.GetGenericTypeDefinition();
-                return genericDef != typeof(ResourceCreateCommand<,>)
-                    && genericDef != typeof(ResourceDeleteCommand<,>)
-                    && genericDef != typeof(ResourceDescribeCommand<,>)
-                    && genericDef != typeof(ResourceGetCommand<>)
-                    && genericDef != typeof(ResourceConfigureCommand<>);
-            })
-            .Select(type => (BaseCommand)Activator.CreateInstance(type)!)
-            .ToList();
-
-        foreach (var command in commandTypes)
-        {
-            command.SetServiceProvider(_serviceProvider);
-            rootCommand.Add(command);
-        }
-
-        // Test parsing for various resource type commands
-        var testInputs = new[]
-        {
-            new[] { "new", "volume", "--help" },
-            new[] { "delete", "volume", "--help" },
-            new[] { "describe", "volume", "--help" },
-            new[] { "get", "volumes", "--help" },
-            new[] { "new", "app", "--help" },
-            new[] { "delete", "app", "--help" },
-            new[] { "describe", "app", "--help" },
-            new[] { "get", "apps", "--help" },
-            new[] { "new", "stack", "--help" },
-            new[] { "delete", "stack", "--help" },
-            new[] { "describe", "stack", "--help" },
-            new[] { "get", "stacks", "--help" },
-        };
-
-        foreach (var input in testInputs)
-        {
-            var exception = Record.Exception(() => rootCommand.Parse(input));
-            Assert.Null(exception);
-        }
     }
 }

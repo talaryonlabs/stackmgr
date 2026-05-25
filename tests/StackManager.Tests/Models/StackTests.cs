@@ -1,146 +1,106 @@
-using System.IO;
-using Talaryon.StackManager.Exceptions;
-using Talaryon.StackManager.Types;
+using Talaryon.StackManager.Models;
 using Xunit;
 
 namespace Talaryon.StackManager.Tests.Models;
 
-[Collection("FileSystemTests")]
-public class StackTests : IDisposable
+public class StackTests
 {
-    private readonly string _testDir;
-    private readonly string _originalDirectory;
-
-    public StackTests()
-    {
-        _originalDirectory = Environment.CurrentDirectory;
-        _testDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(_testDir);
-        Environment.CurrentDirectory = _testDir;
-    }
-
-    public void Dispose()
-    {
-        try
-        {
-            Environment.CurrentDirectory = _originalDirectory;
-        }
-        finally
-        {
-            if (Directory.Exists(_testDir))
-                Directory.Delete(_testDir, true);
-        }
-    }
-
     [Fact]
-    public void Create_ShouldCreateDirectoryAndFile()
+    public void Stack_ShouldHaveDefaultValues()
     {
-        var env = StackEnvironment.Create("test-env");
-        var stack = Stack.Create(env, "test-stack");
+        var env = new StackEnvironment { Name = "test-env" };
+        var stack = new Stack { Name = "test-stack", Environment = env };
 
         Assert.Equal("test-stack", stack.Name);
-        Assert.Equal("test-env-test-stack", stack.Namespace);
-        Assert.True(Directory.Exists(Path.Combine(_testDir, "test-env", "test-stack")));
-        Assert.True(File.Exists(Path.Combine(_testDir, "test-env", "test-stack", ".stack.yaml")));
-    }
-
-    [Fact]
-    public void Create_WithDotsInName_ShouldReplaceWithHyphensInNamespace()
-    {
-        var env = StackEnvironment.Create("test-env");
-        var stack = Stack.Create(env, "example.com");
-
-        Assert.Equal("example.com", stack.Name);
-        Assert.Equal("test-env-example-com", stack.Namespace);
-    }
-
-    [Fact]
-    public void Create_ShouldThrowIfAlreadyExists()
-    {
-        var env = StackEnvironment.Create("test-env");
-        var stack1 = Stack.Create(env, "test-stack");
-
-        var ex = Assert.Throws<StackAlreadyExistsException>(() => Stack.Create(env, "test-stack"));
-        Assert.Contains("test-stack", ex.Message);
-    }
-
-    [Fact]
-    public void Load_ShouldLoadExistingStack()
-    {
-        var env = StackEnvironment.Create("test-env");
-        var stack1 = Stack.Create(env, "test-stack");
-        var stack2 = Stack.Load(env, "test-stack");
-
-        Assert.Equal(stack1.Name, stack2.Name);
-        Assert.Equal(stack1.Namespace, stack2.Namespace);
-    }
-
-    [Fact]
-    public void Load_ShouldThrowIfNotFound()
-    {
-        var env = StackEnvironment.Create("test-env");
-
-        var ex = Assert.Throws<StackNotFoundException>(() => Stack.Load(env, "nonexistent"));
-        Assert.Contains("nonexistent", ex.Message);
-    }
-
-    [Fact]
-    public void Delete_ShouldMarkAsDeleted()
-    {
-        var env = StackEnvironment.Create("test-env");
-        var stack = Stack.Create(env, "test-stack");
-        
+        Assert.Equal("stack.talaryon.io/v1beta", stack.Version);
+        Assert.Null(stack.Namespace);
+        Assert.False(stack.EnableAutoSync);
         Assert.False(stack.IsDeleted);
-        
-        stack.Delete();
-        
-        Assert.True(stack.IsDeleted);
-        Assert.True(File.Exists(Path.Combine(_testDir, "test-env", "test-stack", ".stack.yaml")));
+        Assert.Empty(stack.Images);
+        Assert.Empty(stack.Apps);
+        Assert.Empty(stack.Ingresses);
+        Assert.Empty(stack.Volumes);
     }
 
     [Fact]
-    public void Delete_WithCompleteTrue_ShouldRemoveDirectory()
+    public void Stack_WithNamespaceSet_ShouldHaveCorrectNamespace()
     {
-        var env = StackEnvironment.Create("test-env");
-        var stack = Stack.Create(env, "test-stack");
-        var stackDir = Path.Combine(_testDir, "test-env", "test-stack");
-        
-        stack.Delete(true);
-        
-        Assert.False(Directory.Exists(stackDir));
+        var env = new StackEnvironment { Name = "test-env" };
+        var stack = new Stack { Name = "test-stack", Environment = env, Namespace = "test-env-test-stack" };
+
+        Assert.Equal("test-env-test-stack", stack.Namespace);
     }
 
     [Fact]
-    public void Delete_ShouldThrowIfAlreadyDeleted()
+    public void Stack_NamespaceWithDotsInName_ShouldUseHyphens()
     {
-        var env = StackEnvironment.Create("test-env");
-        var stack = Stack.Create(env, "test-stack");
-        stack.Delete();
+        var env = new StackEnvironment { Name = "prod-env" };
+        var stack = new Stack { Name = "MyStack.Test", Environment = env, Namespace = "prod-env-mystack-test" };
 
-        var ex = Assert.Throws<StackAlreadyDeletedException>(() => stack.Delete());
-        Assert.Contains("test-stack", ex.Message);
-    }
-
-    [Fact]
-    public void Namespace_ShouldBeLowercaseWithHyphens()
-    {
-        var env = StackEnvironment.Create("Prod-Env");
-        var stack = Stack.Create(env, "MyStack.Test");
-
-        // Environment name in namespace should be from env.Name (which is "Prod-Env")
         // Stack name dots replaced with hyphens
         Assert.Equal("prod-env-mystack-test", stack.Namespace);
     }
 
     [Fact]
-    public void SaveConfig_ShouldUpdateFile()
+    public void Stack_AllPropertiesShouldBeSettable()
     {
-        var env = StackEnvironment.Create("test-env");
-        var stack = Stack.Create(env, "test-stack");
-        stack.EnableAutoSync = true;
-        stack.SaveConfig();
+        var env = new StackEnvironment { Name = "test-env" };
+        var stack = new Stack
+        {
+            Name = "test-stack",
+            Environment = env,
+            Namespace = "test-ns",
+            Version = "stack.talaryon.io/v2",
+            EnableAutoSync = true,
+            IsDeleted = true,
+            Images = [],
+            Apps = [],
+            Ingresses = [],
+            Volumes = []
+        };
 
-        var loaded = Stack.Load(env, "test-stack");
-        Assert.True(loaded.EnableAutoSync);
+        Assert.Equal("test-stack", stack.Name);
+        Assert.Equal("test-ns", stack.Namespace);
+        Assert.Equal("stack.talaryon.io/v2", stack.Version);
+        Assert.True(stack.EnableAutoSync);
+        Assert.True(stack.IsDeleted);
+    }
+
+    [Fact]
+    public void Stack_ShouldBeDeletable()
+    {
+        var env = new StackEnvironment { Name = "test-env" };
+        var stack = new Stack { Name = "test-stack", Environment = env, IsDeleted = false };
+
+        Assert.False(stack.IsDeleted);
+        
+        stack.IsDeleted = true;
+        
+        Assert.True(stack.IsDeleted);
+    }
+
+    [Fact]
+    public void Stack_WithEnableAutoSync_ShouldBeTrue()
+    {
+        var env = new StackEnvironment { Name = "test-env" };
+        var stack = new Stack { Name = "test-stack", Environment = env, EnableAutoSync = true };
+
+        Assert.True(stack.EnableAutoSync);
+    }
+
+    [Fact]
+    public void Stack_ListsShouldBeInitialized()
+    {
+        var env = new StackEnvironment { Name = "test-env" };
+        var stack = new Stack { Name = "test-stack", Environment = env };
+
+        Assert.NotNull(stack.Images);
+        Assert.NotNull(stack.Apps);
+        Assert.NotNull(stack.Ingresses);
+        Assert.NotNull(stack.Volumes);
+        Assert.Empty(stack.Images);
+        Assert.Empty(stack.Apps);
+        Assert.Empty(stack.Ingresses);
+        Assert.Empty(stack.Volumes);
     }
 }

@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Talaryon.StackManager.Commands;
+using Talaryon.StackManager.Commands.Templates;
 using Talaryon.StackManager.Commands.Volumes;
 using Xunit;
 
@@ -85,6 +86,15 @@ public class ParentCommandTests
     }
 
     [Fact]
+    public void MigrateCommand_ShouldNotHaveDuplicateSubcommands()
+    {
+        var migrateCommand = new MigrateCommand();
+        var subcommandNames = migrateCommand.Subcommands.Select(c => c.Name).ToList();
+        
+        Assert.Equal(subcommandNames.Count, subcommandNames.Distinct().Count());
+    }
+
+    [Fact]
     public void ParentCommands_ShouldHaveAllExpectedResourceSubcommands()
     {
         var newCommand = new NewCommand();
@@ -92,6 +102,7 @@ public class ParentCommandTests
         var describeCommand = new DescribeCommand();
         var getCommand = new GetCommand();
         var configureCommand = new ConfigureCommand();
+        var migrateCommand = new MigrateCommand();
 
         // All parent commands should have consistent subcommands
         var resourceTypes = new[] { "volume", "app", "stack", "environment", "ingress", "image" };
@@ -116,6 +127,12 @@ public class ParentCommandTests
         {
             Assert.Contains(configureCommand.Subcommands, c => c.Name == resource);
         }
+
+        // migrate should have singular form for app and image
+        foreach (var resource in new[] { "app", "image" })
+        {
+            Assert.Contains(migrateCommand.Subcommands, c => c.Name == resource);
+        }
     }
 
     [Fact]
@@ -136,5 +153,15 @@ public class ParentCommandTests
         // GetVolumesCommand should use "volumes" as name (plural)
         var getVolumesCommand = new GetVolumesCommand();
         Assert.Equal("volumes", getVolumesCommand.Name);
+    }
+
+    [Fact]
+    public void TemplateCommands_ShouldHaveCorrectNames()
+    {
+        var describeTemplateCommand = new DescribeTemplateCommand();
+        Assert.Equal("template", describeTemplateCommand.Name);
+
+        var getTemplatesCommand = new GetTemplatesCommand();
+        Assert.Equal("templates", getTemplatesCommand.Name);
     }
 }
