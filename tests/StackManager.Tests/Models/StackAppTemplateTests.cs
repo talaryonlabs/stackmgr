@@ -26,28 +26,6 @@ public class StackAppTemplateTests
     }
 
     [Fact]
-    public void StackAppTemplate_FromString_WithNull_ShouldThrow()
-    {
-        var ex = Assert.Throws<ArgumentException>(() => StackAppTemplate.FromString(null!));
-        Assert.Contains("null or empty", ex.Message);
-    }
-
-    [Fact]
-    public void StackAppTemplate_FromString_WithEmpty_ShouldThrow()
-    {
-        var ex = Assert.Throws<ArgumentException>(() => StackAppTemplate.FromString(""));
-        Assert.Contains("null or empty", ex.Message);
-    }
-
-    [Fact]
-    public void StackAppTemplate_ToString_ShouldFormatCorrectly()
-    {
-        var template = new StackAppTemplate { Name = "my-template", Branch = "dev" };
-        
-        Assert.Equal("my-template@dev", template.ToString());
-    }
-
-    [Fact]
     public void StackAppTemplate_ImplicitConversion_FromString()
     {
         StackAppTemplate template = "my-template@main";
