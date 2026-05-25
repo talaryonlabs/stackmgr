@@ -2,21 +2,18 @@ mode: ContinuousDelivery
 branches:
   main:
     label: ''
+    regex: ^main$
     increment: Patch
     prevent-increment-of-merged-branch-version: false
-    regex: ^main$
-    is-release-branch: true
     is-main-branch: true
-  dev:
-    label: dev
-    increment: Patch
+  develop:
+    label: 'dev'
     regex: ^dev$
-    source-branches: [ ]
-    is-release-branch: false
-    is-main-branch: false
+    increment: Patch
+    source-branches: [ main ]
     is-develop: true
   feature:
     label: feature
     increment: Inherit
     regex: ^feature?[/-]
-    source-branches: [ main, dev ]
+    source-branches: [ main, develop ]
