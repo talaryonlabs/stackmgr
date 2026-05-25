@@ -1,7 +1,7 @@
 using Talaryon.StackManager.Exceptions;
 using YamlDotNet.Serialization;
 
-namespace Talaryon.StackManager.Types;
+namespace Talaryon.StackManager.Models;
 
 public class StackTemplate
 {

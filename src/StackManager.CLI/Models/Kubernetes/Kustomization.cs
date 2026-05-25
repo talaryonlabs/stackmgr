@@ -1,8 +1,7 @@
-using Talaryon.StackManager.Serialization;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 
-namespace Talaryon.StackManager.Models;
+namespace Talaryon.StackManager.Models.Kubernetes;
 
 public class Kustomization
 {
@@ -12,12 +11,6 @@ public class Kustomization
     [YamlMember(Alias = "images")] public List<KustomizationImage>? Images { get; set; }
     [YamlMember(Alias = "resources")] public List<string>? Resources { get; set;}
     [YamlMember(Alias = "namespace")] public string? Namespace { get; set; }
-    
-    public void Save(Stack stack)
-    {
-        var file = Path.Combine(stack.LocalDirectory.FullName, FileName);
-        File.WriteAllText(file, YamlSerializer.Serialize(this));
-    }
 }
 
 public class KustomizationImage

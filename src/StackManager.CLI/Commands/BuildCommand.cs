@@ -13,11 +13,62 @@ public class BuildCommand : BaseCommand
         {
             var env = GetEnvironment<EnvironmentOption>(parseResult);
             var stack = GetStack<StackOption>(parseResult, env);
-            var kustomizeService = GetService<KustomizeService>();
-            var builder = new StackBuilder(stack).WithKustomizeValidation(kustomizeService);
+            var builder = new StackBuilder(stack);
+            var kustomizeService = GetRequiredService<IKustomizeService>()
+                .Directory(stack.LocalDirectory);
+
+            await LogBuilder.Message("- [Registry Credentials] ... ")
+                .NoNewLineAfter()
+                .WaitFor(() =>
+                {
+                    builder.BuildRegistryCredentials();
+                    return Task.FromResult(LogBuilder.Message("Done.").AsSuccess());
+
+                })
+                .RunAsync();
             
-            await builder.BuildAsync();
-            LogMessage.AsSuccess($"Stack '{stack.Name}' built.");
+            if (stack.Ingresses.Any(v => v.IsSecured))
+            {
+                await LogBuilder.Message("- [Outpost] ... ")
+                    .NoNewLineAfter()
+                    .WaitFor(() =>
+                    {
+                        builder.BuildOutpost();
+                        return Task.FromResult(LogBuilder.Message("Done.").AsSuccess());
+
+                    })
+                    .RunAsync();
+            }
+            
+            await LogBuilder.Message("- [Ingresses] ... ")
+                .NoNewLineAfter()
+                .WaitFor(() =>
+                {
+                    builder.BuildIngresses();
+                    return LogBuilder.Message("Done.").AsSuccess();
+
+                })
+                .RunAsync();
+            
+            await LogBuilder.Message("- [Kustomization] ... ")
+                .NoNewLineAfter()
+                .WaitFor(() =>
+                {
+                    builder.BuildKustomization();
+                    return LogBuilder.Message("Done.").AsSuccess();
+
+                })
+                .RunAsync();
+            
+            await LogBuilder.Message("- [Validation] ... ")
+                .NoNewLineAfter()
+                .WaitFor(async () =>
+                {
+                    await kustomizeService.ValidateAsync();
+                    return LogBuilder.Message("Done.").AsSuccess();
+
+                })
+                .RunAsync();
         });
     }
 }

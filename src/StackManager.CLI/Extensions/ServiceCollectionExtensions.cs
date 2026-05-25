@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Talaryon.StackManager.Builder;
 using Talaryon.StackManager.Services;
 
 namespace Talaryon.StackManager.Extensions;
@@ -15,7 +16,6 @@ public static class ServiceCollectionExtensions
             // Register transient services
             services.AddTransient<IGitService, GitService>();
             services.AddTransient<ITemplateService, TemplateService>();
-            services.AddTransient<IIngressService, IngressService>();
             services.AddTransient<IKustomizeService, KustomizeService>();
             services.AddTransient<IProxyService, ProxyService>();
             services.AddTransient<ISyncService, SyncService>();

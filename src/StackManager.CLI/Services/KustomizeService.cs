@@ -1,18 +1,24 @@
 using System.Diagnostics;
-using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Models;
+using Talaryon.StackManager.Models.Kubernetes;
 
 namespace Talaryon.StackManager.Services;
 
 public interface IKustomizeService
 {
-    Task<List<string>> ValidateAsync(string kustomizationPath);
-    Task<bool> IsValidKustomizationDirectoryAsync(string directoryPath);
+    IKustomizeServiceActions Directory(DirectoryInfo directory);
+    string? GetVersion();
+}
+
+public interface IKustomizeServiceActions
+{
+    Task<List<string>> ValidateAsync();
 }
 
 /// <summary>
 /// Service for validating kustomization.yaml files using the kustomize CLI.
 /// </summary>
-public class KustomizeService : IKustomizeService
+public class KustomizeService : IKustomizeService, IKustomizeServiceActions
 {
     /// <summary>
     /// Checks if kustomize is installed on the system.
@@ -42,15 +48,44 @@ public class KustomizeService : IKustomizeService
             }
         }
     }
-
-    /// <summary>
-    /// Validates a kustomization.yaml file at the specified path using kustomize CLI.
-    /// </summary>
-    /// <param name="kustomizationPath">Path to the kustomization.yaml file or directory containing it</param>
-    /// <returns>List of validation errors (empty if valid)</returns>
-    public async Task<List<string>> ValidateAsync(string kustomizationPath)
+    
+    private DirectoryInfo? _currentDirectory = new(Environment.CurrentDirectory);
+    
+    IKustomizeServiceActions IKustomizeService.Directory(DirectoryInfo directory)
+    {
+        if (!directory.Exists) throw new DirectoryNotFoundException();
+        _currentDirectory = directory;
+        return this;
+    }
+    
+    string? IKustomizeService.GetVersion()
+    {
+        try
+        {
+            var process = StartProcess("version");
+            if (process is null) return null;
+            
+            var output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit(5000);
+            
+            if (process.ExitCode == 0)
+            {
+                return output.Trim();
+            }
+        }
+        catch
+        {
+            // Ignore
+        }
+        
+        return null;
+    }
+    
+    async Task<List<string>> IKustomizeServiceActions.ValidateAsync()
     {
         var errors = new List<string>();
+        var path = Path.Combine(_currentDirectory!.FullName, Kustomization.FileName);
+        var file = new FileInfo(path);
 
         if (!IsInstalled)
         {
@@ -58,53 +93,34 @@ public class KustomizeService : IKustomizeService
             return errors;
         }
 
-        var fileInfo = GetKustomizationFile(kustomizationPath);
-
-        if (fileInfo is null || !fileInfo.Exists)
+        if (!file.Exists)
         {
-            errors.Add($"kustomization.yaml not found at: {kustomizationPath}");
+            errors.Add($"kustomization.yaml not found at: {path}");
             return errors;
         }
 
-        var directory = fileInfo.Directory!.FullName;
-
         // Validate using kustomize build (dry-run mode)
         // The build command will fail if the kustomization is invalid
-        var buildErrors = await RunKustomizeBuildAsync(directory);
+        var buildErrors = await RunKustomizeBuildAsync(file.Directory!);
         errors.AddRange(buildErrors);
 
         // If build succeeded, also run cfg validation
         if (errors.Count == 0)
         {
-            var cfgErrors = await RunKustomizeCfgAsync(directory);
+            var cfgErrors = await RunKustomizeCfgAsync(file.Directory!);
             errors.AddRange(cfgErrors);
         }
 
         return errors;
     }
 
-    /// <summary>
-    /// Runs kustomize build to validate the kustomization.
-    /// </summary>
-    /// <param name="directory">Directory containing kustomization.yaml</param>
-    /// <returns>List of errors from the build process</returns>
-    private async Task<List<string>> RunKustomizeBuildAsync(string directory)
+    private async Task<List<string>> RunKustomizeBuildAsync(DirectoryInfo directory)
     {
         var errors = new List<string>();
 
         try
         {
-            var process = Process.Start(new ProcessStartInfo
-            {
-                FileName = "kustomize",
-                Arguments = "build --load-restrictor LoadRestrictionsNone",
-                WorkingDirectory = directory,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            });
-
+            var process = StartProcess("build --load-restrictor LoadRestrictionsNone");
             if (process is null)
             {
                 errors.Add("Failed to start kustomize build command");
@@ -143,28 +159,13 @@ public class KustomizeService : IKustomizeService
         return errors;
     }
 
-    /// <summary>
-    /// Runs kustomize cfg tree to validate the resource structure.
-    /// </summary>
-    /// <param name="directory">Directory containing kustomization.yaml</param>
-    /// <returns>List of errors from cfg validation</returns>
-    private async Task<List<string>> RunKustomizeCfgAsync(string directory)
+    private async Task<List<string>> RunKustomizeCfgAsync(DirectoryInfo directory)
     {
         var errors = new List<string>();
 
         try
         {
-            var process = Process.Start(new ProcessStartInfo
-            {
-                FileName = "kustomize",
-                Arguments = "cfg tree",
-                WorkingDirectory = directory,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            });
-
+            var process = StartProcess("cfg tree");
             if (process is null)
             {
                 return errors;
@@ -198,92 +199,19 @@ public class KustomizeService : IKustomizeService
         return errors;
     }
 
-    /// <summary>
-    /// Gets the kustomization.yaml file from a path (file or directory).
-    /// </summary>
-    /// <param name="path">Path to kustomization.yaml or directory containing it</param>
-    /// <returns>FileInfo for kustomization.yaml, or null if not found</returns>
-    public FileInfo? GetKustomizationFile(string path)
+    private Process? StartProcess(string command)
     {
-        var fileInfo = new FileInfo(path);
-
-        if (fileInfo.Exists && fileInfo.Name.Equals("kustomization.yaml", StringComparison.OrdinalIgnoreCase))
+        var process = Process.Start(new ProcessStartInfo
         {
-            return fileInfo;
-        }
+            FileName = "kustomize",
+            Arguments = command,
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            WorkingDirectory = _currentDirectory.FullName
+        });
 
-        var directoryInfo = fileInfo.Directory ?? new DirectoryInfo(path);
-        if (!directoryInfo.Exists)
-        {
-            return null;
-        }
-
-        var kustomizationFile = new FileInfo(Path.Combine(directoryInfo.FullName, "kustomization.yaml"));
-        if (kustomizationFile.Exists)
-        {
-            return kustomizationFile;
-        }
-
-        kustomizationFile = new FileInfo(Path.Combine(directoryInfo.FullName, "kustomization.yml"));
-        if (kustomizationFile.Exists)
-        {
-            return kustomizationFile;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Checks if a kustomization.yaml file exists in the specified directory.
-    /// </summary>
-    /// <param name="directory">Directory to check</param>
-    /// <returns>True if kustomization.yaml exists</returns>
-    public bool HasKustomization(DirectoryInfo directory)
-    {
-        return GetKustomizationFile(directory.FullName) != null;
-    }
-
-    /// <summary>
-    /// Validates a directory contains a valid kustomization.yaml.
-    /// </summary>
-    /// <param name="directoryPath">Path to directory to validate</param>
-    /// <returns>True if directory contains valid kustomization.yaml</returns>
-    public async Task<bool> IsValidKustomizationDirectoryAsync(string directoryPath)
-    {
-        var errors = await ValidateAsync(directoryPath);
-        return errors.Count == 0;
-    }
-
-    /// <summary>
-    /// Gets the version of the installed kustomize CLI.
-    /// </summary>
-    /// <returns>Version string, or null if not installed</returns>
-    public static string? GetVersion()
-    {
-        try
-        {
-            var process = Process.Start(new ProcessStartInfo("kustomize", "version")
-            {
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            });
-
-            if (process is null) return null;
-            
-            var output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit(5000);
-            
-            if (process.ExitCode == 0)
-            {
-                return output.Trim();
-            }
-        }
-        catch
-        {
-            // Ignore
-        }
-        
-        return null;
+        return process;
     }
 }

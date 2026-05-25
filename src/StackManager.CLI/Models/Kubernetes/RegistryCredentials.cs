@@ -1,6 +1,6 @@
-using YamlDotNet.Serialization;
+﻿using YamlDotNet.Serialization;
 
-namespace Talaryon.StackManager.Models;
+namespace Talaryon.StackManager.Models.Kubernetes;
 
 public class RegistryCredentials
 {

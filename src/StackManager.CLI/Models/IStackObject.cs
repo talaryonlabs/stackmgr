@@ -1,4 +1,4 @@
-namespace Talaryon.StackManager.Types;
+namespace Talaryon.StackManager.Models;
 
 public interface IStackObject
 {

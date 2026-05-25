@@ -1,56 +1,36 @@
-using Talaryon.StackManager.Models;
+using Talaryon.StackManager.Models.Kubernetes;
 
 namespace Talaryon.StackManager.Builder;
 
-public class IngressBuilder(StackIngress ingress)
+public interface IIngressBuilder
 {
-    public DirectoryInfo LocalDirectory => new(
-        Path.Combine(ingress.Stack.LocalDirectory.FullName, ".ingresses")
-    );
-    public FileInfo LocalFile => new(
-        Path.Combine(LocalDirectory.FullName, $"ingress.[{ingress.Hostname}].yaml")
-    );
-    
-    public Ingress GetAuthIngress()
-    {
-        return new Ingress
-        {
-            Metadata = { Name = $"ingress-{Name}-auth" },
-            Spec =
-            {
-                Rules =
-                [
-                    new()
-                    {
-                        Host = Hostname,
-                        Http = new()
-                        {
-                            Paths =
-                            [
-                                new()
-                                {
-                                    Path = "/outpost.goauthentik.io",
-                                    Backend = new()
-                                    {
-                                        Service = new()
-                                        {
-                                            Name = $"{Stack.Name}-auth",
-                                            Port = new() { Number = 9000 }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
+    Ingress ToIngress();
+    Ingress ToAuthIngress();
+}
 
-                    }
-                ],
-                Tls =
-                [
-                    new() { SecretName = $"letsencrypt-{Name}", Hosts = [Hostname] }
-                ]
-            }
-        };
-    }
+public class IngressBuilder(StackIngress stackIngress) : IIngressBuilder
+{
+    /*
+    
+    void IIngressServiceActions.Save(StackIngress stackIngress)
+    {
+        if(!_currentDirectory.Exists)
+            _currentDirectory.Create();
+        
+        var path = Path.Combine(_currentDirectory.FullName, $"ingress.[{stackIngress.Hostname}].yaml");
+        var file = new FileInfo(path);
+        
+        var ingress = ToIngress(stackIngress);
+        StackResource.Save(ingress, file);
+
+        if (stackIngress.IsSecured)
+        {
+            path = Path.Combine(_currentDirectory.FullName, $"ingress.[{stackIngress.Hostname}].auth.yaml");
+            file = new FileInfo(path);
+            ingress = ToAuthIngress(stackIngress);
+            StackResource.Save(ingress, file);
+        }
+    }*/
 
     public Ingress ToIngress()
     {
@@ -58,8 +38,8 @@ public class IngressBuilder(StackIngress ingress)
         {
             Metadata = new()
             {
-                Name = $"ingress-{Name}",
-                Annotations = Annotations ?? []
+                Name = $"ingress-{stackIngress.Name}",
+                Annotations = stackIngress.Annotations ?? []
             },
             Spec = new()
             {
@@ -67,7 +47,7 @@ public class IngressBuilder(StackIngress ingress)
                 [
                     new()
                     {
-                        Host = Hostname,
+                        Host = stackIngress.Hostname,
                         Http = new()
                         {
                             Paths =
@@ -79,8 +59,8 @@ public class IngressBuilder(StackIngress ingress)
                                     {
                                         Service = new()
                                         {
-                                            Name = Application,
-                                            Port = new() { Number = Port }
+                                            Name = stackIngress.Application,
+                                            Port = new() { Number = stackIngress.Port }
                                         }
                                     }
                                 },
@@ -90,27 +70,27 @@ public class IngressBuilder(StackIngress ingress)
                 ],
                 Tls =
                 [
-                    new() { SecretName = $"letsencrypt-{Name}", Hosts = [Hostname] },
+                    new() { SecretName = $"letsencrypt-{stackIngress.Name}", Hosts = [stackIngress.Hostname] },
                 ]
             }
         };
 
-        if (Stack.Environment.CertIssuer is { Length: >0 })
+        if (stackIngress.Stack.Environment.CertIssuer is { Length: >0 })
         {
-            ingress.Metadata.Annotations.TryAdd("cert-manager.io/cluster-issuer", Stack.Environment.CertIssuer);
+            ingress.Metadata.Annotations.TryAdd("cert-manager.io/cluster-issuer", stackIngress.Stack.Environment.CertIssuer);
         }
 
-        if (IsSecured)
+        if (stackIngress.IsSecured)
         {
             var securingAnnotations = new Dictionary<string, string>
             {
                 {
                     "nginx.ingress.kubernetes.io/auth-url",
-                    $"http://{Stack.Environment.Outpost}:9000/outpost.goauthentik.io/auth/nginx"
+                    $"http://{stackIngress.Stack.Environment.Outpost}:9000/outpost.goauthentik.io/auth/nginx"
                 },
                 {
                     "nginx.ingress.kubernetes.io/auth-signin",
-                    $"https://{Hostname}/outpost.goauthentik.io/start?rd=$scheme://$http_host$escaped_request_uri"
+                    $"https://{stackIngress.Hostname}/outpost.goauthentik.io/start?rd=$scheme://$http_host$escaped_request_uri"
                 },
                 {
                     "nginx.ingress.kubernetes.io/auth-response-headers",
@@ -143,5 +123,46 @@ public class IngressBuilder(StackIngress ingress)
         }
 
         return ingress;
+    }
+
+    public Ingress ToAuthIngress()
+    {
+        return new Ingress
+        {
+            Metadata = { Name = $"ingress-{stackIngress.Name}-auth" },
+            Spec =
+            {
+                Rules =
+                [
+                    new()
+                    {
+                        Host = stackIngress.Hostname,
+                        Http = new()
+                        {
+                            Paths =
+                            [
+                                new()
+                                {
+                                    Path = "/outpost.goauthentik.io",
+                                    Backend = new()
+                                    {
+                                        Service = new()
+                                        {
+                                            Name = $"{stackIngress.Name}-auth",
+                                            Port = new() { Number = 9000 }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+
+                    }
+                ],
+                Tls =
+                [
+                    new() { SecretName = $"letsencrypt-{stackIngress.Name}", Hosts = [stackIngress.Hostname] }
+                ]
+            }
+        };
     }
 }

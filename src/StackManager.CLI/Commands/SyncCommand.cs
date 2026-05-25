@@ -1,6 +1,5 @@
 ﻿using System.CommandLine;
-using StackManager.Shared.Models;
-using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Builder;
 using Talaryon.StackManager.Services;
 
 namespace Talaryon.StackManager.Commands;
@@ -17,13 +16,13 @@ public class SyncCommand : BaseCommand
     
     private async Task SyncStack(ParseResult parseResult)
     {
-        var config = GetRequiredService<LocalConfig>();
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
         var apply = parseResult.GetValue<bool, ApplyOption>();
         
         var kustomizeService = GetRequiredService<IKustomizeService>();
         var syncService = GetRequiredService<ISyncService>();
+        var builder = new StackBuilder(stack);
         
         if (stack.IsDeleted)
         {
@@ -37,7 +36,19 @@ public class SyncCommand : BaseCommand
                     await DeleteStackFromRemote(stack, syncService);
                     return LogBuilder.Message("Done.").AsSuccess();
                 });
+
+            return;
         }
+        
+        await LogBuilder.Message("- [Stack] Building ... ")
+            .NoNewLineAfter()
+            .WaitFor(() =>
+            {
+                builder.BuildAll();
+                return LogBuilder.Message("Done.").AsSuccess();
+
+            })
+            .RunAsync();
         
         await syncService.SyncStackAsync(stack, apply);
     }

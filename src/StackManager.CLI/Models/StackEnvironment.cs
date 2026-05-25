@@ -1,6 +1,6 @@
 using YamlDotNet.Serialization;
 
-namespace Talaryon.StackManager.Types;
+namespace Talaryon.StackManager.Models;
 
 public class StackEnvironment
 {
