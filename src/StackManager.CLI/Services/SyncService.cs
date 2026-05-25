@@ -258,6 +258,11 @@ public class SyncService(IProxyService proxy, IGitService git) : ISyncService
                     : LogBuilder.Message("Failed.").AsError();
             })
             .RunAsync();
+
+        if (applyChanges && application is not null)
+        {
+            await _remote.ApplyApplicationAsync(application.Name);
+        }
         
         return (application is not null);
     }

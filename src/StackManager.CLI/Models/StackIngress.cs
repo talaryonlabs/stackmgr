@@ -6,7 +6,7 @@ public class StackIngress : IStackObject
 {
     [YamlIgnore] public required Stack Stack { get; set; }
     
-    [YamlMember(Alias = "name")] public required string Name { get; set; }
+    [YamlMember(Alias = "name")] public string? Name { get; set; }
     [YamlMember(Alias = "isSecured")] public bool IsSecured { get; set; }
     [YamlMember(Alias = "hostname")] public required string Hostname { get; set; }
     [YamlMember(Alias = "app")] public string? Application { get; set; }

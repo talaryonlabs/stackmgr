@@ -34,11 +34,12 @@ public class IngressBuilder(StackIngress stackIngress) : IIngressBuilder
 
     public Ingress ToIngress()
     {
-        var ingress = new Ingress()
+        var name = stackIngress.Name ?? HelperMethods.HostToName(stackIngress.Hostname);
+        var ingress = new Ingress
         {
             Metadata = new()
             {
-                Name = $"ingress-{stackIngress.Name}",
+                Name = $"ingress-{name}",
                 Annotations = stackIngress.Annotations ?? []
             },
             Spec = new()
@@ -70,7 +71,7 @@ public class IngressBuilder(StackIngress stackIngress) : IIngressBuilder
                 ],
                 Tls =
                 [
-                    new() { SecretName = $"letsencrypt-{stackIngress.Name}", Hosts = [stackIngress.Hostname] },
+                    new() { SecretName = $"letsencrypt-{name}", Hosts = [stackIngress.Hostname] },
                 ]
             }
         };
@@ -127,9 +128,10 @@ public class IngressBuilder(StackIngress stackIngress) : IIngressBuilder
 
     public Ingress ToAuthIngress()
     {
+        var name = stackIngress.Name ?? HelperMethods.HostToName(stackIngress.Hostname);
         return new Ingress
         {
-            Metadata = { Name = $"ingress-{stackIngress.Name}-auth" },
+            Metadata = { Name = $"ingress-{name}-auth" },
             Spec =
             {
                 Rules =
@@ -148,7 +150,7 @@ public class IngressBuilder(StackIngress stackIngress) : IIngressBuilder
                                     {
                                         Service = new()
                                         {
-                                            Name = $"{stackIngress.Name}-auth",
+                                            Name = $"{stackIngress.Stack.Name}-auth",
                                             Port = new() { Number = 9000 }
                                         }
                                     }
@@ -160,7 +162,7 @@ public class IngressBuilder(StackIngress stackIngress) : IIngressBuilder
                 ],
                 Tls =
                 [
-                    new() { SecretName = $"letsencrypt-{stackIngress.Name}", Hosts = [stackIngress.Hostname] }
+                    new() { SecretName = $"letsencrypt-{name}", Hosts = [stackIngress.Hostname] }
                 ]
             }
         };
