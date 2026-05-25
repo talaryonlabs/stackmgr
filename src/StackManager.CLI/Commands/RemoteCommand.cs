@@ -84,13 +84,12 @@ public class RemoteCommand : BaseCommand
             return;
         }
 
-        var httpClientFactory = GetRequiredService<IHttpClientFactory>();
+        var proxy = GetRequiredService<ProxyService>().Remote(remote);
         await LogBuilder.Message($"Testing Connection '{remote.Name}' ...")
             .WaitFor(async () =>
             {
                 try
                 {
-                    var proxy = new ProxyService(remote, httpClientFactory);
                     if (await proxy.TestConnectionAsync())
                     {
                         return LogBuilder.Message("Done.").AsSuccess();

@@ -5,6 +5,11 @@ namespace Talaryon.StackManager.Services;
 
 public interface IProxyService
 {
+    IProxyServiceActions Remote(LocalConfigRemote remote);
+}
+
+public interface IProxyServiceActions
+{
     Task<bool> TestConnectionAsync();
     
     Task<IReadOnlyList<Namespace>> GetNamespacesAsync();
@@ -30,20 +35,20 @@ public interface IProxyService
     Task<Volume?> DeleteVolumeAsync(string ns, string name);
 }
 
-public class ProxyService : IProxyService
+public class ProxyService(IHttpClientFactory httpClientFactory) : IProxyService, IProxyServiceActions
 {
-    private readonly HttpClient _client;
-    private readonly LocalConfigRemote _remote;
+    private readonly HttpClient _client = httpClientFactory.CreateClient("ProxyService");
     private readonly int _maxRetries = 3;
     private readonly TimeSpan _timeout = TimeSpan.FromSeconds(30);
-    
-    public ProxyService(LocalConfigRemote remote, IHttpClientFactory httpClientFactory)
+    private LocalConfigRemote? _remote;
+
+    public IProxyServiceActions Remote(LocalConfigRemote remote)
     {
         _remote = remote;
-        _client = httpClientFactory.CreateClient("ProxyService");
         _client.BaseAddress = new Uri(_remote.Url);
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_remote.AccessToken}");
         _client.Timeout = _timeout;
+        return this;
     }
 
     private async Task<T> ExecuteWithRetryAsync<T>(Func<Task<T>> action, string operationName)
