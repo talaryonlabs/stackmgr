@@ -107,8 +107,19 @@ public class GitService : IGitService, IGitServiceActions
     
     async Task IGitServiceActions.CommitAsync(string[] messages)
     {
-        var message = string.Join(" -m ", messages);
-        await (this as IGitServiceActions).CommitAsync(message);
+        if(messages.Length == 0)
+            throw new ArgumentException("At least one message is required.");
+        
+        messages = messages
+            .Select(v => v.StartsWith("\"") ? v : $"\"{v}\"")
+            .ToArray();
+        
+        var message = messages.Length == 1 ? messages[0] : string.Join(" -m ", messages);
+        var process = StartProcess($"commit -m {message}");
+        if (process is null)
+            throw new SystemErrorException("Git commit failed.");
+        
+        await process.WaitForExitAsync();
     }
     
     async Task IGitServiceActions.PushAsync()

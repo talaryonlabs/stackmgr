@@ -146,7 +146,7 @@ public class ProxyService(IHttpClientFactory httpClientFactory) : IProxyService,
                 Name = name
             })
             .RunAsync();
-
+        
         return response.Data;
     }
 

@@ -289,14 +289,13 @@ public class SyncService(IProxyService proxy, IGitService git) : ISyncService
             .WaitFor(async () =>
             {
                 if (files.Length == 0) return LogBuilder.Message("No changes.").AsWarning();
-                
+               
                 await repo.AddAsync();
                 await repo.CommitAsync([
-                    "\"Apply changes. (StackManager)\"",
-                    $"\"> Stack: [{stack.Name}]\"",
-                    $"\"> Environment: [{stack.Environment.Name}]\"",
-                    "\"> Files: \"",
-                    string.Join(Environment.NewLine, files.Select(x => $"\" - {x.Name.Trim()}\""))
+                    "Apply changes. (StackManager)",
+                    $" > Stack: [{stack.Name}]",
+                    $" > Environment: [{stack.Environment.Name}]",
+                    $" > Files: [{string.Join("; ", files.Select(x => x.Name.Trim()))}]"
                 ]);
                 
                 return LogBuilder.Message("Done.").AsSuccess();

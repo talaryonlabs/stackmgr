@@ -19,8 +19,9 @@ public class SyncCommand : BaseCommand
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var stack = GetStack<StackOption>(parseResult, env);
         var apply = parseResult.GetValue<bool, ApplyOption>();
-        
-        var kustomizeService = GetRequiredService<IKustomizeService>();
+
+        var kustomizeService = GetRequiredService<IKustomizeService>()
+            .Directory(stack.LocalDirectory);
         var syncService = GetRequiredService<ISyncService>();
         var builder = new StackBuilder(stack);
         
@@ -50,6 +51,29 @@ public class SyncCommand : BaseCommand
             })
             .RunAsync();
         
+        var errors = default(List<string>);
+        await LogBuilder.Message("- [Stack] Validating ... ")
+            .NoNewLineAfter()
+            .WaitFor(async () =>
+            {
+                if ((errors = await kustomizeService.ValidateAsync()).Count > 0)
+                {
+                    return LogBuilder.Message("Failed.").AsError();
+                }
+                return LogBuilder.Message("Done.").AsSuccess();
+            })
+            .RunAsync();
+        
+        if(errors is {Count: > 0})
+        {
+            foreach (var error in errors)
+            {
+                LogMessage.AsError($"> {error}");
+            }
+
+            return;
+        }
+
         await syncService.SyncStackAsync(stack, apply);
     }
 
