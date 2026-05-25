@@ -4,13 +4,14 @@ branches:
     label: ''
     regex: ^main$
     increment: Patch
-    prevent-increment-of-merged-branch-version: false
+    prevent-increment-of-merged-branch-version: true
+    commit-message-incrementing: MergeMessageOnly
     is-main-branch: true
   develop:
     label: 'dev'
     regex: ^dev$
-    increment: Patch
-    source-branches: [ main ]
+    increment: None
+    source-branches: [ ]
     is-develop: true
   feature:
     label: feature
