@@ -3,9 +3,9 @@ branches:
   main:
     label: ''
     regex: ^main$
-    increment: Patch
+    increment: None
     prevent-increment-of-merged-branch-version: true
-    commit-message-incrementing: MergeMessageOnly
+    commit-message-incrementing: Disabled
     is-main-branch: true
   develop:
     label: 'dev'
