@@ -1,23 +1,45 @@
-﻿using System.Diagnostics;
-using Talaryon.StackManager.Types;
+using System.Diagnostics;
+using Talaryon.StackManager.Exceptions;
 
 namespace Talaryon.StackManager.Services;
 
-public class GitService
+public interface IGitService
 {
-    public static bool IsRepository => Directory.Exists(Path.Combine(Environment.CurrentDirectory, ".git"));
-    public static bool IsInstalled
+    bool IsInstalled { get; }
+    IGitServiceActions CurrentDirectory();
+    IGitServiceActions Directory(DirectoryInfo directory);
+    IGitServiceActions Directory(string directory);
+}
+
+public interface IGitServiceActions
+{
+    bool IsRepository { get; }
+    Task<string> DiffAsync();
+    Task<string> DiffAsync(FileInfo file1, FileInfo file2);
+    Task PullAsync();
+    Task CommitAsync(string message);
+    Task CommitAsync(string[] messages);
+    Task PushAsync();
+    Task ResetAsync();
+    Task AddAsync();
+    Task CloneAsync(string url);
+    Task CheckoutAsync(string branch);
+}
+
+
+
+public class GitService : IGitService, IGitServiceActions
+{
+    private DirectoryInfo _currentDirectory = new(Environment.CurrentDirectory);
+
+    bool IGitServiceActions.IsRepository => Directory.Exists(Path.Combine(_currentDirectory.FullName, ".git"));
+    bool IGitService.IsInstalled
     {
         get
         {
             try
             {
-                Process
-                    .Start(new ProcessStartInfo("git", "--version")
-                    {
-                        RedirectStandardOutput = true
-                    })
-                    ?.WaitForExit();
+                StartProcess("--version")!.WaitForExit();
             }
             catch
             {
@@ -27,160 +49,143 @@ public class GitService
         }
     }
 
-    private readonly string _appRepository;
-    
-    public GitService()
+    IGitServiceActions IGitService.CurrentDirectory()
     {
-        _appRepository = LocalConfig.Get().AppRepository;
-
-        if (_appRepository is not { Length: > 0 })
-            throw new Exception("App repository cannot be null. Please check your configuration.");
-
+        _currentDirectory = new DirectoryInfo(Environment.CurrentDirectory);
+        return this;
     }
 
-    private void ApplyIgnoreFile()
+    IGitServiceActions IGitService.Directory(DirectoryInfo directory)
     {
-        var items = new List<string> { ".apps", ".stackmgr" };
-        var path = Path.Combine(Environment.CurrentDirectory, ".gitignore");
-        var file = new FileInfo(path);
-        if (!file.Exists) file.Create().Close();
-
-        var lines = File.ReadAllLines(file.FullName).ToList();
-        foreach (var item in items.Where(item => !lines.Contains(item)))
-        {
-            lines.Add(item);
-        }
-        File.WriteAllLines(file.FullName, lines);
-    }
-
-    public async Task<DirectoryInfo[]> GetAppsAsync(string branch)
-    {
-        ApplyIgnoreFile();
-        
-        if (!StackTemplate.AppDirectory.Exists || StackTemplate.AppDirectory.GetDirectories(".git").Length == 0)
-        {
-            var clone = Process.Start(new ProcessStartInfo("git",
-                $"clone -q {_appRepository} {StackTemplate.AppDirectory.FullName}")
-            {
-                RedirectStandardOutput = true
-            });
-            if(clone is not null) await clone.WaitForExitAsync();
-        }
-        else
-        {
-            var pull = Process.Start(new ProcessStartInfo("git", "pull -q")
-            {
-                WorkingDirectory = StackTemplate.AppDirectory.FullName,
-            });
-            if (pull is not null)
-            {
-                LogMessage.AsInfo($"Pulling {branch}.");
-                await pull.WaitForExitAsync();
-            }
-        }
-        
-        var checkout = Process.Start(new ProcessStartInfo("git", $"checkout {branch} -q")
-        {
-            WorkingDirectory = StackTemplate.AppDirectory.FullName,
-            RedirectStandardOutput = true
-        });
-        if(checkout is not null) await checkout.WaitForExitAsync();
-        
-        return StackTemplate.AppDirectory.GetDirectories();
+        _currentDirectory = directory;
+        return this;
     }
     
-    public Task PullAsync()
+    IGitServiceActions IGitService.Directory(string directory)
     {
-        ApplyIgnoreFile();
-        
-        var pull = Process.Start(new ProcessStartInfo("git", "pull -q")
-        {
-            WorkingDirectory = Environment.CurrentDirectory,
-        });
-        return pull?.WaitForExitAsync() ?? Task.CompletedTask;
+        _currentDirectory = new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, directory));
+        return this;
     }
 
-    public async Task ApplyAsync(Stack stack)
+    async Task IGitServiceActions.PullAsync()
     {
-        ApplyIgnoreFile();
-        FileInfo[] files = [];
+        var process = StartProcess("pull -q");
+        if(process is null)
+            throw new SystemErrorException("Git pull failed.");
         
-        await PullAsync();
-        await LogBuilder.Message("- [Git] Review changes ... ")
-            .NoNewLineAfter()
-            .WaitFor(async () =>
-            {
-                var reset = Process.Start(new ProcessStartInfo("git", "reset -q")
-                {
-                    WorkingDirectory = Environment.CurrentDirectory,
-                });
-                if (reset is not null) 
-                    await reset.WaitForExitAsync();
-                
-                var diff = Process.Start(new ProcessStartInfo("git", "diff --name-only")
-                {
-                    WorkingDirectory = Environment.CurrentDirectory,
-                    RedirectStandardOutput = true,
-                });
-                if(diff is null) throw new Exception("Diff failed.");
-                files = (await diff!.StandardOutput.ReadToEndAsync())
-                    .Split(Environment.NewLine)
-                    .Where(x => x.Length > 0)
-                    .Select(x => new FileInfo(x))
-                    .ToArray();
+        await process.WaitForExitAsync();
+    }
 
-                return LogBuilder.Message("Done.").AsSuccess();
+    async Task<string> IGitServiceActions.DiffAsync()
+    {
+        var process = StartProcess("diff --name-only");
+        if (process is null)
+            throw new SystemErrorException("Git diff failed.");
+        
+        await process.WaitForExitAsync();
+        return await process.StandardOutput.ReadToEndAsync();
+    }
 
-            })
-            .RunAsync();
+    async Task<string> IGitServiceActions.DiffAsync(FileInfo file1, FileInfo file2)
+    {
+        var process = StartProcess($"diff --no-index \"{file1.FullName}\" \"{file2.FullName}\"");
+        if (process is null)
+            throw new SystemErrorException("Git diff failed.");
+        
+        await process.WaitForExitAsync();
+        return await process.StandardOutput.ReadToEndAsync();
+    }
 
-        await LogBuilder.Message("- [Git] Commit changes ... ")
-            .NoNewLineAfter()
-            .WaitFor(async () =>
-            {
-                if (files.Length == 0) return LogBuilder.Message("No changes.").AsWarning();
-                
-                var add = Process.Start(new ProcessStartInfo("git", "add .")
-                {
-                    WorkingDirectory = Environment.CurrentDirectory,
-                });
+    async Task IGitServiceActions.CommitAsync(string message)
+    {
+        var process = StartProcess($"commit -m \"{message}\"");
+        if (process is null)
+            throw new SystemErrorException("Git commit failed.");
+        
+        await process.WaitForExitAsync();
+    }
+    
+    async Task IGitServiceActions.CommitAsync(string[] messages)
+    {
+        if(messages.Length == 0)
+            throw new ArgumentException("At least one message is required.");
+        
+        messages = messages
+            .Select(v => v.StartsWith("\"") ? v : $"\"{v}\"")
+            .ToArray();
+        
+        var message = messages.Length == 1 ? messages[0] : string.Join(" -m ", messages);
+        var process = StartProcess($"commit -m {message}");
+        if (process is null)
+            throw new SystemErrorException("Git commit failed.");
+        
+        await process.WaitForExitAsync();
+    }
+    
+    async Task IGitServiceActions.PushAsync()
+    {
+        var process = StartProcess("push -q");
+        if (process is null)
+            throw new SystemErrorException("Git push failed.");
+        
+        await process.WaitForExitAsync();
+    }
+    
+    async Task IGitServiceActions.ResetAsync()
+    {
+        var process = StartProcess("reset -q");
+        if (process is null)
+            throw new SystemErrorException("Git reset failed.");
+        
+        await process.WaitForExitAsync();
+    }
+    
+    async Task IGitServiceActions.AddAsync()
+    {
+        var process = StartProcess("add .");
+        if (process is null)
+            throw new SystemErrorException("Git add failed.");
+        
+        await process.WaitForExitAsync();
+    }
 
-                if (add is not null) 
-                    await add.WaitForExitAsync();
-                
-                var message = string.Join(" -m ", new[]
-                {
-                    "\"Apply changes. (StackManager)\"",
-                    $"\"> Stack: [{stack.Name}]\"",
-                    $"\"> Environment: [{stack.Environment.Name}]\"",
-                    "\"> Files: \"",
-                    string.Join(Environment.NewLine, files.Select(x => $"\" - {x.Name.Trim()}\""))
-                });
-                
-                var commit = Process.Start(new ProcessStartInfo("git", $"commit -m {message} -q")
-                {
-                    WorkingDirectory = Environment.CurrentDirectory,
-                });
-                if(commit is not null) 
-                    await commit.WaitForExitAsync();
-                
-                return LogBuilder.Message("Done.").AsSuccess();
-            })
-            .RunAsync();
+    async Task IGitServiceActions.CloneAsync(string url)
+    {
+        if(!_currentDirectory.Exists)
+            _currentDirectory.Create();
+        
+        if(Directory.Exists(Path.Combine(_currentDirectory.FullName, ".git")))
+            throw new SystemErrorException("Directory already has a .git directory.");
+        
+        var process = StartProcess($"clone {url}");
+        if (process is null)
+            throw new SystemErrorException("Git clone failed.");
+        
+        await process.WaitForExitAsync();
+    }
 
-        await LogBuilder.Message("- [Git] Push changes ... ")
-            .NoNewLineAfter()
-            .WaitFor(async () =>
-            {
-                var push = Process.Start(new ProcessStartInfo("git", "push -q")
-                {
-                    WorkingDirectory = Environment.CurrentDirectory,
-                });
-                if(push is not null) 
-                    await push.WaitForExitAsync();
-                
-                return LogBuilder.Message("Done.").AsSuccess();
-            })
-            .RunAsync();
+    async Task IGitServiceActions.CheckoutAsync(string branch)
+    {
+        var process = StartProcess($"checkout {branch} -q");
+        if (process is null)
+            throw new SystemErrorException("Git checkout failed.");
+        
+        await process.WaitForExitAsync();
+    }
+
+
+    private Process? StartProcess(string command)
+    {
+        var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = "git",
+            Arguments = command,
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WorkingDirectory = _currentDirectory.FullName
+        });
+
+        return process;
     }
 }

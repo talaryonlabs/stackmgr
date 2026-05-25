@@ -1,10 +1,10 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 
 namespace Talaryon.StackManager.Options;
 
 public class EnvironmentOption : Option<string>
 {
-    public EnvironmentOption() : base("--environment", "--env")
+    public EnvironmentOption() : base("--environment", "--env", "-e")
     {
         DefaultValueFactory = _ =>
         {

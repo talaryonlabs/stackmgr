@@ -1,3 +1,10 @@
-﻿namespace Talaryon.StackManager.Exceptions;
+namespace Talaryon.StackManager.Exceptions;
 
-public class EnvironmentNotFoundException(string? name = null) : Exception (name is not null ? $"Environment '{name}' not found." : "Environment not found.");
+public class EnvironmentNotFoundException(string? name = null)
+    : StackManagerException(
+        name is not null ? $"Environment '{name}' not found." : "Environment not found.",
+        "Environment",
+        name
+    )
+{
+}

@@ -1,16 +1,13 @@
 ﻿using System.CommandLine;
-using Talaryon.StackManager.Arguments;
-using Talaryon.StackManager.Options;
 using Talaryon.StackManager.Services;
-using Talaryon.Toolbox.Extensions;
 
 namespace Talaryon.StackManager.Commands;
 
-public class RemoteCommand : StackManagerCommand
+public class RemoteCommand : BaseCommand
 {
     public RemoteCommand() : base("remote", "Manage remote proxy")
     {
-        var add = new StackManagerCommand("add", "Add a remote proxy")
+        var add = new BaseCommand("add", "Add a remote proxy")
         {
             new NameArgument(),
             new RemoteArgument(),
@@ -18,26 +15,26 @@ public class RemoteCommand : StackManagerCommand
         };
         add.SetAction(AddRemote);
 
-        var remove = new StackManagerCommand("remove", "Remove a remote proxy")
+        var remove = new BaseCommand("remove", "Remove a remote proxy")
         {
             new NameArgument()
         };
         remove.SetAction(RemoveRemote);
 
-        var set = new StackManagerCommand("set", "Set the access token")
+        var set = new BaseCommand("set", "Set the access token")
         {
             new NameArgument(),
             new AccessTokenOption()
         };
         set.SetAction(SetRemote);
         
-        var test = new StackManagerCommand("test", "Test a remote proxy")
+        var test = new BaseCommand("test", "Test a remote proxy")
         {
             new NameArgument()
         };
         test.SetAction(TestRemote);
 
-        var generate = new StackManagerCommand("generate", "Generate deployment file for kubectl apply.")
+        var generate = new BaseCommand("generate", "Generate deployment file for kubectl apply.")
         {
             new NameArgument(),
             new HostnameArgument(),
@@ -49,16 +46,17 @@ public class RemoteCommand : StackManagerCommand
         Add(remove);
         Add(test);
         Add(set);
-        Add(generate);
+        // Add(generate);
         SetAction(_ =>
         {
-            if (LocalConfig.Get().Remotes.Count == 0)
+            var config = GetRequiredService<LocalConfig>();
+            if (config.Remotes.Count == 0)
             {
                 LogMessage.AsWarning("No remotes found.");
                 return;
             }
             LogMessage.AsInfo("Remotes:");
-            foreach (var remote in LocalConfig.Get().Remotes)
+            foreach (var remote in config.Remotes)
             {
                 LogMessage.AsSuccess($"- {remote.Name}: {remote.Url}");
             }
@@ -74,23 +72,24 @@ public class RemoteCommand : StackManagerCommand
         
         throw new NotImplementedException();
     }
-
+    
     private async Task TestRemote(ParseResult obj)
     {
-        var config = LocalConfig.Get();
-        var remote = config.Remotes.FirstOrDefault(r => r.Name == obj.GetRequiredValue<string, NameArgument>());
+        var config = GetRequiredService<LocalConfig>();
+        var name = obj.GetRequiredValue<string, NameArgument>();
+        var remote = config.Remotes.FirstOrDefault(r => r.Name == name);
         if (remote == null)
         {
-            LogMessage.AsError($"Remote not found: {obj.GetRequiredValue<string, NameArgument>()}");
+            LogMessage.AsError($"Remote not found: {name}");
             return;
         }
 
+        var proxy = GetRequiredService<ProxyService>().Remote(remote);
         await LogBuilder.Message($"Testing Connection '{remote.Name}' ...")
             .WaitFor(async () =>
             {
                 try
                 {
-                    using var proxy = new ProxyService(remote);
                     if (await proxy.TestConnectionAsync())
                     {
                         return LogBuilder.Message("Done.").AsSuccess();
@@ -109,7 +108,7 @@ public class RemoteCommand : StackManagerCommand
 
     private void AddRemote(ParseResult parseResult)
     {
-        var config = LocalConfig.Get();
+        var config = GetRequiredService<LocalConfig>();
         if (config.Remotes.Any(r => r.Name == parseResult.GetRequiredValue<string, NameArgument>()))
         {
             LogMessage.AsError($"Remote already exists: {parseResult.GetRequiredValue<string, NameArgument>()}");
@@ -130,7 +129,7 @@ public class RemoteCommand : StackManagerCommand
     
     private void SetRemote(ParseResult obj)
     {
-        var config = LocalConfig.Get();
+        var config = GetRequiredService<LocalConfig>();
         var remote = config.Remotes.FirstOrDefault(v => v.Name == obj.GetRequiredValue<string, NameArgument>());
         if (remote is null)
         {
@@ -145,7 +144,7 @@ public class RemoteCommand : StackManagerCommand
 
     private void RemoveRemote(ParseResult obj)
     {
-        var config = LocalConfig.Get();
+        var config = GetRequiredService<LocalConfig>();
         var remote = config.Remotes.FirstOrDefault(v => v.Name == obj.GetRequiredValue<string, NameArgument>());
         if (remote is null)
         {

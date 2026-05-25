@@ -1,9 +1,14 @@
-﻿using StackManager.Shared.Models;
+using StackManager.Shared.Models;
 using Talaryon.Toolbox.Api;
 
 namespace Talaryon.StackManager.Services;
 
 public interface IProxyService
+{
+    IProxyServiceActions Remote(LocalConfigRemote remote);
+}
+
+public interface IProxyServiceActions
 {
     Task<bool> TestConnectionAsync();
     
@@ -30,17 +35,69 @@ public interface IProxyService
     Task<Volume?> DeleteVolumeAsync(string ns, string name);
 }
 
-public class ProxyService : IProxyService, IDisposable
+public class ProxyService(IHttpClientFactory httpClientFactory) : IProxyService, IProxyServiceActions
 {
-    private readonly HttpClient _client;
-    private readonly LocalConfigRemote _remote;
-    
-    public ProxyService(LocalConfigRemote remote)
+    private readonly HttpClient _client = httpClientFactory.CreateClient("ProxyService");
+    private readonly int _maxRetries = 3;
+    private readonly TimeSpan _timeout = TimeSpan.FromSeconds(30);
+    private LocalConfigRemote? _remote;
+
+    public IProxyServiceActions Remote(LocalConfigRemote remote)
     {
         _remote = remote;
-        _client = new HttpClient();
         _client.BaseAddress = new Uri(_remote.Url);
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_remote.AccessToken}");
+        _client.Timeout = _timeout;
+        return this;
+    }
+
+    private async Task<T> ExecuteWithRetryAsync<T>(Func<Task<T>> action, string operationName)
+    {
+        var lastException = default(Exception);
+        for (var attempt = 1; attempt <= _maxRetries; attempt++)
+        {
+            try
+            {
+                var cts = new CancellationTokenSource(_timeout);
+                var task = action();
+                if (await Task.WhenAny(task, Task.Delay(_timeout, cts.Token)) == task)
+                {
+                    cts.Cancel();
+                    return await task;
+                }
+                cts.Cancel();
+                throw new TimeoutException($"{operationName} timed out after {_timeout.TotalSeconds}s");
+            }
+            catch (HttpRequestException ex)
+            {
+                lastException = ex;
+                if (attempt < _maxRetries)
+                {
+                    var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
+                    LogMessage.AsWarning($"{operationName} failed, retry {attempt}/{_maxRetries} in {delay.TotalSeconds}s: {ex.Message}");
+                    await Task.Delay(delay);
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (TaskCanceledException ex)
+            {
+                lastException = ex;
+                if (attempt < _maxRetries)
+                {
+                    var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
+                    LogMessage.AsWarning($"{operationName} timed out, retry {attempt}/{_maxRetries} in {delay.TotalSeconds}s");
+                    await Task.Delay(delay);
+                }
+                else
+                {
+                    throw new TimeoutException($"{operationName} timed out after {_maxRetries} attempts", ex);
+                }
+            }
+        }
+        throw lastException ?? new Exception($"{operationName} failed after {_maxRetries} attempts");
     }
 
     public async Task<bool> TestConnectionAsync()
@@ -89,7 +146,7 @@ public class ProxyService : IProxyService, IDisposable
                 Name = name
             })
             .RunAsync();
-
+        
         return response.Data;
     }
 
@@ -250,10 +307,5 @@ public class ProxyService : IProxyService, IDisposable
             .RunAsync();
 
         return response.Data;
-    }
-
-    public void Dispose()
-    {
-        _client.Dispose();
     }
 }

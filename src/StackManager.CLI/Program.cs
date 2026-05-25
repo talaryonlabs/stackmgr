@@ -1,57 +1,88 @@
-﻿using System.CommandLine;
+using System.CommandLine;
+using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 using Talaryon.StackManager;
 using Talaryon.StackManager.Commands;
+using Talaryon.StackManager.Commands.Resources;
+using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Extensions;
 using Talaryon.Toolbox.Api;
 
-var localConfig = LocalConfig.Get();
-var rootCommand = new RootCommand
+// Check for --version or -v before DI setup
+if (args.Length > 0 && (args[0] == "--version" || args[0] == "-v"))
 {
-    new NewCommand(),
-    new GetCommand(),
-    new DeleteCommand(),
-    new ConfigureCommand(),
-    new SyncCommand(),
-    new DefaultCommand(),
-    new MigrateCommand(),
-    new BuildCommand(),
-    new RemoteCommand(),
-    new DescribeCommand(),
-};
+    var assembly = typeof(Program).Assembly;
+    var version = assembly.GetName().Version?.ToString() ?? "unknown";
+    var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? version;
+    Console.WriteLine($"stackmgr version {informationalVersion}");
+    Environment.Exit(0);
+}
 
-// if (!GitService.IsInstalled)
-// {
-//     HelperMethods.LogError("Git command not found. Please install Git and try again.");
-//     return;
-// }
-//
-// if (!GitService.IsRepository)
-// {
-//     HelperMethods.LogError("Not a git repository.");
-//     return;
-// }
+// Setup DI container
+var services = new ServiceCollection()
+    .AddStackManagerServices()
+    .BuildServiceProvider();
 
 
+// Get local config
+var localConfig = services.GetRequiredService<LocalConfig>();
 
+var rootCommand = new RootCommand();
+
+// Auto-discover and register all commands that inherit from BaseCommand
+var commands = Assembly.GetExecutingAssembly()
+    .GetTypes()
+    .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsSubclassOf(typeof(BaseCommand)))
+    .ToList();
+
+// Exclude resource subcommands (ResourceCreateCommand, ResourceDeleteCommand, etc.) 
+// as they are added under their parent commands (NewCommand, DeleteCommand, etc.)
+commands.Where(t =>
+    {
+        var baseType = t.BaseType;
+        if (baseType is not { IsGenericType: true })
+            return true;
+        var genericDef = baseType.GetGenericTypeDefinition();
+        return genericDef != typeof(ResourceCreateCommand<,>)
+               && genericDef != typeof(ResourceDeleteCommand<,>)
+               && genericDef != typeof(ResourceDescribeCommand<,>)
+               && genericDef != typeof(ResourceGetCommand<>)
+               && genericDef != typeof(ResourceConfigureCommand<>)
+               && genericDef != typeof(ResourceMigrateCommand<,>);
+    })
+    .Select(type => (BaseCommand)Activator.CreateInstance(type)!)
+    .ToList()
+    .ForEach(command => 
+    {
+        command.SetServiceProvider(services);
+        rootCommand.Add(command);
+    });
+
+int exitCode = 0;
 
 try
 {
-    var parseResult = rootCommand.Parse("--help");
-    if (args.Length > 0)
-    {
-        parseResult = rootCommand.Parse(args);
-    }
-
-    await parseResult.InvokeAsync(new InvocationConfiguration()
-    {
-        EnableDefaultExceptionHandler = false
-
-    });
+    var parseResult = rootCommand.Parse(args);
+    parseResult.Invoke();
 }
-catch (ApiError error)
+catch (CliException cliEx)
 {
-    LogMessage.AsError(error.Message ?? "Unknown error");   
+    LogMessage.AsError(cliEx.Message);
+    if (localConfig.DebugMode && cliEx.ShowStackTrace)
+    {
+        Console.Error.WriteLine(cliEx.StackTrace);
+    }
+    exitCode = cliEx.ExitCode;
+}
+catch (ApiError apiError)
+{
+    LogMessage.AsError(apiError.Message ?? "Unknown API error");
+    exitCode = 2;
 }
 catch (Exception ex)
 {
     LogMessage.AsError(localConfig.DebugMode ? ex.ToString() : ex.Message);
+    exitCode = 2;
 }
+
+Environment.Exit(exitCode);
