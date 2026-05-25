@@ -51,13 +51,13 @@ public class StackAppTemplate
     /// Creates a StackAppTemplate from a string.
     /// String format: "name@branch", "name:branch", or just "name" (defaults to "main")
     /// </summary>
-    public static StackAppTemplate FromString(string templateString)
+    public static StackAppTemplate? FromString(string templateString)
     {
-        return new StackAppTemplate(templateString);
+        return string.IsNullOrWhiteSpace(templateString) ? null : new StackAppTemplate(templateString);
     }
 
     /// <summary>
     /// Implicit conversion from string to StackAppTemplate for backward compatibility.
     /// </summary>
-    public static implicit operator StackAppTemplate(string templateString) => new(templateString);
+    public static implicit operator StackAppTemplate?(string templateString) => !string.IsNullOrWhiteSpace(templateString) ? new StackAppTemplate(templateString) : null;
 }
