@@ -1,10 +1,10 @@
 ﻿namespace Talaryon.StackManager.Exceptions;
 
-public class EnvironmentAlreadyExistsException(StackEnvironment environment)
+public class EnvironmentAlreadyExistsException(string name)
     : StackManagerException(
-        $"Environment '{environment.Name}' already exists",
+        $"Environment '{name}' already exists",
         "Environment",
-        environment.Name
+        name
     )
 {
 }

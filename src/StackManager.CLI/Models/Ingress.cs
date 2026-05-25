@@ -1,19 +1,15 @@
-using Talaryon.StackManager.Serialization;
-using YamlDotNet.Serialization;
+﻿using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Models;
 
 public class Ingress
 {
+    [YamlIgnore] public string? Hostname { get; set; }
+    
     [YamlMember(Alias = "apiVersion")] public string ApiVersion { get; set; } = "networking.k8s.io/v1";
     [YamlMember(Alias = "kind")] public string Kind { get; set; } = "Ingress";
     [YamlMember(Alias = "metadata")] public IngressMetadata Metadata { get; set; } = new();
     [YamlMember(Alias = "spec")] public IngressSpec Spec { get; set; } = new();
-
-    public void SaveTo(string path)
-    {
-        File.WriteAllText(path, YamlSerializer.Serialize(this));
-    }
 }
 
 public class IngressMetadata

@@ -20,15 +20,30 @@ public abstract class ResourceDescribeCommand<TResource, TArg> : BaseCommand
         : base(name, description)
     {
         Add(new TArg());
-        SetAction(ExecuteDescribeResource);
+        SetAction(ExecuteDescribeResourceAsync);
     }
 
     /// <summary>
-    /// Loads the resource from the parse result.
+    /// Loads the resource from the parse result (synchronous version).
+    /// Override this or LoadResourceAsync to provide resource loading.
     /// </summary>
     /// <param name="parseResult">The parse result containing command arguments</param>
     /// <returns>The loaded resource</returns>
-    protected abstract TResource LoadResource(ParseResult parseResult);
+    protected virtual TResource LoadResource(ParseResult parseResult)
+    {
+        throw new NotImplementedException($"Either {nameof(LoadResource)} or {nameof(LoadResourceAsync)} must be overridden.");
+    }
+
+    /// <summary>
+    /// Loads the resource from the parse result (asynchronous version).
+    /// Override this method to provide async resource loading.
+    /// </summary>
+    /// <param name="parseResult">The parse result containing command arguments</param>
+    /// <returns>A task containing the loaded resource</returns>
+    protected virtual Task<TResource> LoadResourceAsync(ParseResult parseResult)
+    {
+        return Task.FromResult(LoadResource(parseResult));
+    }
 
     /// <summary>
     /// Displays detailed information about the resource.
@@ -36,11 +51,11 @@ public abstract class ResourceDescribeCommand<TResource, TArg> : BaseCommand
     /// <param name="resource">The resource to display</param>
     protected abstract void DisplayResource(TResource resource);
 
-    private void ExecuteDescribeResource(ParseResult parseResult)
+    private async Task ExecuteDescribeResourceAsync(ParseResult parseResult)
     {
         try
         {
-            var resource = LoadResource(parseResult);
+            var resource = await LoadResourceAsync(parseResult).ConfigureAwait(false);
             DisplayResource(resource);
         }
         catch (StackManagerException ex)

@@ -20,21 +20,52 @@ public abstract class ResourceDeleteCommand<TResource, TArg> : BaseCommand
         : base(name, description)
     {
         Add(new TArg());
-        SetAction(ExecuteDeleteResource);
+        SetAction(ExecuteDeleteResourceAsync);
     }
 
     /// <summary>
-    /// Loads the resource from the parse result.
+    /// Loads the resource from the parse result (synchronous version).
+    /// Override this or LoadResourceAsync to provide resource loading.
     /// </summary>
     /// <param name="parseResult">The parse result containing command arguments</param>
     /// <returns>The loaded resource</returns>
-    protected abstract TResource LoadResource(ParseResult parseResult);
+    protected virtual TResource LoadResource(ParseResult parseResult)
+    {
+        throw new NotImplementedException($"Either {nameof(LoadResource)} or {nameof(LoadResourceAsync)} must be overridden.");
+    }
 
     /// <summary>
-    /// Deletes the resource.
+    /// Loads the resource from the parse result (asynchronous version).
+    /// Override this method to provide async resource loading.
+    /// </summary>
+    /// <param name="parseResult">The parse result containing command arguments</param>
+    /// <returns>A task containing the loaded resource</returns>
+    protected virtual Task<TResource> LoadResourceAsync(ParseResult parseResult)
+    {
+        return Task.FromResult(LoadResource(parseResult));
+    }
+
+    /// <summary>
+    /// Deletes the resource (synchronous version).
+    /// Override this or DeleteResourceInstanceAsync to provide resource deletion.
     /// </summary>
     /// <param name="resource">The resource to delete</param>
-    protected abstract void DeleteResourceInstance(TResource resource);
+    protected virtual void DeleteResourceInstance(TResource resource)
+    {
+        throw new NotImplementedException($"Either {nameof(DeleteResourceInstance)} or {nameof(DeleteResourceInstanceAsync)} must be overridden.");
+    }
+
+    /// <summary>
+    /// Deletes the resource (asynchronous version).
+    /// Override this method to provide async resource deletion.
+    /// </summary>
+    /// <param name="resource">The resource to delete</param>
+    /// <returns>A task representing the deletion operation</returns>
+    protected virtual Task DeleteResourceInstanceAsync(TResource resource)
+    {
+        DeleteResourceInstance(resource);
+        return Task.CompletedTask;
+    }
 
     /// <summary>
     /// Called after successful resource deletion.
@@ -42,12 +73,12 @@ public abstract class ResourceDeleteCommand<TResource, TArg> : BaseCommand
     /// <param name="resource">The deleted resource</param>
     protected abstract void OnResourceDeleted(TResource resource);
 
-    private void ExecuteDeleteResource(ParseResult parseResult)
+    private async Task ExecuteDeleteResourceAsync(ParseResult parseResult)
     {
         try
         {
-            var resource = LoadResource(parseResult);
-            DeleteResourceInstance(resource);
+            var resource = await LoadResourceAsync(parseResult).ConfigureAwait(false);
+            await DeleteResourceInstanceAsync(resource).ConfigureAwait(false);
             OnResourceDeleted(resource);
         }
         catch (StackManagerException ex)

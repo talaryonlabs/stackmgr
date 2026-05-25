@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Talaryon.StackManager.Builder;
 using Talaryon.StackManager.Commands.Resources;
 using Talaryon.StackManager.Validation;
 
@@ -19,7 +20,14 @@ public class NewEnvironmentCommand : ResourceCreateCommand<StackEnvironment, Env
     {
         var name = GetName<EnvironmentArgument>(parseResult);
         ValidationHelper.ValidateEnvironmentName(name);
-        return StackEnvironment.Create(name);
+
+        var env = new StackEnvironmentBuilder()
+            .WithName(name)
+            .Build();
+
+        env.Save();
+        
+        return env;
     }
 
     protected override void OnResourceCreated(StackEnvironment resource)

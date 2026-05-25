@@ -40,7 +40,7 @@ public class MigrateImageCommand : ResourceMigrateCommand<StackImage, ImageArgum
         var name = resource.Name;
 
         resource.Image = newImage;
-        resource.Stack.SaveConfig();
+        resource.Stack.Save();
         
         LogMessage.AsSuccess($"Image '{name}' migrated to '{newImage}'.");
     }

@@ -33,7 +33,7 @@ public class DeleteEnvironmentCommand : ResourceDeleteCommand<StackEnvironment, 
         
         LogMessage.AsInfo($"Removing environment '{resource.Name}'.");
         resource.IsDeleted = true;
-        resource.SaveConfig();
+        resource.Save();
     }
 
     protected override void OnResourceDeleted(StackEnvironment resource)

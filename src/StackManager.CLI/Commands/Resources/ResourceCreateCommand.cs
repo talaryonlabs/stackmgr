@@ -20,15 +20,30 @@ public abstract class ResourceCreateCommand<TResource, TArg> : BaseCommand
         : base(name, description)
     {
         Add(new TArg());
-        SetAction(ExecuteCreateResource);
+        SetAction(ExecuteCreateResourceAsync);
     }
 
     /// <summary>
-    /// Creates the resource from the parse result.
+    /// Creates the resource from the parse result (synchronous version).
+    /// Override this or CreateResourceInstanceAsync to provide resource creation.
     /// </summary>
     /// <param name="parseResult">The parse result containing command arguments</param>
     /// <returns>The created resource</returns>
-    protected abstract TResource CreateResourceInstance(ParseResult parseResult);
+    protected virtual TResource CreateResourceInstance(ParseResult parseResult)
+    {
+        throw new NotImplementedException($"Either {nameof(CreateResourceInstance)} or {nameof(CreateResourceInstanceAsync)} must be overridden.");
+    }
+
+    /// <summary>
+    /// Creates the resource from the parse result (asynchronous version).
+    /// Override this method to provide async resource creation.
+    /// </summary>
+    /// <param name="parseResult">The parse result containing command arguments</param>
+    /// <returns>A task containing the created resource</returns>
+    protected virtual Task<TResource> CreateResourceInstanceAsync(ParseResult parseResult)
+    {
+        return Task.FromResult(CreateResourceInstance(parseResult));
+    }
 
     /// <summary>
     /// Called after successful resource creation.
@@ -36,11 +51,11 @@ public abstract class ResourceCreateCommand<TResource, TArg> : BaseCommand
     /// <param name="resource">The created resource</param>
     protected abstract void OnResourceCreated(TResource resource);
 
-    private void ExecuteCreateResource(ParseResult parseResult)
+    private async Task ExecuteCreateResourceAsync(ParseResult parseResult)
     {
         try
         {
-            var resource = CreateResourceInstance(parseResult);
+            var resource = await CreateResourceInstanceAsync(parseResult).ConfigureAwait(false);
             OnResourceCreated(resource);
         }
         catch (StackManagerException ex)

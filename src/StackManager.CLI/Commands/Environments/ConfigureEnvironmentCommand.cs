@@ -66,6 +66,6 @@ public class ConfigureEnvironmentCommand : ResourceConfigureCommand<EnvironmentA
             LogMessage.AsSuccess($"Remote '{remote}' configured for environment '{env.Name}'.");
         }
         
-        env.SaveConfig();
+        env.Save();
     }
 }

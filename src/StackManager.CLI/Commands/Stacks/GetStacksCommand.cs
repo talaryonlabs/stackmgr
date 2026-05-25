@@ -17,11 +17,7 @@ public class GetStacksCommand : ResourceGetCommand<Stack>
     protected override IReadOnlyList<Stack> GetResources(ParseResult parseResult)
     {
         var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var files = env.LocalDirectory.GetFiles(Stack.FileName, SearchOption.AllDirectories);
-        
-        return files
-            .Select(v => env.GetStack(v.Directory!.Name))
-            .ToList();
+        return env.GetStacks();
     }
 
     protected override void DisplayResource(Stack resource)

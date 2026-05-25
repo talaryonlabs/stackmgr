@@ -1,3 +1,4 @@
+using Talaryon.StackManager.Builder;
 using Talaryon.StackManager.Services;
 
 namespace Talaryon.StackManager.Commands;
@@ -13,8 +14,9 @@ public class BuildCommand : BaseCommand
             var env = GetEnvironment<EnvironmentOption>(parseResult);
             var stack = GetStack<StackOption>(parseResult, env);
             var kustomizeService = GetService<KustomizeService>();
+            var builder = new StackBuilder(stack).WithKustomizeValidation(kustomizeService);
             
-            await stack.BuildAsync(kustomizeService);
+            await builder.BuildAsync();
             LogMessage.AsSuccess($"Stack '{stack.Name}' built.");
         });
     }

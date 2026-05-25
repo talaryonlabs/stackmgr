@@ -5,6 +5,7 @@ using Talaryon.StackManager;
 using Talaryon.StackManager.Commands;
 using Talaryon.StackManager.Commands.Resources;
 using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Extensions;
 using Talaryon.Toolbox.Api;
 
 // Check for --version or -v before DI setup

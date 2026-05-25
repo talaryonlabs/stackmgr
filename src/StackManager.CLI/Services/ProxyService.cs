@@ -30,7 +30,7 @@ public interface IProxyService
     Task<Volume?> DeleteVolumeAsync(string ns, string name);
 }
 
-public class ProxyService : IProxyService, IDisposable
+public class ProxyService : IProxyService
 {
     private readonly HttpClient _client;
     private readonly LocalConfigRemote _remote;
@@ -302,10 +302,5 @@ public class ProxyService : IProxyService, IDisposable
             .RunAsync();
 
         return response.Data;
-    }
-
-    public void Dispose()
-    {
-        // HttpClient is managed by IHttpClientFactory, don't dispose it
     }
 }

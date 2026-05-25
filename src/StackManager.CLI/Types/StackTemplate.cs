@@ -5,19 +5,12 @@ namespace Talaryon.StackManager.Types;
 
 public class StackTemplate
 {
-    public static DirectoryInfo AppDirectory => new(Path.Combine(Environment.CurrentDirectory, ".apps"));
-    
     public const string FileName = ".app.yaml";
-    public DirectoryInfo LocalDirectory => new(Path.Combine(AppDirectory.FullName, Name));
-    
-    public static StackTemplate Load(string name)
-    {
-        var path = Path.Combine(AppDirectory.FullName, name, FileName);
-        var file = new FileInfo(path);
-        
-        return !file.Exists ? throw new TemplateNotFoundException(name) : StackConfig.Load<StackTemplate>(file);
-    }
+    public const string DirectoryName = ".apps";
 
+    [YamlIgnore] public FileInfo LocalFile => new(Path.Combine(LocalDirectory.FullName, FileName));
+    [YamlIgnore] public DirectoryInfo LocalDirectory => new (Path.Combine(DirectoryName, Name));
+    
     [YamlMember(Alias = "name")] public required string Name { get; init; }
     [YamlMember(Alias = "version")] public string? Version { get; init; } = "template.talaryon.io/v1beta";
     [YamlMember(Alias = "port")] public short Port { get; init; }

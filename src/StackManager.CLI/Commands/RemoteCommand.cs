@@ -90,7 +90,7 @@ public class RemoteCommand : BaseCommand
             {
                 try
                 {
-                    using var proxy = new ProxyService(remote, httpClientFactory);
+                    var proxy = new ProxyService(remote, httpClientFactory);
                     if (await proxy.TestConnectionAsync())
                     {
                         return LogBuilder.Message("Done.").AsSuccess();

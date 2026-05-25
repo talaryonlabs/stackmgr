@@ -23,7 +23,7 @@ public class MigrateAppCommand : ResourceMigrateCommand<StackApp, AppArgument>
         return GetApp<AppArgument>(parseResult, stack);
     }
 
-    protected override async void MigrateResource(StackApp resource, ParseResult parseResult)
+    protected override async Task MigrateResourceAsync(StackApp resource, ParseResult parseResult)
     {
         var app = resource;
         var stack = app.Stack;
@@ -35,11 +35,10 @@ public class MigrateAppCommand : ResourceMigrateCommand<StackApp, AppArgument>
             return;
         }
 
-        var git = GetRequiredService<IGitService>();
-        await git.GetAppsAsync(app.Template.Branch);
+        var templateService = GetRequiredService<ITemplateService>();
+        await templateService.UpdateAsync(app.Template.Name);
         
-        var template = StackTemplate.Load(app.Template.Name);
-
+        var template = templateService.GetTemplate(app.Template.Name);
         var errors = new List<string>();
 
         errors.AddRange(template.Volumes
@@ -68,10 +67,7 @@ public class MigrateAppCommand : ResourceMigrateCommand<StackApp, AppArgument>
 
         if (errors.Count > 0)
         {
-            foreach (var error in errors)
-            {
-                LogMessage.AsError(error);
-            }
+            errors.ForEach(LogMessage.AsError);
             return;
         }
 
@@ -83,10 +79,9 @@ public class MigrateAppCommand : ResourceMigrateCommand<StackApp, AppArgument>
         await LogBuilder
             .Message($"Migrating app '{app.Name}' from template '{app.Template.Name}' ({app.Template.Branch}) ... ")
             .NoNewLineAfter()
-            .WaitFor(async () =>
+            .WaitFor(() =>
             {
-                var appService = new AppService(app);
-                await appService.MigrateAsync(template);
+                templateService.ApplyTemplate(template, app);
                 return LogBuilder.Message("Migration done.").AsSuccess();
             })
             .RunAsync();

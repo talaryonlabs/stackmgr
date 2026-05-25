@@ -21,7 +21,8 @@ public class NewStackCommand : ResourceCreateCommand<Stack, StackArgument>
         var env = GetEnvironment<EnvironmentOption>(parseResult);
         var name = GetName<StackArgument>(parseResult);
         ValidationHelper.ValidateStackName(name);
-        return Stack.Create(env, name);
+        
+        return env.NewStack(name);
     }
 
     protected override void OnResourceCreated(Stack resource)

@@ -33,15 +33,30 @@ public abstract class ResourceGetCommand<TResource> : BaseCommand
             Add(option);
         }
         
-        SetAction(ExecuteGetResources);
+        SetAction(ExecuteGetResourcesAsync);
     }
 
     /// <summary>
-    /// Gets the list of resources to display.
+    /// Gets the list of resources to display (synchronous version).
+    /// Override this or GetResourcesAsync to provide resource retrieval.
     /// </summary>
     /// <param name="parseResult">The parse result containing command arguments</param>
     /// <returns>The list of resources</returns>
-    protected abstract IReadOnlyList<TResource> GetResources(ParseResult parseResult);
+    protected virtual IReadOnlyList<TResource> GetResources(ParseResult parseResult)
+    {
+        throw new NotImplementedException($"Either {nameof(GetResources)} or {nameof(GetResourcesAsync)} must be overridden.");
+    }
+
+    /// <summary>
+    /// Gets the list of resources to display (asynchronous version).
+    /// Override this method to provide async resource retrieval.
+    /// </summary>
+    /// <param name="parseResult">The parse result containing command arguments</param>
+    /// <returns>A task containing the list of resources</returns>
+    protected virtual Task<IReadOnlyList<TResource>> GetResourcesAsync(ParseResult parseResult)
+    {
+        return Task.FromResult(GetResources(parseResult));
+    }
 
     /// <summary>
     /// Displays a single resource.
@@ -54,11 +69,11 @@ public abstract class ResourceGetCommand<TResource> : BaseCommand
     /// </summary>
     protected virtual string ResourceName => _resourceName;
 
-    private void ExecuteGetResources(ParseResult parseResult)
+    private async Task ExecuteGetResourcesAsync(ParseResult parseResult)
     {
         try
         {
-            var resources = GetResources(parseResult);
+            var resources = await GetResourcesAsync(parseResult).ConfigureAwait(false);
             DisplayResources(resources);
         }
         catch (StackManagerException ex)

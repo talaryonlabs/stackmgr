@@ -53,7 +53,10 @@ public class BaseCommand(string name, string description) : Command(name, descri
     protected static StackEnvironment GetEnvironment<T>(ParseResult parseResult) where T : Symbol
     {
         var name = GetName<T>(parseResult);
-        return StackEnvironment.Load(name);
+        var path = Path.Combine(Directory.GetCurrentDirectory(), name, StackEnvironment.FileName);
+        var file = new FileInfo(path);
+        
+        return StackResource.Load<StackEnvironment>(file);
     }
     
     protected static Stack GetStack<T>(ParseResult parseResult, StackEnvironment env) 
@@ -67,6 +70,6 @@ public class BaseCommand(string name, string description) : Command(name, descri
         where T : Symbol
     {
         var name = GetName<T>(parseResult);
-        return stack.Apps.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) ?? throw new AppNotFoundException(name);
+        return stack.Get<StackApp>(name);
     }
 }

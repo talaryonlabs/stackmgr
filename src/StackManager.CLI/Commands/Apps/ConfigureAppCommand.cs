@@ -53,6 +53,6 @@ public class ConfigureAppCommand : ResourceConfigureCommand<AppArgument>
             LogMessage.AsSuccess($"Image '{image.Key}' set to '{image.Value}' for app '{app.Name}'.");
         }
         
-        stack.SaveConfig();
+        stack.Save();
     }
 }

@@ -3,7 +3,7 @@ using Talaryon.StackManager.Serialization;
 
 namespace Talaryon.StackManager;
 
-public static class StackConfig
+public static class StackResource
 {
     public static T Load<T>(FileInfo file)
     {
@@ -13,9 +13,15 @@ public static class StackConfig
             {
                 throw new StackNotFoundException(file.Name);
             }
+            
             if(typeof(T) == typeof(StackEnvironment))
             {
                 throw new EnvironmentNotFoundException(file.Name);
+            }
+
+            if (typeof(T) == typeof(StackTemplate))
+            {
+                throw new TemplateNotFoundException(file.Name);
             }
 
             throw new FileNotFoundException(file.FullName);

@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
+using Talaryon.StackManager.Services;
 
 namespace Talaryon.StackManager.Commands.Templates;
 
@@ -8,32 +9,22 @@ namespace Talaryon.StackManager.Commands.Templates;
 /// </summary>
 public class GetTemplatesCommand : ResourceGetCommand<StackTemplate>
 {
-    public GetTemplatesCommand()
-        : base("templates", "List available application templates", "Templates")
+    /// <summary>
+    /// Command for listing available templates.
+    /// </summary>
+    public GetTemplatesCommand() : base("templates", "List available application templates", "Templates")
     {
+        Add(new DevOption());
     }
 
-    protected override IReadOnlyList<StackTemplate> GetResources(ParseResult parseResult)
+    protected override async Task<IReadOnlyList<StackTemplate>> GetResourcesAsync(ParseResult parseResult)
     {
-        if (!StackTemplate.AppDirectory.Exists)
-        {
-            return [];
-        }
+        var templateService = GetRequiredService<ITemplateService>();
+        var isDev = parseResult.GetValue<bool, DevOption>();
 
-        var templates = new List<StackTemplate>();
-        foreach (var dir in StackTemplate.AppDirectory.GetDirectories())
-        {
-            try
-            {
-                var template = StackTemplate.Load(dir.Name);
-                templates.Add(template);
-            }
-            catch
-            {
-                // Skip directories that don't contain valid templates
-            }
-        }
-        return templates;
+        await templateService.UpdateAsync(isDev ? "dev" : "prod");
+        
+        return templateService.GetTemplates();
     }
 
     protected override void DisplayResource(StackTemplate resource)

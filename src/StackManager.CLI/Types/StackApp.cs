@@ -5,7 +5,6 @@ namespace Talaryon.StackManager.Types;
 public class StackApp : IStackObject
 {
     [YamlIgnore] public required Stack Stack { get; set; }
-
     [YamlIgnore]
     public DirectoryInfo LocalDirectory => new(
         Path.Combine(Stack.LocalDirectory.FullName, Name)

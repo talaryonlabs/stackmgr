@@ -1,55 +1,10 @@
-using System.CommandLine;
 using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
-using Talaryon.StackManager.Builder;
 using Talaryon.StackManager.Exceptions;
-using Talaryon.StackManager.Services;
-using Talaryon.Toolbox.Extensions;
 
 namespace Talaryon.StackManager;
 
 public static class ExtensionMethods
 {
-    extension(ParseResult parseResult)
-    {
-        public TValue GetRequiredValue<TValue, TSymbol>() where TSymbol : Symbol 
-        {
-            var item = Activator.CreateInstance<TSymbol>();
-            return parseResult.GetRequiredValue<TValue>(item.Name);
-        }
-
-        public TValue? GetValue<TValue, TSymbol>() where TSymbol : Symbol 
-        {
-            var item = Activator.CreateInstance<TSymbol>();
-            return parseResult.GetValue<TValue>(item.Name);
-        }
-    }
-
-    extension(IServiceCollection services)
-    {
-        public IServiceCollection AddStackManagerServices()
-        {
-            // Register singleton services
-            services.AddSingleton<LocalConfig>(_ => LocalConfig.Get());
-        
-            // Register transient services
-            services.AddTransient<IAppService, AppService>();
-            services.AddTransient<IGitService, GitService>();
-            services.AddTransient<IKustomizeService, KustomizeService>();
-            services.AddTransient<IProxyService, ProxyService>();
-        
-            // Register named HttpClient for ProxyService
-            services.AddHttpClient("ProxyService")
-                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-                {
-                    AllowAutoRedirect = true,
-                    MaxAutomaticRedirections = 5
-                });
-        
-            return services;
-        }
-    }
-
     extension(StackEnvironment env)
     {
         public Stack GetStack(string name)
@@ -57,9 +12,10 @@ public static class ExtensionMethods
             var path = Path.Combine(env.LocalDirectory.FullName, name, Stack.FileName); 
             var file = new FileInfo(path);
         
-            if (!file.Exists) throw new StackNotFoundException(name);
+            if (!file.Exists) 
+                throw new StackNotFoundException(name);
 
-            var stack = StackConfig.Load<Stack>(file);
+            var stack = StackResource.Load<Stack>(file);
 
             stack.Environment = env;
             
@@ -73,13 +29,52 @@ public static class ExtensionMethods
 
             return stack;
         }
+
+        public IReadOnlyList<Stack> GetStacks()
+        {
+            return env.LocalDirectory.GetDirectories()
+                .Select(v => env.GetStack(v.Name))
+                .ToList();
+        }
+        
+        public Stack NewStack(string name)
+        {
+            var stack = new Stack
+            {
+                Name = name,
+                Environment = env,
+                Namespace = $"{env.Name.ToLower()}-{name.ToLower().Replace(".", "-")}",
+                Images = [],
+                Apps = [],
+                Ingresses = [],
+                Volumes = [],
+            };
+
+            if (stack.LocalFile.Exists)
+                throw new StackAlreadyExistsException(stack);
+        
+            if(!stack.LocalDirectory.Exists)
+                stack.LocalDirectory.Create();
+        
+            stack.Save();
+        
+            return stack;
+        }
+
+        public void Save()
+        {
+            if (!env.LocalDirectory.Exists)
+                env.LocalDirectory.Create();
+            
+            StackResource.Save(env, env.LocalFile);
+        }
     }
 
     extension(Stack stack)
     {
-        public IStackFactory<T> New<T>() where T : class, IStackObject
+        public IStackObjectFactory<T> New<T>() where T : class, IStackObject
         {
-            return new StackFactory<T>(stack);
+            return new StackObjectFactory<T>(stack);
         }
 
         public T Get<T>(string name) where T : class, IStackObject
@@ -95,6 +90,26 @@ public static class ExtensionMethods
                 throw new InvalidOperationException();
 
             return list.FirstOrDefault(v => v.Name == name) ?? throw new ResourceNotFoundException<T>(stack, name);
+        }
+
+        public void Delete(bool complete = false)
+        {
+            if (complete)
+            {
+                stack.LocalDirectory.Delete(true);
+                return;
+            }
+
+            if (stack.IsDeleted)
+                throw new StackAlreadyDeletedException(stack.Name);
+
+            stack.IsDeleted = true;
+            stack.Save();
+        }
+
+        public void Save()
+        {
+            StackResource.Save(stack, stack.LocalFile);
         }
     }
 
@@ -149,7 +164,7 @@ public static class ExtensionMethods
                 .ToList()
                 .ForEach(v => v.Remove((T)stackObject));
             
-            stackObject.Stack.SaveConfig();
+            stackObject.Stack.Save();
         }
     }
 }

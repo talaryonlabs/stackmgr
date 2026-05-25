@@ -24,8 +24,9 @@ public class GetEnvironmentsCommand : ResourceGetCommand<StackEnvironment>
             .ToList();
 
         return directories
-            .Where(v => File.Exists(Path.Combine(v.FullName, StackEnvironment.FileName)))
-            .Select(v => StackEnvironment.Load(v.Name))
+            .Select(v => new FileInfo(Path.Combine(v.FullName, StackEnvironment.FileName)))
+            .Where(v => v.Exists)
+            .Select(StackResource.Load<StackEnvironment>)
             .ToList();
     }
 

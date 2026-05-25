@@ -1,6 +1,6 @@
 using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
-using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Services;
 
 namespace Talaryon.StackManager.Commands.Templates;
 
@@ -12,23 +12,26 @@ public class DescribeTemplateCommand : ResourceDescribeCommand<StackTemplate, Na
     public DescribeTemplateCommand()
         : base("template", "Describe an application template")
     {
+        Add(new DevOption());
     }
 
     protected override StackTemplate LoadResource(ParseResult parseResult)
     {
-        var name = parseResult.GetValue<string, NameArgument>();
-        if (name is null)
+        var name = GetName<NameArgument>(parseResult);
+        if (string.IsNullOrEmpty(name))
         {
-            throw new TemplateNotFoundException("");
+            throw new ArgumentNullException(nameof(name));
         }
-        try
+        
+        var templateService = GetRequiredService<ITemplateService>();
+        var isDev = parseResult.GetValue<bool, DevOption>();
+
+        Task.Run(async () =>
         {
-            return StackTemplate.Load(name);
-        }
-        catch (TemplateNotFoundException)
-        {
-            throw new TemplateNotFoundException(name);
-        }
+            await templateService.UpdateAsync(isDev ? "dev" : "prod");
+        });
+        
+        return templateService.GetTemplate(name);
     }
 
     protected override void DisplayResource(StackTemplate resource)

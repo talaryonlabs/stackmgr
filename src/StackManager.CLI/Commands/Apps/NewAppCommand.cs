@@ -36,10 +36,9 @@ public class NewAppCommand : ResourceCreateCommand<StackApp, AppArgument>
             {
                 if (template is not null)
                 {
-                    var stackTemplate = StackTemplate.Load(template);
                     app.Template = new StackAppTemplate
                     {
-                        Name = stackTemplate.Name,
+                        Name = template,
                         Branch = branch,
                     };
                 }

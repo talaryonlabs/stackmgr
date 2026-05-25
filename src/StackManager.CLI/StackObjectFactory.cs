@@ -1,22 +1,22 @@
 using System.Reflection;
 using Talaryon.StackManager.Exceptions;
 
-namespace Talaryon.StackManager.Builder;
+namespace Talaryon.StackManager;
 
-public interface IStackFactory<out T>
+public interface IStackObjectFactory<out T>
 {
-    IStackFactory<T> WithName(string name);
-    IStackFactory<T> Configure(Action<T> configure);
+    IStackObjectFactory<T> WithName(string name);
+    IStackObjectFactory<T> Configure(Action<T> configure);
     T Save();
 }
 
-public class StackFactory<T>(Stack stack) : IStackFactory<T>
+public class StackObjectFactory<T>(Stack stack) : IStackObjectFactory<T>
     where T : class, IStackObject
 {
     private readonly T _object = Activator.CreateInstance<T>();
     private string? _name;
     
-    public IStackFactory<T> WithName(string name)
+    public IStackObjectFactory<T> WithName(string name)
     {
         var list = GetList();
         if (list.Any(v => v.Name == name))
@@ -26,7 +26,7 @@ public class StackFactory<T>(Stack stack) : IStackFactory<T>
         return this;
     }
 
-    public IStackFactory<T> Configure(Action<T> configure)
+    public IStackObjectFactory<T> Configure(Action<T> configure)
     {
         configure(_object);
         return this;
@@ -42,7 +42,7 @@ public class StackFactory<T>(Stack stack) : IStackFactory<T>
         
         var list = GetList();
         list.Add(_object);
-        stack.SaveConfig();
+        stack.Save();
         
         return _object;
     }

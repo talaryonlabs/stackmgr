@@ -25,6 +25,6 @@ public class ConfigureStackCommand : ResourceConfigureCommand<StackArgument>
             stack.EnableAutoSync = parseResult.GetValue<bool, EnableAutoSyncOption>();
         }
         
-        stack.SaveConfig();
+        stack.Save();
     }
 }
