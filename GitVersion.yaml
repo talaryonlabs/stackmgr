@@ -3,13 +3,13 @@ branches:
   main:
     label: ''
     increment: Patch
-    prevent-increment-of-merged-branch-version: true
+    prevent-increment-of-merged-branch-version: false
     regex: ^main$
     is-release-branch: true
     is-main-branch: true
   dev:
     label: dev
-    increment: None
+    increment: Patch
     regex: ^dev$
     source-branches: [ ]
     is-release-branch: false
