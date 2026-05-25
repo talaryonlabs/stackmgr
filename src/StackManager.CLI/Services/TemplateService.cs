@@ -58,7 +58,8 @@ public class TemplateService(IGitService git, LocalConfig config) : ITemplateSer
         baseDirectory.Create();
 
         var files = template.LocalDirectory
-            .GetFiles("*.yaml", SearchOption.AllDirectories);
+            .GetFiles("*.yaml", SearchOption.AllDirectories)
+            .Where(v => v.Name != StackTemplate.FileName);
 
         foreach (var file in files.Where(v => v.Name.StartsWith("init.", StringComparison.OrdinalIgnoreCase)))
         {
