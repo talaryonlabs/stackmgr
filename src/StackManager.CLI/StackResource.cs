@@ -33,8 +33,7 @@ public static class StackResource
     
     public static void Save<T>(T resource, FileInfo file)
     {
-        using var stream = file.OpenWrite();
-        using var writer = new StreamWriter(stream);
-        YamlSerializer.Serializer.Serialize(writer, resource);
+        var yaml = YamlSerializer.Serialize(resource);
+        File.WriteAllText(file.FullName, yaml);
     }
 }

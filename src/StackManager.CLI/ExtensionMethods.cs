@@ -18,14 +18,15 @@ public static class ExtensionMethods
             var stack = StackResource.Load<Stack>(file);
 
             stack.Environment = env;
-            
-            typeof(Stack)
-                .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                .Where(v => v.PropertyType.GetInterfaces().Any(i => i == typeof(IStackObject)))
-                .Select(v => v.GetValue(stack))
-                .OfType<IStackObject>()
-                .ToList()
-                .ForEach(v => v.Stack = stack);
+
+            foreach (IEnumerable<IStackObject>? list in typeof(Stack)
+                         .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                         .Where(v => v.PropertyType.IsGenericType && v.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
+                         .Select(v => v.GetValue(stack))
+                         .ToList())
+            {
+                list?.ToList().ForEach(v => v.Stack = stack);
+            }
 
             return stack;
         }
@@ -33,6 +34,7 @@ public static class ExtensionMethods
         public IReadOnlyList<Stack> GetStacks()
         {
             return env.LocalDirectory.GetDirectories()
+                .Where(v => v.GetFiles(Stack.FileName).Length > 0)
                 .Select(v => env.GetStack(v.Name))
                 .ToList();
         }

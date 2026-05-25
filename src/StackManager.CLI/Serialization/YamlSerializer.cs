@@ -1,4 +1,6 @@
+using Talaryon.StackManager.Models;
 using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace Talaryon.StackManager.Serialization;
 
@@ -8,18 +10,34 @@ namespace Talaryon.StackManager.Serialization;
 /// </summary>
 public static class YamlSerializer
 {
+    private static ISerializer? _serializer;
+    private static IDeserializer? _deserializer;
+
     /// <summary>
     /// Gets the shared serializer instance.
     /// </summary>
-    public static ISerializer Serializer => new SerializerBuilder()
-        .Build();
+    public static ISerializer Serializer => _serializer ??= BuildSerializer();
 
     /// <summary>
     /// Gets the shared deserializer instance.
     /// </summary>
-    public static IDeserializer Deserializer => new DeserializerBuilder()
-        .IgnoreUnmatchedProperties()
-        .Build();
+    public static IDeserializer Deserializer => _deserializer ??= BuildDeserializer();
+
+    private static ISerializer BuildSerializer()
+    {
+        return new SerializerBuilder()
+            .WithTypeConverter(new StackAppTemplateTypeConverter())
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+    }
+
+    private static IDeserializer BuildDeserializer()
+    {
+        return new DeserializerBuilder()
+            .IgnoreUnmatchedProperties()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+    }
 
     /// <summary>
     /// Serializes an object to YAML string.

@@ -60,15 +60,27 @@ public class BuildCommand : BaseCommand
                 })
                 .RunAsync();
             
+            var errors = default(List<string>);
             await LogBuilder.Message("- [Validation] ... ")
                 .NoNewLineAfter()
                 .WaitFor(async () =>
                 {
-                    await kustomizeService.ValidateAsync();
+                    if ((errors = await kustomizeService.ValidateAsync()).Count > 0)
+                    {
+                        return LogBuilder.Message("Failed.").AsError();
+                    }
                     return LogBuilder.Message("Done.").AsSuccess();
 
                 })
                 .RunAsync();
+            
+            if(errors is {Count: > 0})
+            {
+                foreach (var error in errors)
+                {
+                    LogMessage.AsError($"> {error}");
+                }
+            }
         });
     }
 }

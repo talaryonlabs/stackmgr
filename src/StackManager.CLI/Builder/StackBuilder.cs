@@ -57,7 +57,7 @@ public class StackBuilder(Stack stack) : IStackBuilder
             Images = stack.Images.Select(i => (KustomizationImage)i).ToList(),
             Resources = normalFiles
                 .Concat(baseFiles)
-                .Select(v => v.FullName.Replace(stack.LocalDirectory.FullName, ""))
+                .Select(v => v.FullName.Replace(stack.LocalDirectory.FullName + Path.DirectorySeparatorChar, ""))
                 .ToList()
         };
             
@@ -73,13 +73,12 @@ public class StackBuilder(Stack stack) : IStackBuilder
         {
             var credentials = new RegistryCredentials();
             credentials.Metadata.Annotations.Path = stack.Environment.RegistryCredentials;
-            LogMessage.AsInfo($"Using registry credentials '{stack.Environment.RegistryCredentials}' for stack '{stack.Name}'.");
-            File.WriteAllText(file.FullName, YamlSerializer.Serialize(credentials));
+            
+            StackResource.Save(credentials, file);
         }
         else if (file.Exists)
         {
             file.Delete();
-            LogMessage.AsInfo($"Registry credentials for stack '{stack.Name}' are empty. {file.Name} removed.");
         }
     }
 
