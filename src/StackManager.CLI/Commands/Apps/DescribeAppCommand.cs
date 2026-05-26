@@ -33,11 +33,20 @@ public class DescribeAppCommand : ResourceDescribeCommand<StackApp, AppArgument>
             .WaitFor(() => LogBuilder.Message($"{resource.Name}").AsSuccess())
             .Run();
 
+        LogBuilder.Message($" Directory: {resource.LocalDirectory.FullName} ")
+            .NoNewLineAfter()
+            .WaitFor(() => resource.LocalDirectory.Exists
+                ? LogBuilder.Message("(Exists)").AsSuccess()
+                : LogBuilder.Message("(Missing)").AsWarning())
+            .Run();
+
         if (resource.Template != null)
         {
             LogBuilder.Message(" Template: ")
                 .NoNewLineAfter()
-                .WaitFor(() => LogBuilder.Message($"{resource.Template.Name} ({resource.Template.Branch})").AsWarning())
+                .WaitFor(() => string.IsNullOrEmpty(resource.Template.Name)
+                    ? LogBuilder.Message("(None)")
+                    : LogBuilder.Message($"{resource.Template.Name} ({resource.Template.Branch})").AsWarning())
                 .Run();
         }
 

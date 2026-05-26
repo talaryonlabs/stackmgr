@@ -24,6 +24,11 @@ public class StackAppTemplateTypeConverter : IYamlTypeConverter
 
     public void WriteYaml(IEmitter emitter, object? value, Type type, ObjectSerializer serializer)
     {
+        if (value is null && type == typeof(StackAppTemplate))
+        {
+            value = new StackAppTemplate();
+        }
+        
         if (value is StackAppTemplate template)
         {
             // Always serialize as object format for consistency

@@ -19,6 +19,7 @@ public class BuildCommand : BaseCommand
         var kustomizeService = GetRequiredService<IKustomizeService>()
             .Directory(stack.LocalDirectory);
 
+        LogMessage.AsInfo($"Building stack '{stack.Name}' ...");
         await LogBuilder.Message("- [Registry Credentials] ... ")
             .NoNewLineAfter()
             .WaitFor(() =>

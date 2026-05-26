@@ -40,6 +40,8 @@ public class SyncCommand : BaseCommand
 
             return;
         }
+
+        LogMessage.AsInfo($"Syncing stack '{stack.Name}' ...");
         
         await LogBuilder.Message("- [Stack] Building ... ")
             .NoNewLineAfter()
