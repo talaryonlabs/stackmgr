@@ -1,4 +1,3 @@
-using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
 
 namespace Talaryon.StackManager.Commands.Environments;
@@ -15,9 +14,9 @@ public class GetEnvironmentsCommand : ResourceGetCommand<StackEnvironment>
         Aliases.Add("env");
     }
 
-    protected override IReadOnlyList<StackEnvironment> GetResources(ParseResult parseResult)
+    protected override IReadOnlyList<StackEnvironment> GetResources()
     {
-        var root = new DirectoryInfo(System.Environment.CurrentDirectory);
+        var root = new DirectoryInfo(Environment.CurrentDirectory);
         var directories = root
             .GetDirectories("*", SearchOption.TopDirectoryOnly)
             .Where(x => x.Name != ".apps" && x.Name != ".git")

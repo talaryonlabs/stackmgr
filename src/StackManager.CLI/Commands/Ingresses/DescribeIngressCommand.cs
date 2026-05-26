@@ -16,11 +16,11 @@ public class DescribeIngressCommand : ResourceDescribeCommand<StackIngress, Host
         Add(new StackOption());
     }
 
-    protected override StackIngress LoadResource(ParseResult parseResult)
+    protected override StackIngress LoadResource()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
-        var hostname = GetName<HostnameArgument>(parseResult);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
+        var hostname = GetName<HostnameArgument>();
         var name = HelperMethods.HostToName(hostname);
         
         return stack.Get<StackIngress>(name);

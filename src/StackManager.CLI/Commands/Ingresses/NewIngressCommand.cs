@@ -21,20 +21,20 @@ public class NewIngressCommand : ResourceCreateCommand<StackIngress, HostnameArg
         Add(new GenerateOption());
     }
 
-    protected override StackIngress CreateResourceInstance(ParseResult parseResult)
+    protected override StackIngress CreateResourceInstance()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
-        var hostname = GetName<HostnameArgument>(parseResult);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
+        var hostname = GetName<HostnameArgument>();
         var name = HelperMethods.HostToName(hostname);
-        var app = parseResult.GetRequiredValue<string, AppOption>();
-        var port = parseResult.GetRequiredValue<int, PortOption>();
+        var app = GetRequiredValue<string, AppOption>();
+        var port = GetRequiredValue<int, PortOption>();
         
         ValidationHelper.ValidateHostname(hostname);
         ValidationHelper.ValidateAppName(app);
         ValidationHelper.ValidatePort(port);
         
-        if(parseResult.GetValue<bool, GenerateOption>())
+        if(GetValue<bool, GenerateOption>())
         {
             if(hostname.StartsWith("."))
                 hostname = hostname[1..];
@@ -59,7 +59,7 @@ public class NewIngressCommand : ResourceCreateCommand<StackIngress, HostnameArg
                 ingress.Hostname = hostname;
                 ingress.Port = port;
                 ingress.Application = app;
-                ingress.IsSecured = parseResult.GetValue<bool, SecuredOption>();
+                ingress.IsSecured = GetValue<bool, SecuredOption>();
             })
             .Save();
     }

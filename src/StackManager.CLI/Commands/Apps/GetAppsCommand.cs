@@ -1,4 +1,3 @@
-using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
 
 namespace Talaryon.StackManager.Commands.Apps;
@@ -13,10 +12,10 @@ public class GetAppsCommand : ResourceGetCommand<StackApp>
     {
     }
 
-    protected override IReadOnlyList<StackApp> GetResources(ParseResult parseResult)
+    protected override IReadOnlyList<StackApp> GetResources()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
         return stack.Apps;
     }
 

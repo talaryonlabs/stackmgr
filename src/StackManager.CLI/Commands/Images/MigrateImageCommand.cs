@@ -17,12 +17,12 @@ public class MigrateImageCommand : ResourceMigrateCommand<StackImage, ImageArgum
         Add(new NameOption());
     }
 
-    protected override StackImage LoadResource(ParseResult parseResult)
+    protected override StackImage LoadResource()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
-        var newImage = parseResult.GetRequiredValue<string, ImageArgument>();
-        var name = parseResult.GetValue<string, NameOption>();
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
+        var newImage = GetValue<string, ImageArgument>();
+        var name = GetValue<string, NameOption>();
         
         if (string.IsNullOrEmpty(name))
         {
@@ -34,9 +34,9 @@ public class MigrateImageCommand : ResourceMigrateCommand<StackImage, ImageArgum
                throw new Exception($"Image '{name}' not found in stack '{stack.Name}' (environment '{env.Name}').");
     }
 
-    protected override void MigrateResource(StackImage resource, ParseResult parseResult)
+    protected override void MigrateResource(StackImage resource)
     {
-        var newImage = parseResult.GetRequiredValue<string, ImageArgument>();
+        var newImage = GetRequiredValue<string, ImageArgument>();
         var name = resource.Name;
 
         resource.Image = newImage;

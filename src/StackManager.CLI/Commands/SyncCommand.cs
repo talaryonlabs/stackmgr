@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using Talaryon.StackManager.Builder;
+using Talaryon.StackManager.Exceptions;
 using Talaryon.StackManager.Services;
 
 namespace Talaryon.StackManager.Commands;
@@ -11,14 +12,13 @@ public class SyncCommand : BaseCommand
         Add(new EnvironmentOption());
         Add(new StackOption());
         Add(new ApplyOption());
-        SetAction(SyncStack);
     }
-    
-    private async Task SyncStack(ParseResult parseResult)
+
+    protected override async Task ExecuteAsync()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
-        var apply = parseResult.GetValue<bool, ApplyOption>();
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
+        var apply = GetValue<bool, ApplyOption>();
 
         var kustomizeService = GetRequiredService<IKustomizeService>()
             .Directory(stack.LocalDirectory);

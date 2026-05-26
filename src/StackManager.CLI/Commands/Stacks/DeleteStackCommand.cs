@@ -14,10 +14,10 @@ public class DeleteStackCommand : ResourceDeleteCommand<Stack, StackArgument>
         Add(new EnvironmentOption());
     }
 
-    protected override Stack LoadResource(ParseResult parseResult)
+    protected override Stack LoadResource()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var name = GetName<StackArgument>(parseResult);
+        var env = GetEnvironment<EnvironmentOption>();
+        var name = GetName<StackArgument>();
         return env.GetStack(name);
     }
 

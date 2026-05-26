@@ -15,11 +15,11 @@ public class ConfigureGlobalCommand : ResourceConfigureCommand<NameArgument>
         Add(new AppRepositoryOption());
     }
 
-    protected override void Configure(ParseResult parseResult)
+    protected override void Configure()
     {
         var localConfig = GetRequiredService<LocalConfig>();
         
-        var appRepository = parseResult.GetValue<string, AppRepositoryOption>();
+        var appRepository = GetValue<string, AppRepositoryOption>();
         if (appRepository is not null)
         {
             ValidationHelper.ValidateUrl(appRepository);

@@ -15,11 +15,11 @@ public class DescribeImageCommand : ResourceDescribeCommand<StackImage, ImageArg
         Add(new StackOption());
     }
 
-    protected override StackImage LoadResource(ParseResult parseResult)
+    protected override StackImage LoadResource()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
-        var name = GetName<ImageArgument>(parseResult);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
+        var name = GetName<ImageArgument>();
         
         return stack.Get<StackImage>(name);
     }

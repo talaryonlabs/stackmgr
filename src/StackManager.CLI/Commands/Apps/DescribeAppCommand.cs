@@ -1,4 +1,3 @@
-using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
 using Talaryon.StackManager.Exceptions;
 
@@ -16,11 +15,11 @@ public class DescribeAppCommand : ResourceDescribeCommand<StackApp, AppArgument>
         Add(new StackOption());
     }
 
-    protected override StackApp LoadResource(ParseResult parseResult)
+    protected override StackApp LoadResource()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
-        var name = GetName<AppArgument>(parseResult);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
+        var name = GetName<AppArgument>();
         return stack.Apps.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) 
             ?? throw new AppNotFoundException(name);
     }

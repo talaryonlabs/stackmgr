@@ -13,10 +13,10 @@ public class GetImagesCommand : ResourceGetCommand<StackImage>
     {
     }
 
-    protected override IReadOnlyList<StackImage> GetResources(ParseResult parseResult)
+    protected override IReadOnlyList<StackImage> GetResources()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
         return stack.Images;
     }
 
