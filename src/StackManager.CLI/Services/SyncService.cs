@@ -1,3 +1,4 @@
+using System.Reflection;
 using StackManager.Shared.Models;
 using Talaryon.StackManager.Exceptions;
 
@@ -77,6 +78,8 @@ public class SyncService(IProxyService proxy, IGitService git) : ISyncService
         var application = await _remote.GetApplicationAsync(stack.Namespace);
         var ns = await _remote.GetNamespaceAsync(stack.Namespace);
         var error = false;
+        
+        var getVolumeName = HelperMethods.GetApiMethod<SyncService>(stack, "GetVolumeName");
 
         foreach (var volume in volumes)
         {
@@ -84,7 +87,8 @@ public class SyncService(IProxyService proxy, IGitService git) : ISyncService
                 .NoNewLineAfter()
                 .WaitFor(async () =>
                 {
-                    if (await _remote.DeleteVolumeAsync(stack.Namespace, volume.Name) is not null)
+                    var name = (string)getVolumeName.Invoke(this, [stack, volume.Name])!;
+                    if (await _remote.DeleteVolumeAsync(stack.Namespace, name) is not null)
                         return LogBuilder.Message("Done.").AsSuccess();
                     
                     error = true;
@@ -150,9 +154,16 @@ public class SyncService(IProxyService proxy, IGitService git) : ISyncService
 
         return (ns is not null);
     }
-    
+
+    [ApiVersion("stack.talaryon.io/v2beta")]
+    private string GetVolumeName(Stack stack, string volume) => $"{stack.Environment.Name}-{stack.Name}-{volume}";
+
+    [ApiVersion]
+    private string GetVolumeNameLegacy(Stack stack, string volume) => volume;
+
     private async Task<bool> SyncVolumesAsync(Stack stack)
     {
+        var getVolumeName = HelperMethods.GetApiMethod<SyncService>(stack, "GetVolumeName");
         var remote = await _remote.GetVolumesAsync(stack.Namespace!);
         var local = stack.Volumes
             .SelectMany(v =>
@@ -172,36 +183,41 @@ public class SyncService(IProxyService proxy, IGitService git) : ISyncService
                 return [v];
             })
             .ToList();
-        
-        foreach(var volume in local.IntersectBy(remote.Select(v => v.Name), v => v.Name))
+
+        foreach (var volume in local.IntersectBy(remote.Select(v => v.Name),
+                     v => (string)getVolumeName.Invoke(this, [stack, v.Name])!))
         {
             await LogBuilder.Message($"- [Volume] {volume.Name} ... ")
                 .NoNewLineAfter()
                 .WaitFor(() => LogBuilder.Message("Exists.").AsWarning())
                 .RunAsync();
         }
-        
-        foreach(var volume in local.ExceptBy(remote.Select(v => v.Name), v => v.Name))
+
+        foreach (var volume in local.ExceptBy(remote.Select(v => v.Name),
+                     v => (string)getVolumeName.Invoke(this, [stack, v.Name])!))
         {
             await LogBuilder
                 .Message($"- [Volume] Creating {volume.Name} ... ")
                 .NoNewLineAfter()
                 .WaitFor(async () =>
                 {
-                    var v = await _remote.CreateVolumeAsync(stack.Namespace!, new Volume
-                    {
-                        Name = volume.Name,
-                        AccessMode = volume.AccessMode,
-                        Size = volume.StorageSize
-                    });
-                    return v is null
-                        ? LogBuilder.Message("Failed.").AsError()
-                        : LogBuilder.Message("Done.").AsSuccess();
+                    var name = (string)getVolumeName.Invoke(this, [stack, volume.Name])!;
+                    return LogBuilder.Message(name).AsWarning();
+                    // var v = await _remote.CreateVolumeAsync(stack.Namespace!, new Volume
+                    // {
+                    //     Name = name,
+                    //     AccessMode = volume.AccessMode,
+                    //     Size = volume.StorageSize
+                    // });
+                    // return v is null
+                    //     ? LogBuilder.Message("Failed.").AsError()
+                    //     : LogBuilder.Message("Done.").AsSuccess();
                 })
                 .RunAsync();
         }
 
-        foreach(var volume in remote.ExceptBy(local.Select(v => v.Name), v => v.Name))
+        foreach (var volume in remote.ExceptBy(local.Select(v => (string)getVolumeName.Invoke(this, [stack, v.Name])!),
+                     v => v.Name))
         {
             await LogBuilder
                 .Message($"- [Volume] Deleting {volume.Name} ... ")

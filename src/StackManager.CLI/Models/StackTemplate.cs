@@ -1,9 +1,8 @@
-using Talaryon.StackManager.Exceptions;
 using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Models;
 
-public class StackTemplate
+public class StackTemplate : IApiVersionItem
 {
     public const string FileName = ".app.yaml";
     public const string DirectoryName = ".apps";
@@ -12,7 +11,7 @@ public class StackTemplate
     [YamlIgnore] public DirectoryInfo LocalDirectory => new (Path.Combine(DirectoryName, Name));
     
     [YamlMember(Alias = "name")] public required string Name { get; init; }
-    [YamlMember(Alias = "version")] public string? Version { get; init; } = "template.talaryon.io/v1beta";
+    [YamlMember(Alias = "version")] public string? Version { get; set; } = "template.talaryon.io/v1beta";
     [YamlMember(Alias = "port")] public short Port { get; init; }
     [YamlMember(Alias = "requirements")] public List<string> Requirements { get; init; } = [];
     [YamlMember(Alias = "volumes")] public List<string> Volumes { get; init; } = [];
