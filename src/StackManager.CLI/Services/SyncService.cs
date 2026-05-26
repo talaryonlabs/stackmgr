@@ -79,7 +79,7 @@ public class SyncService(IProxyService proxy, IGitService git) : ISyncService
         var ns = await _remote.GetNamespaceAsync(stack.Namespace);
         var error = false;
         
-        var getVolumeName = HelperMethods.GetApiMethod<SyncService>(stack, "GetVolumeName");
+        var getVolumeName = HelperMethods.GetApiMethod<ApiMethods>(stack, "GetVolumeName");
 
         foreach (var volume in volumes)
         {
@@ -157,7 +157,7 @@ public class SyncService(IProxyService proxy, IGitService git) : ISyncService
 
     private async Task<bool> SyncVolumesAsync(Stack stack)
     {
-        var getVolumeName = HelperMethods.GetApiMethod<SyncService>(stack, "GetVolumeName");
+        var getVolumeName = HelperMethods.GetApiMethod<ApiMethods>(stack, "GetVolumeName");
         var remote = await _remote.GetVolumesAsync(stack.Namespace!);
         var local = stack.Volumes
             .SelectMany(v =>
@@ -327,10 +327,4 @@ public class SyncService(IProxyService proxy, IGitService git) : ISyncService
 
         return true;
     }
-    
-    [ApiVersion("stack.talaryon.io/v2beta")]
-    private static string GetVolumeName(Stack stack, string volume) => $"{stack.Environment.Name}-{stack.Name}-{volume}";
-
-    [ApiVersion]
-    private static string GetVolumeNameLegacy(Stack stack, string volume) => volume;
 }
