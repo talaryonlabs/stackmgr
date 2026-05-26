@@ -1,6 +1,9 @@
 using System.CommandLine;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Talaryon.StackManager.Exceptions;
+using Talaryon.StackManager.Services;
+using Talaryon.Toolbox.Api;
 
 namespace Talaryon.StackManager.Commands;
 
@@ -16,13 +19,27 @@ public abstract class BaseCommand : Command
         SetAction(async parseResult =>
         {
             _parseResult = parseResult;
+
+            var errorService = GetRequiredService<IErrorService>();
+            
             try
             {
                 await ExecuteAsync();
             }
-            catch (Exception e)
+            catch (CliException cliEx)
             {
-                LogMessage.AsError(e.Message);
+                errorService.LogError(cliEx);
+                errorService.SetExitCode(cliEx.ExitCode);
+            }
+            catch (ApiError apiError)
+            {
+                errorService.LogError(apiError);
+                errorService.SetExitCode(2);
+            }
+            catch (Exception ex)
+            {
+                errorService.LogError(ex);
+                errorService.SetExitCode(2);
             }
         });
     }

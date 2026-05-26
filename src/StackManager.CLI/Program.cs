@@ -4,9 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Talaryon.StackManager;
 using Talaryon.StackManager.Commands;
 using Talaryon.StackManager.Commands.Resources;
-using Talaryon.StackManager.Exceptions;
-using Talaryon.StackManager.Extensions;
-using Talaryon.Toolbox.Api;
+using Talaryon.StackManager.Services;
 
 // Check for --version or -v before DI setup
 if (args.Length > 0 && (args[0] == "--version" || args[0] == "-v"))
@@ -58,31 +56,29 @@ commands.Where(t =>
         rootCommand.Add(command);
     });
 
-int exitCode = 0;
+var errorService = services.GetRequiredService<IErrorService>();
 
 try
 {
     var parseResult = rootCommand.Parse(args);
     parseResult.Invoke();
 }
-catch (CliException cliEx)
+catch (Exception e)
 {
-    LogMessage.AsError(cliEx.Message);
-    if (localConfig.DebugMode && cliEx.ShowStackTrace)
-    {
-        Console.Error.WriteLine(cliEx.StackTrace);
-    }
-    exitCode = cliEx.ExitCode;
-}
-catch (ApiError apiError)
-{
-    LogMessage.AsError(apiError.Message ?? "Unknown API error");
-    exitCode = 2;
-}
-catch (Exception ex)
-{
-    LogMessage.AsError(localConfig.DebugMode ? ex.ToString() : ex.Message);
-    exitCode = 2;
+    errorService.SetExitCode(1);
+    errorService.LogError(e);   
 }
 
-Environment.Exit(exitCode);
+if (errorService.ExitCode > 0)
+{
+    if (errorService.LastException is null)
+    {
+        throw new Exception("Unknown error occurred.");   
+    }
+
+    LogMessage.AsError(localConfig.DebugMode
+        ? errorService.LastException.ToString()
+        : errorService.LastException.Message);
+
+    Environment.Exit(errorService.ExitCode);
+}

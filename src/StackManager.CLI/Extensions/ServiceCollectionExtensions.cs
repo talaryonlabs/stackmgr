@@ -12,6 +12,7 @@ public static class ServiceCollectionExtensions
         {
             // Register singleton services
             services.AddSingleton<LocalConfig>(_ => LocalConfig.Get());
+            services.AddSingleton<IErrorService, ErrorService>();
         
             // Register transient services
             services.AddTransient<IGitService, GitService>();
