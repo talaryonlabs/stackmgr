@@ -8,14 +8,13 @@ public class DefaultCommand : BaseCommand
     {
         Add(new EnvironmentOption());
         Add(new StackOption());
-        SetAction(SetDefaults);
     }
 
-    private void SetDefaults(ParseResult parseResult)
+    protected override void Execute()
     {
         var conf = GetRequiredService<LocalConfig>();
-        var env = parseResult.GetValue<string, EnvironmentOption>();
-        var stack = parseResult.GetValue<string, StackOption>();
+        var env = GetValue<string, EnvironmentOption>();
+        var stack = GetValue<string, StackOption>();
 
         if (env is not null)
         {

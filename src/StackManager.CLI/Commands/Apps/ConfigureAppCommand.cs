@@ -1,4 +1,3 @@
-using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
 
 namespace Talaryon.StackManager.Commands.Apps;
@@ -19,34 +18,34 @@ public class ConfigureAppCommand : ResourceConfigureCommand<AppArgument>
         Add(new ImageOption());
     }
 
-    protected override void Configure(ParseResult parseResult)
+    protected override void Configure()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
-        var app = GetApp<AppArgument>(parseResult, stack);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
+        var app = GetApp<AppArgument>(stack);
 
-        var volumes = VolumeOption.GetVolumes(parseResult);
+        var volumes = VolumeOption.GetVolumes(ParseResult);
         foreach (var volume in volumes)
         {
             app.Volumes[volume.Key] = volume.Value;
             LogMessage.AsSuccess($"Volume '{volume.Key}' set to '{volume.Value}' for app '{app.Name}'.");
         }
         
-        var requirements = RequirementOption.GetRequirements(parseResult);
+        var requirements = RequirementOption.GetRequirements(ParseResult);
         foreach (var requirement in requirements)
         {
             app.Requirements[requirement.Key] = requirement.Value;
             LogMessage.AsSuccess($"Requirement '{requirement.Key}' set to '{requirement.Value}' for app '{app.Name}'.");
         }
         
-        var parameters = ParamOption.GetParams(parseResult);
+        var parameters = ParamOption.GetParams(ParseResult);
         foreach (var parameter in parameters)
         {
             app.Params[parameter.Key] = parameter.Value;
             LogMessage.AsSuccess($"Parameter '{parameter.Key}' set to '{parameter.Value}' for app '{app.Name}'.");
         }
 
-        var images = ImageOption.GetImages(parseResult);
+        var images = ImageOption.GetImages(ParseResult);
         foreach (var image in images)
         {
             app.Images[image.Key] = image.Value;

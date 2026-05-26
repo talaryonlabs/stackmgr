@@ -1,4 +1,3 @@
-using System.CommandLine;
 using Talaryon.StackManager.Builder;
 using Talaryon.StackManager.Commands.Resources;
 using Talaryon.StackManager.Validation;
@@ -16,9 +15,9 @@ public class NewEnvironmentCommand : ResourceCreateCommand<StackEnvironment, Env
         Aliases.Add("env");
     }
 
-    protected override StackEnvironment CreateResourceInstance(ParseResult parseResult)
+    protected override StackEnvironment CreateResourceInstance()
     {
-        var name = GetName<EnvironmentArgument>(parseResult);
+        var name = GetName<EnvironmentArgument>();
         ValidationHelper.ValidateEnvironmentName(name);
 
         var env = new StackEnvironmentBuilder()

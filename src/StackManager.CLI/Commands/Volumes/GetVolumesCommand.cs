@@ -13,10 +13,10 @@ public class GetVolumesCommand : ResourceGetCommand<StackVolume>
     {
     }
 
-    protected override IReadOnlyList<StackVolume> GetResources(ParseResult parseResult)
+    protected override IReadOnlyList<StackVolume> GetResources()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
         return stack.Volumes;
     }
 

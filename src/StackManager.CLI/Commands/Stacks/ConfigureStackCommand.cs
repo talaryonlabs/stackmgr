@@ -15,14 +15,14 @@ public class ConfigureStackCommand : ResourceConfigureCommand<StackArgument>
         Add(new EnableAutoSyncOption());
     }
 
-    protected override void Configure(ParseResult parseResult)
+    protected override void Configure()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackArgument>(parseResult, env);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackArgument>(env);
 
-        if (parseResult.Tokens.Any(v => v.Value == "--enable-auto-sync"))
+        if (ParseResult.Tokens.Any(v => v.Value == "--enable-auto-sync"))
         {
-            stack.EnableAutoSync = parseResult.GetValue<bool, EnableAutoSyncOption>();
+            stack.EnableAutoSync = GetValue<bool, EnableAutoSyncOption>();
         }
         
         stack.Save();

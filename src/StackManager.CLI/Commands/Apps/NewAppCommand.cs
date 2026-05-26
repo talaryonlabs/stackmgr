@@ -1,4 +1,3 @@
-using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
 using Talaryon.StackManager.Validation;
 
@@ -18,16 +17,16 @@ public class NewAppCommand : ResourceCreateCommand<StackApp, AppArgument>
         Add(new DevOption());
     }
 
-    protected override StackApp CreateResourceInstance(ParseResult parseResult)
+    protected override StackApp CreateResourceInstance()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
-        var name = GetName<AppArgument>(parseResult);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
+        var name = GetName<AppArgument>();
         
         ValidationHelper.ValidateAppName(name);
         
-        var template = parseResult.GetValue<string, TemplateOption>();
-        var branch = parseResult.GetValue<bool, DevOption>() ? "dev" : "prod";
+        var template = GetValue<string, TemplateOption>();
+        var branch = GetValue<bool, DevOption>() ? "dev" : "prod";
 
         return stack
             .New<StackApp>()

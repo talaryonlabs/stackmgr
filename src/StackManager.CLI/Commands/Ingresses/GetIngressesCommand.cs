@@ -13,10 +13,10 @@ public class GetIngressesCommand : ResourceGetCommand<StackIngress>
     {
     }
 
-    protected override IReadOnlyList<StackIngress> GetResources(ParseResult parseResult)
+    protected override IReadOnlyList<StackIngress> GetResources()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
         return stack.Ingresses;
     }
 

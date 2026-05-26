@@ -19,15 +19,15 @@ public class NewVolumeCommand : ResourceCreateCommand<StackVolume, VolumeArgumen
         Add(new ReplicasOption());
     }
 
-    protected override StackVolume CreateResourceInstance(ParseResult parseResult)
+    protected override StackVolume CreateResourceInstance()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
-        var name = GetName<VolumeArgument>(parseResult);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
+        var name = GetName<VolumeArgument>();
         
         ValidationHelper.ValidateAppName(name);
         
-        var accessMode = (parseResult.GetValue<string, AccessModeOption>() ?? "ReadWriteOnce").Trim().ToLower() switch
+        var accessMode = (GetValue<string, AccessModeOption>() ?? "ReadWriteOnce").Trim().ToLower() switch
         {
             "rwo" => "ReadWriteOnce",
             "readwrite" => "ReadWriteOnce",
@@ -38,10 +38,10 @@ public class NewVolumeCommand : ResourceCreateCommand<StackVolume, VolumeArgumen
             _ => throw new ArgumentException("Invalid access mode. (ReadWriteOnce, ReadWriteMany)")
         };
         
-        var size = parseResult.GetValue<string, SizeOption>() ?? "1Gi";
+        var size = GetValue<string, SizeOption>() ?? "1Gi";
         size = ValidationHelper.ValidateAndNormalizeSize(size);
         
-        var replicas = parseResult.GetValue<int, ReplicasOption>();
+        var replicas = GetValue<int, ReplicasOption>();
         if (replicas < 0) throw new ArgumentException("Replicas must be >= 0");
 
         return stack

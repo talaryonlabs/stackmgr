@@ -15,16 +15,16 @@ public class DescribeTemplateCommand : ResourceDescribeCommand<StackTemplate, Na
         Add(new DevOption());
     }
 
-    protected override StackTemplate LoadResource(ParseResult parseResult)
+    protected override StackTemplate LoadResource()
     {
-        var name = GetName<NameArgument>(parseResult);
+        var name = GetName<NameArgument>();
         if (string.IsNullOrEmpty(name))
         {
             throw new ArgumentNullException(nameof(name));
         }
         
         var templateService = GetRequiredService<ITemplateService>();
-        var isDev = parseResult.GetValue<bool, DevOption>();
+        var isDev = GetValue<bool, DevOption>();
 
         Task.Run(async () =>
         {

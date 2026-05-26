@@ -14,9 +14,9 @@ public class GetStacksCommand : ResourceGetCommand<Stack>
         Aliases.Add("s");
     }
 
-    protected override IReadOnlyList<Stack> GetResources(ParseResult parseResult)
+    protected override IReadOnlyList<Stack> GetResources()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
+        var env = GetEnvironment<EnvironmentOption>();
         return env.GetStacks();
     }
 

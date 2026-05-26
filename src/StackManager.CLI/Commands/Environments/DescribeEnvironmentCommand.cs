@@ -1,4 +1,3 @@
-using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
 
 namespace Talaryon.StackManager.Commands.Environments;
@@ -14,9 +13,9 @@ public class DescribeEnvironmentCommand : ResourceDescribeCommand<StackEnvironme
         Aliases.Add("env");
     }
 
-    protected override StackEnvironment LoadResource(ParseResult parseResult)
+    protected override StackEnvironment LoadResource()
     {
-        return GetEnvironment<EnvironmentArgument>(parseResult);
+        return GetEnvironment<EnvironmentArgument>();
     }
 
     protected override void DisplayResource(StackEnvironment resource)

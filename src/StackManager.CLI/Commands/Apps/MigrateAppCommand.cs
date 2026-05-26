@@ -1,4 +1,3 @@
-using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
 using Talaryon.StackManager.Services;
 
@@ -16,14 +15,14 @@ public class MigrateAppCommand : ResourceMigrateCommand<StackApp, AppArgument>
         Add(new StackOption());
     }
 
-    protected override StackApp LoadResource(ParseResult parseResult)
+    protected override StackApp LoadResource()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
-        return GetApp<AppArgument>(parseResult, stack);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
+        return GetApp<AppArgument>(stack);
     }
 
-    protected override async Task MigrateResourceAsync(StackApp resource, ParseResult parseResult)
+    protected override async Task MigrateResourceAsync(StackApp resource)
     {
         var app = resource;
         var stack = app.Stack;

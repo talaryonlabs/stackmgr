@@ -1,4 +1,3 @@
-using System.CommandLine;
 using Talaryon.StackManager.Commands.Resources;
 
 namespace Talaryon.StackManager.Commands.Environments;
@@ -20,46 +19,46 @@ public class ConfigureEnvironmentCommand : ResourceConfigureCommand<EnvironmentA
         Add(new RepositoryOption());
     }
 
-    protected override void Configure(ParseResult parseResult)
+    protected override void Configure()
     {
-        var env = GetEnvironment<EnvironmentArgument>(parseResult);
+        var env = GetEnvironment<EnvironmentArgument>();
         
-        var repository = parseResult.GetValue<string, RepositoryOption>();
+        var repository = GetValue<string, RepositoryOption>();
         if (!string.IsNullOrEmpty(repository))
         {
             env.Repository = repository;
             LogMessage.AsSuccess($"Repository '{repository}' configured for environment '{env.Name}'.");
         }
         
-        var vault = parseResult.GetValue<string, VaultOption>();
+        var vault = GetValue<string, VaultOption>();
         if (!string.IsNullOrEmpty(vault))
         {
             env.Vault = vault;
             LogMessage.AsSuccess($"Vault '{vault}' configured for environment '{env.Name}'.");
         }
         
-        var registryCredentials = parseResult.GetValue<string, RegistryCredentialsOption>();
+        var registryCredentials = GetValue<string, RegistryCredentialsOption>();
         if (!string.IsNullOrEmpty(registryCredentials))
         {
             env.RegistryCredentials = registryCredentials;
             LogMessage.AsSuccess($"Registry credentials configured for environment '{env.Name}'.");
         }
         
-        var outpost = parseResult.GetValue<string, OutpostOption>();
+        var outpost = GetValue<string, OutpostOption>();
         if (!string.IsNullOrEmpty(outpost))
         {
             env.Outpost = outpost;
             LogMessage.AsSuccess($"Outpost '{outpost}' configured for environment '{env.Name}'.");
         }
         
-        var certIssuer = parseResult.GetValue<string, CertIssuerOption>();
+        var certIssuer = GetValue<string, CertIssuerOption>();
         if (!string.IsNullOrEmpty(certIssuer))
         {
             env.CertIssuer = certIssuer;
             LogMessage.AsSuccess($"CertIssuer '{certIssuer}' configured for environment '{env.Name}'.");
         }
         
-        var remote = parseResult.GetValue<string, RemoteOption>();
+        var remote = GetValue<string, RemoteOption>();
         if (!string.IsNullOrEmpty(remote))
         {
             env.Remote = remote;

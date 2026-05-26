@@ -17,10 +17,10 @@ public class GetTemplatesCommand : ResourceGetCommand<StackTemplate>
         Add(new DevOption());
     }
 
-    protected override async Task<IReadOnlyList<StackTemplate>> GetResourcesAsync(ParseResult parseResult)
+    protected override async Task<IReadOnlyList<StackTemplate>> GetResourcesAsync()
     {
         var templateService = GetRequiredService<ITemplateService>();
-        var isDev = parseResult.GetValue<bool, DevOption>();
+        var isDev = GetValue<bool, DevOption>();
 
         await templateService.UpdateAsync(isDev ? "dev" : "prod");
         

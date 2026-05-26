@@ -16,10 +16,10 @@ public class NewStackCommand : ResourceCreateCommand<Stack, StackArgument>
         Add(new TemplateOption());
     }
 
-    protected override Stack CreateResourceInstance(ParseResult parseResult)
+    protected override Stack CreateResourceInstance()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var name = GetName<StackArgument>(parseResult);
+        var env = GetEnvironment<EnvironmentOption>();
+        var name = GetName<StackArgument>();
         ValidationHelper.ValidateStackName(name);
         
         return env.NewStack(name);

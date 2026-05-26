@@ -17,12 +17,12 @@ public class NewImageCommand : ResourceCreateCommand<StackImage, ImageArgument>
         Add(new NameOption());
     }
 
-    protected override StackImage CreateResourceInstance(ParseResult parseResult)
+    protected override StackImage CreateResourceInstance()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
-        var imageName = GetName<ImageArgument>(parseResult);
-        var name = parseResult.GetValue<string, NameOption>();
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
+        var imageName = GetName<ImageArgument>();
+        var name = GetValue<string, NameOption>();
         
         if (string.IsNullOrEmpty(name))
         {

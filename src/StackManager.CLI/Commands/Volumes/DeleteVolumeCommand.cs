@@ -16,11 +16,11 @@ public class DeleteVolumeCommand : ResourceDeleteCommand<StackVolume, VolumeArgu
         Add(new StackOption());
     }
 
-    protected override StackVolume LoadResource(ParseResult parseResult)
+    protected override StackVolume LoadResource()
     {
-        var env = GetEnvironment<EnvironmentOption>(parseResult);
-        var stack = GetStack<StackOption>(parseResult, env);
-        var name = GetName<VolumeArgument>(parseResult);
+        var env = GetEnvironment<EnvironmentOption>();
+        var stack = GetStack<StackOption>(env);
+        var name = GetName<VolumeArgument>();
         
         return stack.Get<StackVolume>(name);
     }
