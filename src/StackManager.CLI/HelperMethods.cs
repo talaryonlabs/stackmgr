@@ -11,7 +11,7 @@ public static class HelperMethods
     public static MethodInfo GetApiMethod<T>(IApiVersionItem apiVersionItem, string namePattern)
     {
         var apiMethods = typeof(T)
-            .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+            .GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic)
             .Where(m => m.GetCustomAttribute<ApiVersionAttribute>() is not null)
             .Where(m => m.Name.StartsWith(namePattern))
             .ToList();

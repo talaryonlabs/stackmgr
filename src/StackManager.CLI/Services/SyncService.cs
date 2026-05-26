@@ -27,7 +27,7 @@ public interface ISyncService
 
 public class SyncService(IProxyService proxy, IGitService git) : ISyncService
 {
-    private IProxyServiceActions? _remote;
+    private IProxyServiceActions _remote = null!;
     
     public async Task<bool> SyncStackAsync(Stack stack, bool applyChanges)
     {
@@ -155,12 +155,6 @@ public class SyncService(IProxyService proxy, IGitService git) : ISyncService
         return (ns is not null);
     }
 
-    [ApiVersion("stack.talaryon.io/v2beta")]
-    private string GetVolumeName(Stack stack, string volume) => $"{stack.Environment.Name}-{stack.Name}-{volume}";
-
-    [ApiVersion]
-    private string GetVolumeNameLegacy(Stack stack, string volume) => volume;
-
     private async Task<bool> SyncVolumesAsync(Stack stack)
     {
         var getVolumeName = HelperMethods.GetApiMethod<SyncService>(stack, "GetVolumeName");
@@ -202,16 +196,15 @@ public class SyncService(IProxyService proxy, IGitService git) : ISyncService
                 .WaitFor(async () =>
                 {
                     var name = (string)getVolumeName.Invoke(this, [stack, volume.Name])!;
-                    return LogBuilder.Message(name).AsWarning();
-                    // var v = await _remote.CreateVolumeAsync(stack.Namespace!, new Volume
-                    // {
-                    //     Name = name,
-                    //     AccessMode = volume.AccessMode,
-                    //     Size = volume.StorageSize
-                    // });
-                    // return v is null
-                    //     ? LogBuilder.Message("Failed.").AsError()
-                    //     : LogBuilder.Message("Done.").AsSuccess();
+                    var v = await _remote.CreateVolumeAsync(stack.Namespace!, new Volume
+                    {
+                        Name = name,
+                        AccessMode = volume.AccessMode,
+                        Size = volume.StorageSize
+                    });
+                    return v is null
+                        ? LogBuilder.Message("Failed.").AsError()
+                        : LogBuilder.Message("Done.").AsSuccess();
                 })
                 .RunAsync();
         }
@@ -334,4 +327,10 @@ public class SyncService(IProxyService proxy, IGitService git) : ISyncService
 
         return true;
     }
+    
+    [ApiVersion("stack.talaryon.io/v2beta")]
+    private static string GetVolumeName(Stack stack, string volume) => $"{stack.Environment.Name}-{stack.Name}-{volume}";
+
+    [ApiVersion]
+    private static string GetVolumeNameLegacy(Stack stack, string volume) => volume;
 }
