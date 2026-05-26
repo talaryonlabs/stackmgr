@@ -26,7 +26,7 @@ public class TemplateService(IGitService git, LocalConfig config) : ITemplateSer
         var directory = new DirectoryInfo(StackTemplate.DirectoryName);
         var apps = directory
             .GetDirectories()
-            .Select(v => new FileInfo(Path.Combine(v.FullName, StackTemplate.FileName)))
+            .Select(v => v.GetFile(StackTemplate.FileName))
             .Where(v => v.Exists)
             .Select(StackResource.Load<StackTemplate>)
             .ToList();
@@ -50,59 +50,33 @@ public class TemplateService(IGitService git, LocalConfig config) : ITemplateSer
         if (!app.LocalDirectory.Exists)
             app.LocalDirectory.Create();
 
-        var baseDirectory = new DirectoryInfo(Path.Combine(app.LocalDirectory.FullName, ".base"));
-        if (baseDirectory.Exists)
-        {
-            baseDirectory.Delete(true);
-        }
-        baseDirectory.Create();
+        var baseDirectory = app.LocalDirectory.GetDirectory(".base");
+        if (!baseDirectory.Exists)
+            baseDirectory.Create();
+        else
+            baseDirectory
+                .GetFiles("template.*.yaml", SearchOption.TopDirectoryOnly)
+                .ToList()
+                .ForEach(v => v.Delete());
+
 
         var files = template.LocalDirectory
             .GetFiles("*.yaml", SearchOption.AllDirectories)
-            .Where(v => v.Name != StackTemplate.FileName);
+            .Where(v => v.Name != StackTemplate.FileName)
+            .ToList();
 
-        foreach (var file in files.Where(v => v.Name.StartsWith("init.", StringComparison.OrdinalIgnoreCase)))
+        foreach (var file in files)
         {
-            var destination = new FileInfo(Path.Combine(app.LocalDirectory.FullName, file.Name[5..]));
+            var destination = GetDestinationFileInfo(baseDirectory, file.Name);
             if (destination.Exists) continue;
-
+            
             var content = File.ReadAllText(file.FullName);
-            
-            content = ApplyVariables(content, app);
-            
             File.WriteAllText(destination.FullName, content);
-            LogMessage.AsInfo($"Applied init file '{destination.Name}' to app root.");
-        }
-        
-        foreach(var file in files.Where(v => !v.Name.StartsWith("init.", StringComparison.OrdinalIgnoreCase)))
-        {
-            var destination = new FileInfo(Path.Combine(baseDirectory.FullName, file.Name));
-            if (destination.Exists) continue;
-
-            var content = File.ReadAllText(file.FullName);
-            content = ApplyVariables(content, app);
-            
-            File.WriteAllText(destination.FullName, content);
-            LogMessage.AsInfo($"Applied template file '{destination.Name}' to app base.");
+            LogMessage.AsInfo($"Applied file '{destination.Name}' to .base sub-directory.");
         }
     }
 
-    private string ApplyVariables(string content, StackApp app)
-    {
-        content = content
-            .Replace("{{app-name}}", app.Name)
-            .Replace("{{stack-name}}", app.Stack.Name)
-            .Replace("{{env-name}}", app.Stack.Environment.Name)
-            .Replace("{{vault-path}}", $"{app.Stack.Environment.Vault}/{app.Stack.Name}/{app.Name}");
-                
-        content = app.Volumes.Aggregate(content,
-            (current, volume) => current.Replace("{{app-volume." + volume.Key + "}}", volume.Value));
-        content = app.Params.Aggregate(content,
-            (current, param) => current.Replace("{{app-param." + param.Key + "}}", param.Value));
-        content = app.Requirements.Aggregate(content,
-            (current, requirement) =>
-                current.Replace("{{app-requirement." + requirement.Key + "}}", requirement.Value));
-        
-        return content;
-    }
+    private static FileInfo GetDestinationFileInfo(DirectoryInfo destination, string filename) =>
+        new(Path.Combine(destination.FullName,
+            filename.StartsWith("init.", StringComparison.OrdinalIgnoreCase) ? filename : $"template.{filename}"));
 }

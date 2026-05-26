@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Talaryon.StackManager.Models;
 using Talaryon.StackManager.Models.Kubernetes;
 
 namespace Talaryon.StackManager.Services;
@@ -86,7 +85,7 @@ public class KustomizeService : IKustomizeService, IKustomizeServiceActions
         var errors = new List<string>();
         var path = Path.Combine(_currentDirectory!.FullName, Kustomization.FileName);
         var file = new FileInfo(path);
-
+        
         if (!IsInstalled)
         {
             errors.Add("kustomize CLI is not installed. Please install it from https://kustomize.io/");
@@ -99,28 +98,58 @@ public class KustomizeService : IKustomizeService, IKustomizeServiceActions
             return errors;
         }
 
+        _currentDirectory.GetFiles("*.yaml", SearchOption.AllDirectories);
+
+        var validationDirectory = _currentDirectory.GetDirectory(".validation");
+        if(validationDirectory.Exists)
+        {
+            validationDirectory.Delete(true);
+        }
+        validationDirectory.Create();
+        
+        _currentDirectory.GetDirectories()
+            .Where(d => !d.Name.Contains(".base", StringComparison.OrdinalIgnoreCase))
+            .Where(d => !d.Name.Contains(".validation", StringComparison.OrdinalIgnoreCase))
+            .Select(v =>
+                new DirectoryInfo(Path.Combine(validationDirectory.FullName,
+                    v.FullName.Replace(_currentDirectory.FullName, validationDirectory.FullName))))
+            .ToList()
+            .ForEach(v => Directory.CreateDirectory(v.FullName));
+        
+        _currentDirectory.GetFiles("*.yaml", SearchOption.AllDirectories)
+            .Where(v => !v.FullName.Contains(".base", StringComparison.OrdinalIgnoreCase))
+            .Where(v => !v.FullName.Contains(".validation", StringComparison.OrdinalIgnoreCase))
+            .Where(v => !v.Name.Equals(Stack.FileName, StringComparison.OrdinalIgnoreCase))
+            .ToList()
+            .ForEach(v =>
+            {
+                File.Copy(v.FullName, Path.Combine(validationDirectory.FullName, v.FullName.Replace(_currentDirectory.FullName, validationDirectory.FullName)), true);
+            });
+
         // Validate using kustomize build (dry-run mode)
         // The build command will fail if the kustomization is invalid
-        var buildErrors = await RunKustomizeBuildAsync(file.Directory!);
+        var buildErrors = await RunKustomizeBuildAsync();
         errors.AddRange(buildErrors);
 
         // If build succeeded, also run cfg validation
         if (errors.Count == 0)
         {
-            var cfgErrors = await RunKustomizeCfgAsync(file.Directory!);
+            var cfgErrors = await RunKustomizeCfgAsync();
             errors.AddRange(cfgErrors);
         }
+        
+        validationDirectory.Delete(true);
 
         return errors;
     }
 
-    private async Task<List<string>> RunKustomizeBuildAsync(DirectoryInfo directory)
+    private async Task<List<string>> RunKustomizeBuildAsync()
     {
         var errors = new List<string>();
 
         try
         {
-            var process = StartProcess("build --load-restrictor LoadRestrictionsNone");
+            var process = StartProcess("build .validation");
             if (process is null)
             {
                 errors.Add("Failed to start kustomize build command");
@@ -159,13 +188,13 @@ public class KustomizeService : IKustomizeService, IKustomizeServiceActions
         return errors;
     }
 
-    private async Task<List<string>> RunKustomizeCfgAsync(DirectoryInfo directory)
+    private async Task<List<string>> RunKustomizeCfgAsync()
     {
         var errors = new List<string>();
 
         try
         {
-            var process = StartProcess("cfg tree");
+            var process = StartProcess("cfg tree .validation");
             if (process is null)
             {
                 return errors;
@@ -209,7 +238,7 @@ public class KustomizeService : IKustomizeService, IKustomizeServiceActions
             UseShellExecute = false,
             RedirectStandardError = true,
             CreateNoWindow = true,
-            WorkingDirectory = _currentDirectory.FullName
+            WorkingDirectory = _currentDirectory!.FullName
         });
 
         return process;

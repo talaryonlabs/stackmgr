@@ -1,4 +1,3 @@
-using Talaryon.StackManager.Serialization;
 using Talaryon.StackManager.Models.Kubernetes;
 
 namespace Talaryon.StackManager.Builder;
@@ -9,6 +8,7 @@ public interface IStackBuilder
     void BuildOutpost();
     void BuildIngresses();
     void BuildRegistryCredentials();
+    void BuildApps();
     void BuildKustomization();
 }
 
@@ -19,6 +19,7 @@ public class StackBuilder(Stack stack) : IStackBuilder
     {
         BuildRegistryCredentials();
         BuildIngresses();
+        BuildApps();
 
         if (stack.Ingresses.Any(v => v.IsSecured))
         {
@@ -28,35 +29,61 @@ public class StackBuilder(Stack stack) : IStackBuilder
         // must be last
         BuildKustomization();
     }
-    
-    public void BuildKustomization()
+
+    public void BuildApps()
     {
-        var path = Path.Combine(stack.LocalDirectory.FullName, Kustomization.FileName);
-        var file = new FileInfo(path);
+        stack.Apps.ForEach(BuildApp);
+    }
+
+    private void BuildApp(StackApp app)
+    {
+        var files = app.LocalDirectory.GetFiles("*.yaml", SearchOption.AllDirectories);
+        files
+            .Where(v => v.Name.StartsWith("blueprint.", StringComparison.OrdinalIgnoreCase))
+            .Where(v => !v.FullName.Contains(".base"))
+            .ToList()
+            .ForEach(v => v.Delete());
+        files
+            .Where(v => v.Name.StartsWith("template.", StringComparison.OrdinalIgnoreCase))
+            .Where(v => !v.FullName.Contains(".base"))
+            .ToList()
+            .ForEach(v => v.Delete());
         
-        var allFiles = stack.LocalDirectory
-            .GetFiles("*.yaml", SearchOption.AllDirectories)
-            .Where(v => !new List<string> { Kustomization.FileName, Stack.FileName }.Contains(v.Name))
+        var baseFiles = files
+            .Where(v => v.FullName.Contains(".base"))
             .ToList();
 
-        var normalFiles = allFiles
-            .Where(v => !v.FullName.Contains(".base"))
-            .ToList();
+        foreach (var file in baseFiles)
+        {
+            var destination = app.LocalDirectory.GetFile(file.Name);
+            var content = new ContentBuilder(app)
+                .With(file)
+                .Build();
+            
+            var overrideFile = app.LocalDirectory.GetFile($"override.{file.Name.Replace("template.", "")}");
+            if (overrideFile.Exists)
+                continue;
+
+            File.WriteAllText(destination.FullName, content);
+        }
         
-        var baseFiles = allFiles
-            .Where(v => v.FullName.Contains(".base"))
-            .Where(v =>
-            {
-                return !normalFiles.Any(f => f.Name.Equals($"override.{v.Name}"));
-            })
+    }
+
+    public void BuildKustomization()
+    {
+        var file = stack.LocalDirectory.GetFile(Kustomization.FileName);
+        var resources = stack.LocalDirectory
+            .GetFiles("*.yaml", SearchOption.AllDirectories)
+            .Where(v => !new List<string> { Kustomization.FileName, Stack.FileName }.Contains(v.Name))
+            .Where(v => !v.FullName.Contains(".base"))
+            .Where(v => !v.FullName.Contains(".validation"))
             .ToList();
         
         var kustomization = new Kustomization
         {
             Namespace = stack.Namespace,
             Images = stack.Images.Select(i => (KustomizationImage)i).ToList(),
-            Resources = normalFiles
-                .Concat(baseFiles)
+            Resources = resources
                 .Select(v => v.FullName.Replace(stack.LocalDirectory.FullName + Path.DirectorySeparatorChar, ""))
                 .ToList()
         };
@@ -66,8 +93,7 @@ public class StackBuilder(Stack stack) : IStackBuilder
     
     public void BuildRegistryCredentials()
     {
-        var path = Path.Combine(stack.LocalDirectory.FullName, "registry-credentials.yaml");
-        var file = new FileInfo(path);
+        var file = stack.LocalDirectory.GetFile("registry-credentials.yaml");
         
         if (stack.Environment.RegistryCredentials is { Length: > 0 })
         {
@@ -85,8 +111,7 @@ public class StackBuilder(Stack stack) : IStackBuilder
     public void BuildOutpost()
     {
         var outpost = new OutpostService(stack);
-        var path = Path.Combine(stack.LocalDirectory.FullName, OutpostService.FileName);
-        var file = new FileInfo(path);
+        var file = stack.LocalDirectory.GetFile(OutpostService.FileName);
         
         StackResource.Save(outpost, file);
     }
@@ -96,9 +121,7 @@ public class StackBuilder(Stack stack) : IStackBuilder
         if (stack.Ingresses.Any(v => v.IsSecured) && stack.Environment.Outpost is not { Length: > 0 })
             throw new Exception("Some ingresses are secured, but there is no environment outpost defined.");
         
-        var path = Path.Combine(stack.LocalDirectory.FullName, ".ingresses");
-        var directory = new DirectoryInfo(path);
-        
+        var directory = stack.LocalDirectory.GetDirectory(".ingresses");
         if (directory.Exists)
         {
             directory.Delete(true);
@@ -110,15 +133,17 @@ public class StackBuilder(Stack stack) : IStackBuilder
             var builder = new IngressBuilder(stackIngress);
             var ingress = builder.ToIngress();
             
-            var file = new FileInfo(Path.Combine(directory.FullName, $"ingress.[{stackIngress.Hostname}].yaml"));
+            var file = directory.GetFile($"ingress.[{stackIngress.Hostname}].yaml");
             StackResource.Save(ingress, file);
             
             if (stackIngress.IsSecured)
             {
                 var authIngress = builder.ToAuthIngress();
-                file = new FileInfo(Path.Combine(directory.FullName, $"ingress.[{stackIngress.Hostname}].auth.yaml"));
+                file = directory.GetFile($"ingress.[{stackIngress.Hostname}].auth.yaml");
                 StackResource.Save(authIngress, file);
             }
         }
     }
+    
+    
 }
