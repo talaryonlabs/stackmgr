@@ -4,7 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Talaryon.StackManager;
 using Talaryon.StackManager.Commands;
 using Talaryon.StackManager.Commands.Resources;
+using Talaryon.StackManager.Exceptions;
 using Talaryon.StackManager.Services;
+using Talaryon.Toolbox.Api;
 
 // Check for --version or -v before DI setup
 if (args.Length > 0 && (args[0] == "--version" || args[0] == "-v"))
@@ -80,14 +82,23 @@ catch (Exception e)
 
 if (errorService.ExitCode > 0)
 {
-    if (errorService.LastException is null)
+    switch (errorService.LastException)
     {
-        throw new Exception("Unknown error occurred.");   
+        case null:
+            throw new Exception("Unknown error occurred.");
+        case StackManagerException stackManagerException:
+            LogMessage.AsError(stackManagerException.Message);
+            break;
+        case CliException cliException:
+            LogMessage.AsError(cliException.Message);
+            break;
+        
+        default:
+            LogMessage.AsError(localConfig.DebugMode
+                ? errorService.LastException.ToString()
+                : errorService.LastException.Message);
+            break;
     }
-
-    LogMessage.AsError(localConfig.DebugMode
-        ? errorService.LastException.ToString()
-        : errorService.LastException.Message);
 
     Environment.Exit(errorService.ExitCode);
 }

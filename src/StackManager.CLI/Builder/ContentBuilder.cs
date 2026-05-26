@@ -1,3 +1,5 @@
+using Talaryon.StackManager.Exceptions;
+
 namespace Talaryon.StackManager.Builder;
 
 public interface IContentBuilder
@@ -28,8 +30,16 @@ public class ContentBuilder(StackApp app) : IContentBuilder
         var content = _content
             .Replace("{{app-name}}", app.Name)
             .Replace("{{stack-name}}", app.Stack.Name)
-            .Replace("{{env-name}}", app.Stack.Environment.Name)
-            .Replace("{{vault-path}}", $"{app.Stack.Environment.Vault}/{app.Stack.Name}/{app.Name}");
+            .Replace("{{env-name}}", app.Stack.Environment.Name);
+
+        if (content.Contains("{{vault-path}}"))
+        {
+            if (string.IsNullOrEmpty(app.Stack.Environment.Vault))
+            {
+                throw new ConfigurationException("Vault-Path is not configured. Please run 'stackmgr configure env <environment-name> --vault <vault-path>' first.");
+            }
+            content = content.Replace("{{vault-path}}", $"{app.Stack.Environment.Vault}/{app.Stack.Name}/{app.Name}");
+        }
                 
         content = app.Volumes.Aggregate(content,
             (current, volume) => current.Replace("{{app-volume." + volume.Key + "}}", volume.Value));
