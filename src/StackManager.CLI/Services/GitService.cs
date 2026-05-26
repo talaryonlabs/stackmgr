@@ -24,6 +24,7 @@ public interface IGitServiceActions
     Task AddAsync();
     Task CloneAsync(string url);
     Task CheckoutAsync(string branch);
+    Task AddIgnoreEntriesAsync(string[] entries);
 }
 
 
@@ -32,7 +33,7 @@ public class GitService : IGitService, IGitServiceActions
 {
     private DirectoryInfo _currentDirectory = new(Environment.CurrentDirectory);
 
-    bool IGitServiceActions.IsRepository => Directory.Exists(Path.Combine(_currentDirectory.FullName, ".git"));
+    bool IGitServiceActions.IsRepository => _currentDirectory.GetDirectory(".git").Exists;
     bool IGitService.IsInstalled
     {
         get
@@ -63,7 +64,7 @@ public class GitService : IGitService, IGitServiceActions
     
     IGitServiceActions IGitService.Directory(string directory)
     {
-        _currentDirectory = new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, directory));
+        _currentDirectory = _currentDirectory.GetDirectory(directory);
         return this;
     }
 
@@ -154,7 +155,7 @@ public class GitService : IGitService, IGitServiceActions
         if(!_currentDirectory.Exists)
             _currentDirectory.Create();
         
-        if(Directory.Exists(Path.Combine(_currentDirectory.FullName, ".git")))
+        if(_currentDirectory.GetDirectory(".git").Exists)
             throw new SystemErrorException("Directory already has a .git directory.");
         
         var process = StartProcess($"clone {url}");
@@ -173,6 +174,25 @@ public class GitService : IGitService, IGitServiceActions
         await process.WaitForExitAsync();
     }
 
+    async Task IGitServiceActions.AddIgnoreEntriesAsync(string[] entries)
+    {
+        var gitignore = _currentDirectory.GetFile(".gitignore");
+        if (!gitignore.Exists)
+            gitignore.Create();
+
+        var lines = (await File.ReadAllLinesAsync(gitignore.FullName)).ToList();
+        var modified = false;
+        foreach (var entry in entries)
+        {
+            if (!lines.Any(v => v.Trim().Equals(entry)))
+            {
+                lines.Add(entry);
+                modified = true;
+            }
+        }
+        if (modified)
+            await File.WriteAllLinesAsync(gitignore.FullName, lines);
+    }
 
     private Process? StartProcess(string command)
     {

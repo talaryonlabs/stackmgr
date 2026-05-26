@@ -56,6 +56,15 @@ commands.Where(t =>
         rootCommand.Add(command);
     });
 
+await services.GetRequiredService<IGitService>()
+    .CurrentDirectory()
+    .AddIgnoreEntriesAsync([
+        ".stackmgr", 
+        ".apps",
+        ".env", 
+        ".validation"
+    ]);
+
 var errorService = services.GetRequiredService<IErrorService>();
 
 try

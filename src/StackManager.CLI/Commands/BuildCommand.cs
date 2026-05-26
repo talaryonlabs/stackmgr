@@ -52,6 +52,16 @@ public class BuildCommand : BaseCommand
 
             })
             .RunAsync();
+        
+        await LogBuilder.Message("- [Apps] ... ")
+            .NoNewLineAfter()
+            .WaitFor(() =>
+            {
+                builder.BuildApps();
+                return LogBuilder.Message("Done.").AsSuccess();
+
+            })
+            .RunAsync();
 
         await LogBuilder.Message("- [Kustomization] ... ")
             .NoNewLineAfter()

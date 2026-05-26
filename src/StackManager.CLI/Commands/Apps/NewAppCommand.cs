@@ -46,6 +46,7 @@ public class NewAppCommand : ResourceCreateCommand<StackApp, AppArgument>
 
     protected override void OnResourceCreated(StackApp resource)
     {
+        Directory.CreateDirectory(resource.LocalDirectory.GetDirectory(".base").FullName);
         LogMessage.AsSuccess($"App '{resource.Name}' created.");
         
         if (resource.Template is not null)
