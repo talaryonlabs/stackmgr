@@ -21,7 +21,7 @@ public class TestRemoteCommand : BaseCommand
             return;
         }
 
-        var proxy = GetRequiredService<ProxyService>().Remote(remote);
+        var proxy = GetRequiredService<IProxyService>().Remote(remote);
         await LogBuilder.Message($"Testing Connection '{remote.Name}' ...")
             .WaitFor(async () =>
             {

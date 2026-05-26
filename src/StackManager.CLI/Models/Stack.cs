@@ -3,15 +3,15 @@ using YamlDotNet.Serialization;
 
 namespace Talaryon.StackManager.Models;
 
-public class Stack
+public class Stack : IApiVersionItem
 {
     public const string FileName = ".stack.yaml";
-    
+
     [YamlIgnore] public FileInfo LocalFile => new(Path.Combine(LocalDirectory.FullName, FileName));
-    [YamlIgnore] public DirectoryInfo LocalDirectory => new (Path.Combine(Environment.LocalDirectory.FullName, Name));
+    [YamlIgnore] public DirectoryInfo LocalDirectory => new(Path.Combine(Environment.LocalDirectory.FullName, Name));
     [YamlIgnore] public StackEnvironment Environment { get; set; }
     [YamlIgnore] public V1alpha1Application? Application { get; set; }
-    
+
     [YamlMember(Alias = "isDeleted")] public bool IsDeleted { get; set; }
     [YamlMember(Alias = "name")] public required string Name { get; set; }
     [YamlMember(Alias = "version")] public string? Version { get; set; } = "stack.talaryon.io/v1beta";
