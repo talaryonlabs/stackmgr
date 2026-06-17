@@ -12,9 +12,9 @@ public interface IContentBuilder
 
 public class ContentBuilder(StackApp app) : IContentBuilder
 {
-    private static readonly Regex VolumeRegex = new("{{app-volume.(?<volumeName>.*)}}");
-    private static readonly Regex ParamRegex = new("{{app-param.(?<paramName>.*)}}");
-    private static readonly Regex RequirementRegex = new("{{app-requirement.(?<requirementName>.*)}}");
+    private static readonly Regex VolumeRegex = new("{{app-volume.(?<volumeName>.*?)}}");
+    private static readonly Regex ParamRegex = new("{{app-param.(?<paramName>.*?)}}");
+    private static readonly Regex RequirementRegex = new("{{app-requirement.(?<requirementName>.*?)}}");
     
     private string _content = string.Empty;
 
