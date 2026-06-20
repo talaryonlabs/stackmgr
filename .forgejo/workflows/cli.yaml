@@ -5,7 +5,7 @@ on:
       - 'src/StackManager.Shared/**'
 jobs:
   build-and-pack:
-    runs-on: talaryon-dotnet
+    runs-on: dotnet
     steps:
       - uses: actions/checkout@v4
 
