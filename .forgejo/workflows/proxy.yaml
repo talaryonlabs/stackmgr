@@ -1,0 +1,40 @@
+on:
+  push:
+    paths:
+      - 'src/StackManager.Proxy/**'
+      - 'src/StackManager.Shared/**'
+
+jobs:
+  build-and-push:
+    runs-on: talaryon-dotnet
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0")
+            VERSION="${LATEST_TAG#v}-ci.${GITHUB_SHA:0:8}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Login to Container Registry
+        run: |
+          echo "${{ secrets.CONTAINER_REGISTRY_PASSWORD }}" | docker login code.talaryon.dev \
+            --username ${{ secrets.CONTAINER_REGISTRY_USERNAME }} \
+            --password-stdin
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:${{ env.VERSION }} \
+            -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:latest \
+            -f src/StackManager.Proxy/Dockerfile \
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:${{ env.VERSION }}
+          docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:latest
