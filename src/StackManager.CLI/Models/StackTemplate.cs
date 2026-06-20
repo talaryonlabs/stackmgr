@@ -11,7 +11,7 @@ public class StackTemplate : IApiVersionItem
     [YamlIgnore] public DirectoryInfo LocalDirectory => new (Path.Combine(DirectoryName, Name));
     
     [YamlMember(Alias = "name")] public required string Name { get; init; }
-    [YamlMember(Alias = "version")] public string? Version { get; set; } = "template.talaryon.io/v1beta";
+    [YamlMember(Alias = "version")] public string? Version { get; set; } = ApiDefaults.TemplateVersion;
     [YamlMember(Alias = "port")] public short Port { get; init; }
     [YamlMember(Alias = "requirements")] public List<string> Requirements { get; init; } = [];
     [YamlMember(Alias = "volumes")] public List<string> Volumes { get; init; } = [];

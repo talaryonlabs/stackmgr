@@ -14,7 +14,7 @@ public class Stack : IApiVersionItem
 
     [YamlMember(Alias = "isDeleted")] public bool IsDeleted { get; set; }
     [YamlMember(Alias = "name")] public required string Name { get; set; }
-    [YamlMember(Alias = "version")] public string? Version { get; set; } = "stack.talaryon.io/v1beta";
+    [YamlMember(Alias = "version")] public string? Version { get; set; } = ApiDefaults.StackVersion;
     [YamlMember(Alias = "namespace")] public string? Namespace { get; set; }
     [YamlMember(Alias = "enableAutoSync")] public bool EnableAutoSync { get; set; }
     [YamlMember(Alias = "images")] public List<StackImage> Images { get; init; } = [];

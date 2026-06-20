@@ -11,7 +11,7 @@ public class StackEnvironment : IApiVersionItem
 
     [YamlMember(Alias = "isDeleted")] public bool IsDeleted { get; set; }
     [YamlMember(Alias = "name")] public string? Name { get; set; }
-    [YamlMember(Alias = "version")] public string? Version { get; set; } = "environment.talaryon.io/v1beta";
+    [YamlMember(Alias = "version")] public string? Version { get; set; } = ApiDefaults.EnvironmentVersion;
     [YamlMember(Alias = "vault")] public string? Vault { get; set; }
     [YamlMember(Alias = "outpost")] public string? Outpost { get; set; }
     [YamlMember(Alias = "certIssuer")] public string? CertIssuer { get; set; }
