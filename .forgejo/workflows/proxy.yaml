@@ -1,24 +1,61 @@
-on:
-  push:
-    paths:
-      - 'src/StackManager.Proxy/**'
-      - 'src/StackManager.Shared/**'
-
+on: [push]
 jobs:
-  build-and-push:
-    runs-on: talaryon-dotnet
+  build:
+    runs-on: dotnet
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            VERSION=${VERSION#v}
+            IS_TAG=true
+          else
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0")
+            BRANCH=${GITHUB_REF#refs/heads/}
+            VERSION="${LATEST_TAG#v}-ci.${GITHUB_SHA:0:8}"
+            if [ "$BRANCH" != "main" ]; then
+              VERSION="${VERSION}-${BRANCH}"
+            fi
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "IS_TAG=$IS_TAG" >> $GITHUB_ENV
+
+      - name: Add NuGet source
+        run: |
+          dotnet nuget add source --name nuget.pkg.talaryon.dev https://nuget.pkg.talaryon.dev/v3/index.json
+          dotnet nuget add source --name code.talaryon.dev https://code.talaryon.dev/api/packages/${{ forgejo.repository_owner }}/nuget/index.json
+
+      - name: Publish project
+        run: |
+          dotnet publish src/StackManager.Proxy/StackManager.Proxy.csproj \
+            -c Release \
+            -o ./publish \
+            -p:Version=${{ env.VERSION }}
+
+      - name: Upload publish artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: proxy-publish
+          path: ./publish
+
+  push:
+    needs: build
+    runs-on: docker
     steps:
       - uses: actions/checkout@v4
 
-      - name: Determine version
-        run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-          else
-            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0")
-            VERSION="${LATEST_TAG#v}-ci.${GITHUB_SHA:0:8}"
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Download publish artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: proxy-publish
+          path: ./publish
 
       - name: Login to Container Registry
         run: |
@@ -29,12 +66,12 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:${{ env.VERSION }} \
-            -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:latest \
+            -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmgr-proxy:${{ needs.build.outputs.version }} \
+            -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmgr-proxy:latest \
             -f src/StackManager.Proxy/Dockerfile \
             .
 
       - name: Push Docker image
         run: |
-          docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:${{ env.VERSION }}
-          docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:latest
+          docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmgr-proxy:${{ needs.build.outputs.version }}
+          docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmgr-proxy:latest
