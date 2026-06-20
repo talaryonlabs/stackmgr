@@ -1,9 +1,4 @@
-on:
-  push:
-    paths:
-      - 'src/StackManager.Proxy/**'
-      - 'src/StackManager.Shared/**'
-
+on: [push]
 jobs:
   build-and-push:
     runs-on: talaryon-dotnet
@@ -16,7 +11,11 @@ jobs:
             VERSION=${GITHUB_REF#refs/tags/v}
           else
             LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0")
+            BRANCH=${GITHUB_REF#refs/heads/}
             VERSION="${LATEST_TAG#v}-ci.${GITHUB_SHA:0:8}"
+            if [ "$BRANCH" != "main" ]; then
+              VERSION="${VERSION}-${BRANCH}"
+            fi
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
