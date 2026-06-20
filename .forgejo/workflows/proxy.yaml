@@ -1,11 +1,14 @@
 on: [push]
 jobs:
-  build-and-push:
+  build:
     runs-on: talaryon-dotnet
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Determine version
+        id: version
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then
             VERSION=${GITHUB_REF#refs/tags/v}
@@ -18,6 +21,32 @@ jobs:
             fi
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Publish project
+        run: |
+          dotnet publish src/StackManager.Proxy/StackManager.Proxy.csproj \
+            -c Release \
+            -o ./publish \
+            -p:Version=${{ env.VERSION }}
+
+      - name: Upload publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: proxy-publish
+          path: ./publish
+
+  push:
+    needs: build
+    runs-on: docker
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download publish artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: proxy-publish
+          path: ./publish
 
       - name: Login to Container Registry
         run: |
@@ -28,12 +57,12 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:${{ env.VERSION }} \
+            -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:${{ needs.build.outputs.version }} \
             -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:latest \
             -f src/StackManager.Proxy/Dockerfile \
             .
 
       - name: Push Docker image
         run: |
-          docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:${{ env.VERSION }}
+          docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:${{ needs.build.outputs.version }}
           docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:latest
