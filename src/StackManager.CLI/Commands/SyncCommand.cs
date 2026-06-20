@@ -35,24 +35,7 @@ public class SyncCommand : BaseCommand
                 return;
             }
             
-            // Check if we're in an interactive terminal
-            if (!Console.IsInputRedirected)
-            {
-                LogBuilder.Question("Are you sure you want to delete stack '{stack.Name}' from remote? (Use --force to skip confirmation)")
-                    .AsYesNo()
-                    .AsWarning()
-                    .InBox()
-                    .WaitFor(async result =>
-                    {
-                        if (!result) return LogBuilder.Message("Aborted.");
-                        await DeleteStackFromRemote(stack, syncService);
-                        return LogBuilder.Message("Done.").AsSuccess();
-                    });
-                return;
-            }
-            
-            // Non-interactive mode: require --force flag
-            LogMessage.AsError("Stack '{stack.Name}' is marked for deletion. Use --force to delete from remote.");
+            LogMessage.AsError("Stack '{stack.Name}' is marked for deletion. Use --force (-f) to delete it from remote.");
             return;
         }
 
