@@ -23,6 +23,15 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Add NuGet source
+        run: |
+          dotnet nuget add source --name nuget.pkg.talaryon.dev https://nuget.pkg.talaryon.dev/v3/index.json
+          dotnet nuget add source --name code.talaryon.dev \
+            --username ${{ secrets.NUGET_USERNAME }} \
+            --password ${{ secrets.NUGET_PASSWORD }} \
+            --store-password-in-clear-text \
+          https://code.talaryon.dev/api/packages/${{ forgejo.repository_owner }}/nuget/index.json
+
       - name: Publish project
         run: |
           dotnet publish src/StackManager.Proxy/StackManager.Proxy.csproj \

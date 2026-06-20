@@ -1,4 +1,8 @@
-on: [push]
+on:
+  push:
+    paths:
+      - 'src/StackManager.CLI/**'
+      - 'src/StackManager.Shared/**'
 jobs:
   build-and-pack:
     runs-on: talaryon-dotnet
