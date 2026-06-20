@@ -67,12 +67,12 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:${{ needs.build.outputs.version }} \
-            -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:latest \
+            -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmgr-proxy:${{ needs.build.outputs.version }} \
+            -t code.talaryon.dev/${{ forgejo.repository_owner }}/stackmgr-proxy:latest \
             -f src/StackManager.Proxy/Dockerfile \
             .
 
       - name: Push Docker image
         run: |
-          docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:${{ needs.build.outputs.version }}
-          docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmanager-proxy:latest
+          docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmgr-proxy:${{ needs.build.outputs.version }}
+          docker push code.talaryon.dev/${{ forgejo.repository_owner }}/stackmgr-proxy:latest
