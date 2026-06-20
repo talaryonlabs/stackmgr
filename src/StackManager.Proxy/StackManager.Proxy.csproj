@@ -13,8 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Talaryon.Toolbox.Hosting" Version="1.5.1" />
-      <PackageReference Include="Talaryon.Toolbox.Services" Version="1.5.1" />
+      <PackageReference Include="Talaryon.Toolbox.Hosting" Version="1.5.5" />
+      <PackageReference Include="Talaryon.Toolbox.Services" Version="1.5.5" />
     </ItemGroup>
 
 </Project>

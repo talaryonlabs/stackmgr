@@ -12,6 +12,7 @@ public class SyncCommand : BaseCommand
         Add(new EnvironmentOption());
         Add(new StackOption());
         Add(new ApplyOption());
+        Add(new ForceOption());
     }
 
     protected override async Task ExecuteAsync()
@@ -19,6 +20,7 @@ public class SyncCommand : BaseCommand
         var env = GetEnvironment<EnvironmentOption>();
         var stack = GetStack<StackOption>(env);
         var apply = GetValue<bool, ApplyOption>();
+        var force = GetValue<bool, ForceOption>();
 
         var kustomizeService = GetRequiredService<IKustomizeService>()
             .Directory(stack.LocalDirectory);
@@ -27,17 +29,30 @@ public class SyncCommand : BaseCommand
         
         if (stack.IsDeleted)
         {
-            LogBuilder.Question("Are you sure you want to delete stack '{stack.Name}' from remote?")
-                .AsYesNo()
-                .AsWarning()
-                .InBox()
-                .WaitFor(async result =>
-                {
-                    if (!result) return LogBuilder.Message("Aborted.");
-                    await DeleteStackFromRemote(stack, syncService);
-                    return LogBuilder.Message("Done.").AsSuccess();
-                });
-
+            if (force)
+            {
+                await DeleteStackFromRemote(stack, syncService);
+                return;
+            }
+            
+            // Check if we're in an interactive terminal
+            if (!Console.IsInputRedirected)
+            {
+                LogBuilder.Question("Are you sure you want to delete stack '{stack.Name}' from remote? (Use --force to skip confirmation)")
+                    .AsYesNo()
+                    .AsWarning()
+                    .InBox()
+                    .WaitFor(async result =>
+                    {
+                        if (!result) return LogBuilder.Message("Aborted.");
+                        await DeleteStackFromRemote(stack, syncService);
+                        return LogBuilder.Message("Done.").AsSuccess();
+                    });
+                return;
+            }
+            
+            // Non-interactive mode: require --force flag
+            LogMessage.AsError("Stack '{stack.Name}' is marked for deletion. Use --force to delete from remote.");
             return;
         }
 
