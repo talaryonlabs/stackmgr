@@ -11,7 +11,8 @@ jobs:
         id: version
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
+            VERSION=${GITHUB_REF#refs/tags/}
+            VERSION=${VERSION#v}
           else
             LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0")
             BRANCH=${GITHUB_REF#refs/heads/}
