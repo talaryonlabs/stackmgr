@@ -64,13 +64,17 @@ public partial class ArgoService : IArgoService
         }
         var applications = await response.Content.ReadFromJsonAsync<V1alpha1ApplicationList>(cancellationToken);
         var repositories = await GetRepositoriesAsync(cancellationToken);
-        return (applications?.Items ?? []).Select(v => new Application
+        return (applications?.Items ?? []).Select(v => 
         {
-            Name = v.Metadata.Name!,
-            Project = v.Spec.Project,
-            Repository = repositories.First(x => v.Spec.Source.RepoURL.StartsWith(x.Url)).Name,
-            Path = v.Spec.Source.Path,
-            IsAutoSyncEnabled = v.Spec.SyncPolicy is { Automated: not null },
+            var repo = repositories.FirstOrDefault(x => v.Spec.Source.RepoURL?.StartsWith(x.Url) == true);
+            return new Application
+            {
+                Name = v.Metadata.Name!,
+                Project = v.Spec.Project,
+                Repository = repo?.Name ?? v.Spec.Source.RepoURL ?? "unknown",
+                Path = v.Spec.Source.Path,
+                IsAutoSyncEnabled = v.Spec.SyncPolicy is { Automated: not null },
+            };
         });
     }
 
@@ -94,11 +98,12 @@ public partial class ArgoService : IArgoService
 
         var repositories = await GetRepositoriesAsync(cancellationToken);
         
+        var repo = repositories.FirstOrDefault(x => application.Spec.Source.RepoURL?.StartsWith(x.Url) == true);
         return new Application
         {
             Name = application.Metadata.Name!,
             Project = application.Spec.Project,
-            Repository = repositories.First(x => application.Spec.Source.RepoURL.StartsWith(x.Url)).Name,
+            Repository = repo?.Name ?? application.Spec.Source.RepoURL ?? "unknown",
             Path = application.Spec.Source.Path,
             IsAutoSyncEnabled = application.Spec.SyncPolicy is { Automated: not null },
         };
