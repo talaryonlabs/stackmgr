@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using StackManager.Shared.Models;
 using Talaryon.StackManager.Proxy.Services;
 using Talaryon.Toolbox.Api.Errors;
@@ -9,7 +10,7 @@ namespace Talaryon.StackManager.Proxy.Controller;
 [Authorize]
 [ApiController]
 [Route("namespaces")]
-public class NamespaceController(IRancherService rancherService)
+public class NamespaceController(IRancherService rancherService, ILogger<NamespaceController> logger)
 {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Namespace>))]
@@ -21,7 +22,7 @@ public class NamespaceController(IRancherService rancherService)
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error listing namespaces");
             throw;
         }
     }
@@ -38,7 +39,7 @@ public class NamespaceController(IRancherService rancherService)
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error getting namespace {Name}", name);
             throw;
         }
     }
@@ -55,7 +56,7 @@ public class NamespaceController(IRancherService rancherService)
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error creating namespace {Name}", body.Name);
             throw;
         }
     }
@@ -70,7 +71,7 @@ public class NamespaceController(IRancherService rancherService)
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error deleting namespace {Name}", name);
             throw;
         }
     }

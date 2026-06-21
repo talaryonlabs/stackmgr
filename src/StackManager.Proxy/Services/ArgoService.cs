@@ -59,7 +59,8 @@ public partial class ArgoService : IArgoService
         var response = await _client.GetAsync($"/api/v1/applications?project={_project}", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            throw new InternalServerError("Failed to request applications. Please try again later.");
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new InternalServerError($"Failed to request applications. Response code: {response.StatusCode}, {errorContent}");
         }
         var applications = await response.Content.ReadFromJsonAsync<V1alpha1ApplicationList>(cancellationToken);
         var repositories = await GetRepositoriesAsync(cancellationToken);
@@ -84,7 +85,8 @@ public partial class ArgoService : IArgoService
         var response = await _client.GetAsync($"/api/v1/applications/{name}", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            throw new InternalServerError("Failed to get application. Please try again later.");
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new InternalServerError($"Failed to get application. Response code: {response.StatusCode}, {errorContent}");
         }
         
         var application = await response.Content.ReadFromJsonAsync<V1alpha1Application>(cancellationToken);
@@ -161,8 +163,9 @@ public partial class ArgoService : IArgoService
 
         if (!response.IsSuccessStatusCode)
         {
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new InternalServerError(
-                $"Failed to create application '{body.Name}'. Response code: {response.StatusCode}");
+                $"Failed to create application '{body.Name}'. Response code: {response.StatusCode}, {errorContent}");
         }
         return await GetApplicationAsync(body.Name, cancellationToken);
     }
@@ -256,8 +259,9 @@ public partial class ArgoService : IArgoService
         var response = await _client.GetAsync($"/api/v1/applications/{app.Name}?refresh=hard", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new InternalServerError(
-                $"Failed to refresh application '{app.Name}'. Response code: {response.StatusCode}");
+                $"Failed to refresh application '{app.Name}'. Response code: {response.StatusCode}, {errorContent}");
         }
 
         return true;
@@ -277,8 +281,9 @@ public partial class ArgoService : IArgoService
         }, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new InternalServerError(
-                $"Failed to sync application '{app.Name}'. Response code: {response.StatusCode}");
+                $"Failed to sync application '{app.Name}'. Response code: {response.StatusCode}, {errorContent}");
         }
 
         return true;
@@ -289,7 +294,8 @@ public partial class ArgoService : IArgoService
         var response = await _client.GetAsync("/api/v1/repositories", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            throw new InternalServerError($"Failed to request repositories. Response code: {response.StatusCode}");
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new InternalServerError($"Failed to request repositories. Response code: {response.StatusCode}, {errorContent}");
         }
         
         var repositories = await response.Content.ReadFromJsonAsync<V1alpha1RepositoryList>(cancellationToken);
@@ -314,7 +320,8 @@ public partial class ArgoService : IArgoService
         var response = await _client.GetAsync($"/api/v1/repositories/{Uri.EscapeDataString(local.Url)}", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            throw new InternalServerError($"Failed to get repository '{name}'. Response code: {response.StatusCode}");
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new InternalServerError($"Failed to get repository '{name}'. Response code: {response.StatusCode}, {errorContent}");
         }
         
         var repository = await response.Content.ReadFromJsonAsync<V1alpha1Repository>(cancellationToken);
@@ -376,7 +383,7 @@ public partial class ArgoService : IArgoService
             }
             
             throw new InternalServerError(
-                $"Failed to delete repository '{body.Name}'. Response code: {response.StatusCode}.");
+                $"Failed to create repository '{body.Name}'. Response code: {response.StatusCode}, {error}");
         }
         return await GetRepositoryAsync(body.Name, cancellationToken);
     }
@@ -392,7 +399,8 @@ public partial class ArgoService : IArgoService
 
         if (!response.IsSuccessStatusCode)
         {
-            throw new InternalServerError("Failed to delete repository. Please try again later.");
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new InternalServerError($"Failed to delete repository. Response code: {response.StatusCode}, {errorContent}");
         }
 
         return repository;

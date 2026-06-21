@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using StackManager.Shared.Models;
 using Talaryon.StackManager.Proxy.Services;
 using Talaryon.Toolbox.Api.Errors;
@@ -9,7 +10,7 @@ namespace Talaryon.StackManager.Proxy.Controller;
 [Authorize]
 [ApiController]
 [Route("applications")]
-public class ApplicationController(IArgoService argoService)
+public class ApplicationController(IArgoService argoService, ILogger<ApplicationController> logger)
 {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Application>))]
@@ -21,7 +22,7 @@ public class ApplicationController(IArgoService argoService)
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error listing applications");
             throw;
         }
     }
@@ -38,7 +39,7 @@ public class ApplicationController(IArgoService argoService)
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error getting application {Name}", name);
             throw;
         }
     }
@@ -55,7 +56,7 @@ public class ApplicationController(IArgoService argoService)
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error refreshing application {Name}", name);
             throw;
         }
     }
@@ -72,7 +73,7 @@ public class ApplicationController(IArgoService argoService)
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error syncing application {Name}", name);
             throw;
         }
     }
@@ -89,7 +90,7 @@ public class ApplicationController(IArgoService argoService)
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error creating application {Name}", body.Name);
             throw;
         }
     }
@@ -106,7 +107,7 @@ public class ApplicationController(IArgoService argoService)
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error updating application {Name}", name);
             throw;
         }
     }
@@ -121,7 +122,7 @@ public class ApplicationController(IArgoService argoService)
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error deleting application {Name}", name);
             throw;
         }
     }

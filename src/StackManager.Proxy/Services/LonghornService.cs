@@ -1,6 +1,7 @@
 using System.Net;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackManager.Shared.Models;
 using Talaryon.StackManager.Proxy.Utilities;
@@ -26,13 +27,15 @@ public class LonghornOptions : TalaryonOptions<LonghornOptions>
 public partial class LonghornService : ILonghornService
 {
     private readonly HttpClient _client;
+    private readonly ILogger<LonghornService> _logger;
 
-    public LonghornService(IHttpClientFactory clientFactory, IOptions<LonghornOptions> options)
+    public LonghornService(IHttpClientFactory clientFactory, IOptions<LonghornOptions> options, ILogger<LonghornService> logger)
     {
         var url = options.Value.Url ?? throw new ArgumentNullException(nameof(options.Value.Url));
         // var token = options.Value.AccessToken ?? throw new ArgumentNullException(nameof(options.Value.AccessToken));
         
         _client = clientFactory.CreateClient();
+        _logger = logger;
         _client.BaseAddress = new Uri(url);
         // _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
         _client.DefaultRequestHeaders.Add("Accept", "application/json");
@@ -44,8 +47,9 @@ public partial class LonghornService : ILonghornService
         var response = await _client.GetAsync("/v1/volumes", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            Console.WriteLine(await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new InternalServerError($"Failed to request volumes. Response code: {response.StatusCode}");
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError("Failed to request volumes. Response code: {StatusCode}, {ErrorContent}", response.StatusCode, errorContent);
+            throw new InternalServerError($"Failed to request volumes. Response code: {response.StatusCode}, {errorContent}");
         }
 
         var list = await response.Content.ReadFromJsonAsync<LonghornServiceVolumeList>(cancellationToken);
@@ -66,11 +70,12 @@ public partial class LonghornService : ILonghornService
         var response = await _client.GetAsync($"/v1/volumes/{name}", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            Console.WriteLine(await response.Content.ReadAsStringAsync(cancellationToken));
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError("Failed to get volume {Name}. Response code: {StatusCode}, {ErrorContent}", name, response.StatusCode, errorContent);
             throw response.StatusCode switch
             {
                 HttpStatusCode.NotFound => new NotFoundError($"Volume '{name}' not found."),
-                _ => new InternalServerError()
+                _ => new InternalServerError($"Failed to get volume '{name}'. Response code: {response.StatusCode}, {errorContent}")
             };
         }
 
@@ -146,8 +151,9 @@ public partial class LonghornService : ILonghornService
         var response = await _client.PostAsJsonAsync("/v1/volumes", request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            Console.WriteLine(await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new InternalServerError($"Failed to create volume '{volume.Name}'. Response code: {response.StatusCode}");
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError("Failed to create volume {Name}. Response code: {StatusCode}, {ErrorContent}", volume.Name, response.StatusCode, errorContent);
+            throw new InternalServerError($"Failed to create volume '{volume.Name}'. Response code: {response.StatusCode}, {errorContent}");
         }
 
         var data = await response.Content.ReadFromJsonAsync<LonghornServiceVolume>(cancellationToken);

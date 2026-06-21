@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using StackManager.Shared.Models;
 using Talaryon.StackManager.Proxy.Models;
 using Talaryon.StackManager.Proxy.Services;
@@ -11,7 +12,7 @@ namespace Talaryon.StackManager.Proxy.Controller;
 [Authorize]
 [ApiController]
 [Route("volumes/{namespace}")]
-public class VolumeController(ILonghornService longhornService, IRancherService rancherService)
+public class VolumeController(ILonghornService longhornService, IRancherService rancherService, ILogger<VolumeController> logger)
 {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Volume>))]
@@ -27,7 +28,7 @@ public class VolumeController(ILonghornService longhornService, IRancherService 
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error listing volumes for namespace {Namespace}", @namespace);
             throw;
         }
     }
@@ -47,7 +48,7 @@ public class VolumeController(ILonghornService longhornService, IRancherService 
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error getting volume {Name} in namespace {Namespace}", name, @namespace);
             throw;
         }
     }
@@ -122,7 +123,7 @@ public class VolumeController(ILonghornService longhornService, IRancherService 
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error creating volume {Name} in namespace {Namespace}", body.Name, @namespace);
             throw;
         }
     }
@@ -153,7 +154,7 @@ public class VolumeController(ILonghornService longhornService, IRancherService 
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e, "Error deleting volume {Name} from namespace {Namespace}", name, @namespace);
             throw;
         }  
     }
