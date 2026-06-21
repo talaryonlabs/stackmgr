@@ -8,14 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configure logging to output to console
 builder.Logging.ClearProviders();
-builder.Logging.AddConsole(options =>
-{
-    options.IncludeScopes = true;
-    options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
-});
-builder.Logging.AddFilter("System", LogLevel.Warning);
-builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
-builder.Logging.AddFilter("Talaryon", LogLevel.Debug);
+builder.Logging.AddConsole();
 var requiredConfig = new[]
 {
     "STACKMGR_ACCESS_TOKEN",
@@ -79,8 +72,5 @@ builder.Services
 var app = builder.BuildAsApi(options);
 
 // Test logging to verify it works
-app.Logger.LogInformation("Proxy starting up - testing console logging");
-app.Logger.LogWarning("Warning test message");
-app.Logger.LogError("Error test message");
-
+app.Logger.LogInformation("Proxy starting up");
 app.Run("http://+:5380");
