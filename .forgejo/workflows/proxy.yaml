@@ -1,4 +1,8 @@
-on: [push]
+on:
+  push:
+    paths:
+      - 'src/StackManager.Proxy/**'
+      - 'src/StackManager.Shared/**'
 jobs:
   build:
     runs-on: dotnet
