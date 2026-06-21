@@ -14,11 +14,11 @@ public class RepositoryController(IArgoService argoService, ILogger<RepositoryCo
 {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Repository>))]
-    public ValueTask<IEnumerable<Repository>> List(CancellationToken cancellationToken)
+    public async ValueTask<IEnumerable<Repository>> List(CancellationToken cancellationToken)
     {
         try
         {
-            return argoService.GetRepositoriesAsync(cancellationToken);
+            return await argoService.GetRepositoriesAsync(cancellationToken);
         }
         catch (Exception e)
         {
@@ -31,11 +31,11 @@ public class RepositoryController(IArgoService argoService, ILogger<RepositoryCo
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Repository))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundError))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
-    public ValueTask<Repository> Get(string name, CancellationToken cancellationToken)
+    public async ValueTask<Repository> Get(string name, CancellationToken cancellationToken)
     {
         try
         {
-            return argoService.GetRepositoryAsync(name, cancellationToken);
+            return await argoService.GetRepositoryAsync(name, cancellationToken);
         }
         catch (Exception e)
         {
@@ -48,11 +48,11 @@ public class RepositoryController(IArgoService argoService, ILogger<RepositoryCo
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Repository))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ConflictError))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
-    public ValueTask<Repository> Post([FromBody] Repository body, CancellationToken cancellationToken)
+    public async ValueTask<Repository> Post([FromBody] Repository body, CancellationToken cancellationToken)
     {
         try
         {
-            return argoService.CreateRepositoryAsync(body, cancellationToken);
+            return await argoService.CreateRepositoryAsync(body, cancellationToken);
         }
         catch (Exception e)
         {
@@ -63,11 +63,11 @@ public class RepositoryController(IArgoService argoService, ILogger<RepositoryCo
     
     [HttpDelete("{name}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
-    public ValueTask<Repository> Delete(string name, CancellationToken cancellationToken)
+    public async ValueTask<Repository> Delete(string name, CancellationToken cancellationToken)
     {
         try
         {
-            return argoService.DeleteRepositoryAsync(name, cancellationToken);
+            return await argoService.DeleteRepositoryAsync(name, cancellationToken);
         }
         catch (Exception e)
         {

@@ -14,11 +14,11 @@ public class ApplicationController(IArgoService argoService, ILogger<Application
 {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Application>))]
-    public ValueTask<IEnumerable<Application>> List(CancellationToken cancellationToken)
+    public async ValueTask<IEnumerable<Application>> List(CancellationToken cancellationToken)
     {
         try
         {
-            return argoService.GetApplicationsAsync(cancellationToken);
+            return await argoService.GetApplicationsAsync(cancellationToken);
         }
         catch (Exception e)
         {
@@ -31,11 +31,11 @@ public class ApplicationController(IArgoService argoService, ILogger<Application
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Application))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundError))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
-    public ValueTask<Application> Get(string name, CancellationToken cancellationToken)
+    public async ValueTask<Application> Get(string name, CancellationToken cancellationToken)
     {
         try
         {
-            return argoService.GetApplicationAsync(name, cancellationToken);
+            return await argoService.GetApplicationAsync(name, cancellationToken);
         }
         catch (Exception e)
         {
@@ -82,11 +82,11 @@ public class ApplicationController(IArgoService argoService, ILogger<Application
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Application))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ConflictError))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
-    public ValueTask<Application> Post([FromBody] Application body, CancellationToken cancellationToken)
+    public async ValueTask<Application> Post([FromBody] Application body, CancellationToken cancellationToken)
     {
         try
         {
-            return argoService.CreateApplicationAsync(body, cancellationToken);
+            return await argoService.CreateApplicationAsync(body, cancellationToken);
         }
         catch (Exception e)
         {
@@ -99,11 +99,11 @@ public class ApplicationController(IArgoService argoService, ILogger<Application
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Application))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundError))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
-    public ValueTask<Application> Put(string name, [FromBody] Application body, CancellationToken cancellationToken)
+    public async ValueTask<Application> Put(string name, [FromBody] Application body, CancellationToken cancellationToken)
     {
         try
         {
-            return argoService.UpdateApplicationAsync(name, body, cancellationToken);
+            return await argoService.UpdateApplicationAsync(name, body, cancellationToken);
         }
         catch (Exception e)
         {
@@ -114,11 +114,11 @@ public class ApplicationController(IArgoService argoService, ILogger<Application
     
     [HttpDelete("{name}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
-    public ValueTask<Application> Delete(string name, CancellationToken cancellationToken)
+    public async ValueTask<Application> Delete(string name, CancellationToken cancellationToken)
     {
         try
         {
-            return argoService.DeleteApplicationAsync(name, cancellationToken);
+            return await argoService.DeleteApplicationAsync(name, cancellationToken);
         }
         catch (Exception e)
         {

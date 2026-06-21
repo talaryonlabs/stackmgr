@@ -14,11 +14,11 @@ public class NamespaceController(IRancherService rancherService, ILogger<Namespa
 {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Namespace>))]
-    public ValueTask<IEnumerable<Namespace>> List(CancellationToken cancellationToken)
+    public async ValueTask<IEnumerable<Namespace>> List(CancellationToken cancellationToken)
     {
         try
         {
-            return rancherService.GetNamespacesAsync(cancellationToken);
+            return await rancherService.GetNamespacesAsync(cancellationToken);
         }
         catch (Exception e)
         {
@@ -31,11 +31,11 @@ public class NamespaceController(IRancherService rancherService, ILogger<Namespa
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Namespace))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundError))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
-    public ValueTask<Namespace> Get(string name, CancellationToken cancellationToken)
+    public async ValueTask<Namespace> Get(string name, CancellationToken cancellationToken)
     {
         try
         {
-            return rancherService.GetNamespaceAsync(name, cancellationToken);
+            return await rancherService.GetNamespaceAsync(name, cancellationToken);
         }
         catch (Exception e)
         {
@@ -48,11 +48,11 @@ public class NamespaceController(IRancherService rancherService, ILogger<Namespa
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Namespace))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ConflictError))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(InternalServerError))]   
-    public ValueTask<Namespace> Post([FromBody] Namespace body, CancellationToken cancellationToken)
+    public async ValueTask<Namespace> Post([FromBody] Namespace body, CancellationToken cancellationToken)
     {
         try
         {
-            return rancherService.CreateNamespaceAsync(body.Name, cancellationToken);
+            return await rancherService.CreateNamespaceAsync(body.Name, cancellationToken);
         }
         catch (Exception e)
         {
@@ -63,11 +63,11 @@ public class NamespaceController(IRancherService rancherService, ILogger<Namespa
     
     [HttpDelete("{name}")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
-    public ValueTask<Namespace> Delete(string name, CancellationToken cancellationToken)
+    public async ValueTask<Namespace> Delete(string name, CancellationToken cancellationToken)
     {
         try
         {
-            return rancherService.DeleteNamespaceAsync(name, cancellationToken);
+            return await rancherService.DeleteNamespaceAsync(name, cancellationToken);
         }
         catch (Exception e)
         {
