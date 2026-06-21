@@ -4,6 +4,10 @@ using Talaryon.Toolbox.Hosting;
 using Talaryon.Toolbox.Hosting.Api;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure logging to output to console
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 var requiredConfig = new[]
 {
     "STACKMGR_ACCESS_TOKEN",
