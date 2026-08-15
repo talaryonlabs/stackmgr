@@ -28,5 +28,10 @@ public class NewStackCommand : ResourceCreateCommand<Stack, StackArgument>
     protected override void OnResourceCreated(Stack resource)
     {
         LogMessage.AsSuccess($"Stack '{resource.Name}' created.");
+
+        var config = GetRequiredService<LocalConfig>();
+        config.Defaults.Stack = resource.Name;
+        config.Save();
+        LogMessage.AsInfo($"Default stack set to '{resource.Name}'.");
     }
 }
