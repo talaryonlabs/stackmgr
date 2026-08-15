@@ -1,4 +1,6 @@
 using System;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Talaryon.StackManager;
 
@@ -11,35 +13,54 @@ public class ApiMethods
         var stackName = stack.Name;
         
         // Longhorn max name length: 40 chars total
-        // Calculate max allowed volume length: 40 - (env + stack + 2 hyphens)
-        var prefixLength = envName.Length + stackName.Length + 2;
-        var maxVolumeLength = 40 - prefixLength;
+        // Calculate available space: 40 - (env + stack + 2 hyphens)
+        var prefix = $"{envName}-{stackName}-";
+        var availableForVolume = 40 - prefix.Length;
         
-        if (maxVolumeLength < 1)
+        if (availableForVolume < 8) // Need at least 8 chars for hash
             throw new ArgumentException("Environment and stack names are too long to fit a volume name (Longhorn limit: 40 chars).");
         
-        // Truncate volume to fit within the 40-char Longhorn limit
-        var truncatedVolume = volume.Length <= maxVolumeLength
-            ? volume
-            : volume[..maxVolumeLength];
+        // Truncate volume and append hash if needed
+        string volumePart;
+        if (volume.Length <= availableForVolume)
+        {
+            volumePart = volume;
+        }
+        else
+        {
+            // Reserve 9 chars for hyphen + 8-char hash
+            var maxVolLength = availableForVolume - 9;
+            if (maxVolLength < 1)
+                throw new ArgumentException("Not enough space for volume name and hash.");
+            
+            var truncatedVol = volume[..maxVolLength];
+            var hash = ComputeHash(volume, 8);
+            volumePart = $"{truncatedVol}-{hash}";
+        }
         
-        var fullName = $"{envName}-{stackName}-{truncatedVolume}";
+        var fullName = $"{prefix}{volumePart}";
         
-        // Ensure the name is valid Kubernetes DNS-1123
+        // Ensure valid Kubernetes DNS-1123
         if (!IsValidKubernetesName(fullName))
         {
-            // If truncation broke the pattern, adjust
             if (fullName.Length > 0 && !char.IsLetterOrDigit(fullName[^1]))
                 fullName = fullName[..^1];
             if (fullName.Length > 0 && !char.IsLetterOrDigit(fullName[0]))
                 fullName = fullName[1..];
             
-            // Final check
             if (!IsValidKubernetesName(fullName))
                 throw new ArgumentException($"Generated volume name '{fullName}' is not a valid Kubernetes DNS name.");
         }
         
         return fullName;
+    }
+    
+    private static string ComputeHash(string input, int length)
+    {
+        using var sha256 = SHA256.Create();
+        var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+        var hex = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+        return hex[..length];
     }
     
     private static bool IsValidKubernetesName(string name)
@@ -59,26 +80,31 @@ public class ApiMethods
     [ApiVersion]
     private static string GetVolumeNameLegacy(Stack stack, string volume)
     {
-        // For legacy API: only check and truncate volume length itself
+        // For legacy API: only check volume length itself with hash truncation
         // Longhorn limit: 40 chars
         if (volume.Length > 40)
         {
-            // Truncate to 40 characters
-            var truncated = volume[..40];
+            // Reserve 9 chars for hyphen + 8-char hash
+            var maxVolLength = 40 - 9; // 31 chars for volume name
+            if (maxVolLength < 1)
+                throw new ArgumentException("Volume name too long even with hash truncation.");
+            
+            var truncatedVol = volume[..maxVolLength];
+            var hash = ComputeHash(volume, 8);
+            var fullName = $"{truncatedVol}-{hash}";
             
             // Ensure it's valid Kubernetes DNS-1123
-            if (!IsValidKubernetesName(truncated))
+            if (!IsValidKubernetesName(fullName))
             {
-                // Adjust if needed
-                if (truncated.Length > 0 && !char.IsLetterOrDigit(truncated[^1]))
-                    truncated = truncated[..^1];
-                if (truncated.Length > 0 && !char.IsLetterOrDigit(truncated[0]))
-                    truncated = truncated[1..];
+                if (fullName.Length > 0 && !char.IsLetterOrDigit(fullName[^1]))
+                    fullName = fullName[..^1];
+                if (fullName.Length > 0 && !char.IsLetterOrDigit(fullName[0]))
+                    fullName = fullName[1..];
                 
-                if (!IsValidKubernetesName(truncated))
+                if (!IsValidKubernetesName(fullName))
                     throw new ArgumentException($"Volume name '{volume}' cannot be made valid for Longhorn (40 char limit).");
             }
-            return truncated;
+            return fullName;
         }
         
         // Validate volume name is a valid Kubernetes DNS-1123 name
