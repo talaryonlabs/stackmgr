@@ -10,15 +10,15 @@ public class ApiMethods
         var envName = stack.Environment.Name;
         var stackName = stack.Name;
         
-        // Kubernetes DNS-1123: max 63 chars total
-        // Calculate max allowed volume length: 63 - (env + stack + 2 hyphens)
+        // Longhorn max name length: 40 chars total
+        // Calculate max allowed volume length: 40 - (env + stack + 2 hyphens)
         var prefixLength = envName.Length + stackName.Length + 2;
-        var maxVolumeLength = 63 - prefixLength;
+        var maxVolumeLength = 40 - prefixLength;
         
         if (maxVolumeLength < 1)
-            throw new ArgumentException("Environment and stack names are too long to fit a volume name.");
+            throw new ArgumentException("Environment and stack names are too long to fit a volume name (Longhorn limit: 40 chars).");
         
-        // Truncate volume to fit within the 63-char limit
+        // Truncate volume to fit within the 40-char Longhorn limit
         var truncatedVolume = volume.Length <= maxVolumeLength
             ? volume
             : volume[..maxVolumeLength];
@@ -60,10 +60,11 @@ public class ApiMethods
     private static string GetVolumeNameLegacy(Stack stack, string volume)
     {
         // For legacy API: only check and truncate volume length itself
-        if (volume.Length > 63)
+        // Longhorn limit: 40 chars
+        if (volume.Length > 40)
         {
-            // Truncate to 63 characters
-            var truncated = volume[..63];
+            // Truncate to 40 characters
+            var truncated = volume[..40];
             
             // Ensure it's valid Kubernetes DNS-1123
             if (!IsValidKubernetesName(truncated))
@@ -75,7 +76,7 @@ public class ApiMethods
                     truncated = truncated[1..];
                 
                 if (!IsValidKubernetesName(truncated))
-                    throw new ArgumentException($"Volume name '{volume}' cannot be made valid for Kubernetes.");
+                    throw new ArgumentException($"Volume name '{volume}' cannot be made valid for Longhorn (40 char limit).");
             }
             return truncated;
         }
