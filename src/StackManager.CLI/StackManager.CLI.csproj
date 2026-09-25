@@ -21,14 +21,14 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="10.0.9" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
-      <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
-      <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.9" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.12" />
       <PackageReference Include="System.CommandLine" Version="3.0.0-preview.4.26230.115" />
-      <PackageReference Include="Talaryon.Toolbox" Version="1.5.5" />
-      <PackageReference Include="Talaryon.Toolbox.Services" Version="1.5.5" />
-      <PackageReference Include="YamlDotNet" Version="18.0.0" />
+      <PackageReference Include="Talaryon.Toolbox" Version="1.7.1" />
+      <PackageReference Include="Talaryon.Toolbox.Services" Version="1.7.1" />
+      <PackageReference Include="YamlDotNet" Version="18.1.0" />
     </ItemGroup>
 
     <ItemGroup>

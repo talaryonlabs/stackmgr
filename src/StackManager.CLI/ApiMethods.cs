@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -9,8 +10,10 @@ public class ApiMethods
     [ApiVersion("stack.talaryon.io/v2beta")]
     private static string GetVolumeName(Stack stack, string volume)
     {
-        var envName = stack.Environment.Name;
-        var stackName = stack.Name;
+        // Longhorn/DNS-1123 labels only allow [a-z0-9-]; e.g. "talaryonlabs.com" -> "talaryonlabs-com"
+        var envName = SanitizeNamePart(stack.Environment.Name);
+        var stackName = SanitizeNamePart(stack.Name);
+        volume = SanitizeNamePart(volume);
         
         // Longhorn max name length: 40 chars total
         // Calculate available space: 40 - (env + stack + 2 hyphens)
@@ -55,6 +58,12 @@ public class ApiMethods
         return fullName;
     }
     
+    private static string SanitizeNamePart(string input)
+    {
+        var chars = input.ToLowerInvariant().Select(c => c is (>= 'a' and <= 'z') or (>= '0' and <= '9') ? c : '-').ToArray();
+        return new string(chars).Trim('-');
+    }
+
     private static string ComputeHash(string input, int length)
     {
         using var sha256 = SHA256.Create();
